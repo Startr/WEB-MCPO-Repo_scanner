@@ -1,0 +1,116 @@
+<!-- templates/results.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TODO Results - {{ repo_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1, h2 {
+            color: #333;
+        }
+        h1 {
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        .summary {
+            background-color: #f0f8ff;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .todo-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border-left: 4px solid #4CAF50;
+        }
+        .file-path {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .line-num {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .todo-text {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .next-line {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            border: 1px solid #ddd;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+        .highlight {
+            background-color: #ffff99;
+            font-weight: bold;
+            padding: 2px;
+        }
+        .back-link {
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        .no-results {
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            text-align: center;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>TODO Scanner Results</h1>
+    
+    <div class="summary">
+        <h2>Repository: {{ repo_name }}</h2>
+        <p>URL: {{ repo_url }}</p>
+        <p>Found {{ count }} TODO items</p>
+    </div>
+    
+    {% if count == 0 %}
+    <div class="no-results">
+        <p>No TODO comments found in this repository.</p>
+    </div>
+    {% else %}
+        {% for todo in todos %}
+        <div class="todo-item">
+            <div class="file-path">{{ todo.file_path }}</div>
+            <div class="line-num">Line {{ todo.line_num }}</div>
+            <div class="todo-text">{{ todo.todo_text|highlight_todo|safe }}</div>
+            {% if todo.next_line %}
+            <div class="next-line">{{ todo.next_line }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div class="back-link">
+        <a href="{{ url_for('index') }}">← Scan another repository</a>
+    </div>
+</body>
+</html>
