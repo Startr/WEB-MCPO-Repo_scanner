@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
 import subprocess
 import re
 import mimetypes
 from pathlib import Path
 import logging
+import json
+from functools import wraps
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
@@ -18,6 +20,14 @@ class TodoItem:
         self.line_num = line_num
         self.todo_text = todo_text
         self.next_line = next_line
+    
+    def to_dict(self):
+        return {
+            'file_path': self.file_path,
+            'line_num': self.line_num,
+            'todo_text': self.todo_text,
+            'next_line': self.next_line
+        }
 
 def ensure_dir_exists(path):
     """Ensure the directory exists, creating it if necessary."""
@@ -117,9 +127,149 @@ def highlight_todo(text):
     """Highlight the TODO keyword in the text."""
     return re.sub(r'(#+\s*TODO|//\s*TODO|TODO:)', r'<span class="highlight">\1</span>', text, flags=re.IGNORECASE)
 
+# ----- MPCO API Endpoints -----
+
+def mpco_response(f):
+    """Decorator for MPCO tool endpoints."""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        try:
+            result = f(*args, **kwargs)
+            return jsonify({
+                "status": "success",
+                "result": result
+            })
+        except Exception as e:
+            app.logger.error(f"MPCO error: {str(e)}")
+            return jsonify({
+                "status": "error",
+                "error": str(e)
+            }), 500
+    return decorated_function
+
+@app.route('/api/mpco/manifest', methods=['GET'])
+def mpco_manifest():
+    """Return the MPCO tool manifest."""
+    return jsonify({
+        "schema_version": "v1",
+        "name_for_human": "TODO Scanner",
+        "name_for_model": "todo_scanner",
+        "description_for_human": "Scans git repositories for TODO comments in code",
+        "description_for_model": "Use this tool to scan git repositories for TODO comments. Input a git repository URL and get back a list of TODO comments found in the code.",
+        "authentication": {
+            "type": "none"
+        },
+        "api": {
+            "type": "openapi",
+            "url": f"{request.url_root}api/mpco/openapi.json"
+        }
+    })
+
+@app.route('/api/mpco/openapi.json', methods=['GET'])
+def mpco_openapi():
+    """Return the OpenAPI specification for the MPCO endpoints."""
+    return jsonify({
+        "openapi": "3.0.1",
+        "info": {
+            "title": "TODO Scanner API",
+            "description": "API for scanning git repositories for TODO comments",
+            "version": "v1"
+        },
+        "servers": [
+            {
+                "url": f"{request.url_root}api"
+            }
+        ],
+        "paths": {
+            "/scan_repository": {
+                "post": {
+                    "operationId": "scanRepository",
+                    "summary": "Scan a git repository for TODO comments",
+                    "requestBody": {
+                        "required": True,
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "required": ["repo_url"],
+                                    "properties": {
+                                        "repo_url": {
+                                            "type": "string",
+                                            "description": "URL of the git repository to scan (e.g., https://github.com/username/repo.git)"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "responses": {
+                        "200": {
+                            "description": "TODO items found in the repository",
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "type": "object",
+                                        "properties": {
+                                            "repo_url": {"type": "string"},
+                                            "repo_name": {"type": "string"},
+                                            "todo_count": {"type": "integer"},
+                                            "todos": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "object",
+                                                    "properties": {
+                                                        "file_path": {"type": "string"},
+                                                        "line_num": {"type": "integer"},
+                                                        "todo_text": {"type": "string"},
+                                                        "next_line": {"type": "string"}
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    })
+
+@app.route('/api/mpco/scan_repository', methods=['POST'])
+@mpco_response
+def api_scan_repository():
+    """API endpoint to scan a repository for TODOs."""
+    data = request.json
+    
+    if not data or 'repo_url' not in data:
+        raise ValueError("Repository URL is required")
+    
+    repo_url = data['repo_url']
+    
+    try:
+        repo_path = clone_repository(repo_url)
+        todos = find_todos(repo_path)
+        repo_name = os.path.basename(repo_path)
+        
+        # Convert TodoItem objects to dictionaries
+        todo_dicts = [todo.to_dict() for todo in todos]
+        
+        return {
+            "repo_url": repo_url,
+            "repo_name": repo_name,
+            "todo_count": len(todos),
+            "todos": todo_dicts,
+            "web_url": f"{request.url_root}scan/{repo_url}"
+        }
+        
+    except Exception as e:
+        app.logger.error(f"Error in API scan: {str(e)}")
+        raise
+
 if __name__ == '__main__':
     # Create the repositories directory if it doesn't exist
     ensure_dir_exists(BASE_REPO_PATH)
     
     # Run the Flask application
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
