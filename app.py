@@ -165,10 +165,21 @@ def mpco_manifest():
         }
     })
 
-@app.route('/api/mpco/openapi.json', methods=['GET'])
-def mpco_openapi():
-    """Return the OpenAPI specification for the MPCO endpoints."""
-    return jsonify({
+def get_api_schema():
+    """Generate the API schema based on actual API endpoints."""
+    # Define the schema for the TodoItem
+    todo_item_schema = {
+        "type": "object",
+        "properties": {
+            "file_path": {"type": "string"},
+            "line_num": {"type": "integer"},
+            "todo_text": {"type": "string"},
+            "next_line": {"type": "string", "nullable": True}
+        }
+    }
+    
+    # Generate the base specification
+    spec = {
         "openapi": "3.0.1",
         "info": {
             "title": "TODO Scanner API",
@@ -180,53 +191,47 @@ def mpco_openapi():
                 "url": f"{request.url_root}api"
             }
         ],
-        "paths": {
-            "/scan_repository": {
-                "post": {
-                    "operationId": "scanRepository",
-                    "summary": "Scan a git repository for TODO comments",
-                    "requestBody": {
-                        "required": True,
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "required": ["repo_url"],
-                                    "properties": {
-                                        "repo_url": {
-                                            "type": "string",
-                                            "description": "URL of the git repository to scan (e.g., https://github.com/username/repo.git)"
-                                        }
-                                    }
+        "paths": {}
+    }
+    
+    # Add scan_repository endpoint
+    spec["paths"]["/scan_repository"] = {
+        "post": {
+            "operationId": "scanRepository",
+            "summary": "Scan a git repository for TODO comments",
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "required": ["repo_url"],
+                            "properties": {
+                                "repo_url": {
+                                    "type": "string",
+                                    "description": "URL of the git repository to scan (e.g., https://github.com/username/repo.git)"
                                 }
                             }
                         }
-                    },
-                    "responses": {
-                        "200": {
-                            "description": "TODO items found in the repository",
-                            "content": {
-                                "application/json": {
-                                    "schema": {
-                                        "type": "object",
-                                        "properties": {
-                                            "repo_url": {"type": "string"},
-                                            "repo_name": {"type": "string"},
-                                            "todo_count": {"type": "integer"},
-                                            "todos": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "file_path": {"type": "string"},
-                                                        "line_num": {"type": "integer"},
-                                                        "todo_text": {"type": "string"},
-                                                        "next_line": {"type": "string"}
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "TODO items found in the repository",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "repo_url": {"type": "string"},
+                                    "repo_name": {"type": "string"},
+                                    "todo_count": {"type": "integer"},
+                                    "todos": {
+                                        "type": "array",
+                                        "items": todo_item_schema
+                                    },
+                                    "web_url": {"type": "string"}
                                 }
                             }
                         }
@@ -234,7 +239,14 @@ def mpco_openapi():
                 }
             }
         }
-    })
+    }
+    
+    return spec
+
+@app.route('/api/mpco/openapi.json', methods=['GET'])
+def mpco_openapi():
+    """Return the OpenAPI specification for the MPCO endpoints."""
+    return jsonify(get_api_schema())
 
 @app.route('/api/mpco/scan_repository', methods=['POST'])
 @mpco_response
