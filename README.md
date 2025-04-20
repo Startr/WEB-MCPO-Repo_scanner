@@ -2,6 +2,8 @@
 
 A dead simple tool to find what needs to be done. You have code. Your code has TODOs. This will find them.
 
+![Sage_repo-TODOs.gif](Sage_repo-TODOs.gif)
+
 ## What It Does
 
 The sun rises. The code waits. TODOs hide in your repositories. This scanner finds them with brutal efficiency.
@@ -117,19 +119,19 @@ The TODOs are not forever. Find them. Fix them. Make your code clean again.
 
 This project hunts TODOs. It has its own TODOs. The irony is not lost.
 
-1. Add support for more TODO patterns. People write differently. Some use `FIXME:`. Others use `BUG:`.
-
-2. Create a visualization dashboard. See TODO patterns across projects. Find clusters. Identify trends.
-
-3. Add priority detection. Some TODOs are urgent. Find ways to detect them.
-
-4. Build a GitHub webhook integration. Scan repositories automatically on commit.
-
-5. Create a plugin system. Let others extend the scanner for their own patterns.
-
-6. Add language-specific scanning. Comments look different in different languages.
-
-7. Build a CLI tool. Not everyone needs a web interface.
+  1. Add support for more TODO patterns. People write differently. Some use `FIXME:`. Others use `BUG:`.
+  
+  2. Create a visualization dashboard. See TODO patterns across projects. Find clusters. Identify trends.
+  
+  3. Add priority detection. Some TODOs are urgent. Find ways to detect them.
+  
+  4. Build a GitHub webhook integration. Scan repositories automatically on commit.
+  
+  5. Create a plugin system. Let others extend the scanner for their own patterns.
+  
+  6. Add language-specific scanning. Comments look different in different languages.
+  
+  7. Build a CLI tool. Not everyone needs a web interface.
 
 These are not suggestions. These are challenges. Pick one. Build it. The code will be better for it.
 
