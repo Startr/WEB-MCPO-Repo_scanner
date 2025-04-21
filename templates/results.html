@@ -8,34 +8,34 @@
     <title>TODO Results - {{ repo_name }}</title>
     
 </head>
-<body style="font-family: Arial, sans-serif;max-width: 900px;margin: 0 auto;padding: 20px;line-height: 1.6;">
-    <h1 style="color: #333;border-bottom: 1px solid #ddd;padding-bottom: 10px;">TODO Scanner Results</h1>
+<body style="--ff:Arial, sans-serif; --maxw:900px; --m:0 auto; --p:20px; --lh:1.6">
+    <h1 style="--c:#333; --bb:1px solid #ddd; --pb:10px">TODO Scanner Results</h1>
     
-    <div class="summary" style="background-color: #f0f8ff;padding: 15px;border-radius: 5px;margin-bottom: 20px;">
-        <h2 style="color: #333;">Repository: {{ repo_name }}</h2>
+    <div class="summary" style="--bgc:#f0f8ff; --p:15px; --radius:5px; --mb:20px">
+        <h2 style="--c:#333">Repository: {{ repo_name }}</h2>
         <p>URL: {{ repo_url }}</p>
         <p>Found {{ count }} TODO items</p>
     </div>
     
     {% if count == 0 %}
-    <div class="no-results" style="background-color: #f9f9f9;padding: 20px;border-radius: 5px;text-align: center;color: #666;">
+    <div class="no-results" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --ta:center; --c:#666">
         <p>No TODO comments found in this repository.</p>
     </div>
     {% else %}
         {% for todo in todos %}
-        <div class="todo-item" style="background-color: #f9f9f9;padding: 15px;margin-bottom: 15px;border-radius: 5px;border-left: 4px solid #4CAF50;">
-            <div class="file-path" style="font-weight: bold;color: #333;margin-bottom: 5px;">{{ todo.file_path }}</div>
-            <div class="line-num" style="color: #666;font-size: 0.9em;">Line {{ todo.line_num }}</div>
-            <div class="todo-text" style="background-color: #fff;padding: 10px;border-radius: 3px;border: 1px solid #ddd;margin: 10px 0;font-family: monospace;white-space: pre-wrap;">{{ todo.todo_text|highlight_todo|safe }}</div>
+        <div class="todo-item" style="--bgc:#f9f9f9; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #4CAF50">
+            <div class="file-path" style="--weight:bold; --c:#333; --mb:5px">{{ todo.file_path }}</div>
+            <div class="line-num" style="--c:#666; --size:0.9em">Line {{ todo.line_num }}</div>
+            <div class="todo-text" style="--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap">{{ todo.todo_text|highlight_todo|safe }}</div>
             {% if todo.next_line %}
-            <div class="next-line" style="background-color: #f5f5f5;padding: 10px;border-radius: 3px;border: 1px solid #ddd;font-family: monospace;white-space: pre-wrap;">{{ todo.next_line }}</div>
+            <div class="next-line" style="--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --ff:monospace; --ws:pre-wrap">{{ todo.next_line }}</div>
             {% endif %}
         </div>
         {% endfor %}
     {% endif %}
     
-    <div class="back-link" style="margin-top: 20px;">
-        <a href="{{ url_for('index') }}" style="color: #0066cc;text-decoration: none;">← Scan another repository</a>
+    <div class="back-link" style="--mt:20px">
+        <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">← Scan another repository</a>
     </div>
 </body>
 </html>
