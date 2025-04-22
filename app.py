@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash
 import os
 import subprocess
 import re
@@ -6,10 +6,13 @@ import mimetypes
 from pathlib import Path
 import logging
 import json
+from datetime import datetime
 from functools import wraps
+from datetime import datetime
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)
+app.secret_key = os.urandom(24)  # Required for flash messages
 
 # Configure base repository path
 BASE_REPO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repositories")
@@ -25,13 +28,97 @@ class TodoItem:
         return {
             'file_path': self.file_path,
             'line_num': self.line_num,
-            'todo_text': self.todo_text,
-            'next_line': self.next_line
+            'todo_text': sanitize_for_llm(self.todo_text),
+            'next_line': sanitize_for_llm(self.next_line)
         }
 
 def ensure_dir_exists(path):
     """Ensure the directory exists, creating it if necessary."""
     os.makedirs(path, exist_ok=True)
+
+def sanitize_for_llm(text):
+    """Sanitize text to avoid issues with LLM processing.
+    
+    Replaces triple quotes with single quotes to prevent confusion in LLM contexts.
+    Also handles other potential problematic patterns for LLMs.
+    """
+    if text is None:
+        return None
+        
+    # Replace triple quotes with single quotes
+    sanitized = text.replace('"""', '"')
+    sanitized = sanitized.replace("'''", "'")
+    
+    # Additional sanitization if needed
+    # sanitized = sanitized.replace(..., ...)
+    
+    return sanitized
+
+def get_repo_origin_url(repo_path):
+    """Get the remote origin URL of a git repository."""
+    try:
+        # Run git command to get the remote origin URL
+        result = subprocess.run(
+            ['git', '-C', repo_path, 'config', '--get', 'remote.origin.url'],
+            capture_output=True, text=True, check=True
+        )
+        return result.stdout.strip()
+    except subprocess.CalledProcessError:
+        app.logger.error(f"Failed to get origin URL for repo at {repo_path}")
+        return None
+
+def pull_repository(repo_path):
+    """Pull the latest changes from the remote repository.
+    
+    Args:
+        repo_path: The local path to the repository
+        
+    Returns:
+        dict: Status of the pull operation with details
+    """
+    try:
+        app.logger.info(f"Pulling latest changes for repository at {repo_path}")
+        
+        # Check if the repository exists locally
+        if not os.path.isdir(repo_path) or not os.path.isdir(os.path.join(repo_path, '.git')):
+            return {"success": False, "message": "Not a valid git repository"}
+        
+        # Run git pull
+        result = subprocess.run(
+            ['git', '-C', repo_path, 'pull'],
+            capture_output=True, text=True
+        )
+        
+        if result.returncode == 0:
+            # Update the modification time of the directory after a successful pull
+            # This ensures the "Last Updated" timestamp is refreshed
+            current_time = datetime.now().timestamp()
+            os.utime(repo_path, (current_time, current_time))
+            
+            return {
+                "success": True,
+                "message": "Successfully pulled latest changes",
+                "details": sanitize_for_llm(result.stdout.strip())
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Failed to pull latest changes",
+                "details": sanitize_for_llm(result.stderr.strip())
+            }
+    except Exception as e:
+        app.logger.error(f"Error pulling repository: {str(e)}")
+        return {"success": False, "message": f"Error: {str(e)}"}
+
+def get_full_origin_url():
+    """Get the full origin URL including protocol and hostname."""
+    
+    # Check for X-Forwarded-Proto and X-Forwarded-Host headers (used by proxies and Cloudflare)
+    proto = request.headers.get('X-Forwarded-Proto') or request.scheme
+    host = request.headers.get('X-Forwarded-Host') or request.headers.get('Host') or request.host
+    
+    # Build and return the full origin URL
+    return f"{proto}://{host}"
 
 def clone_repository(repo_url):
     """Clone the repository if it doesn't exist."""
@@ -61,6 +148,42 @@ def is_text_file(file_path):
     except Exception as e:
         app.logger.error(f"Error checking file type: {e}")
         return False
+
+def list_local_repositories():
+    """List all local repositories that have been cloned."""
+    repos = []
+    
+    try:
+        # Ensure the repository directory exists
+        ensure_dir_exists(BASE_REPO_PATH)
+        
+        # List all directories in the repository path
+        for item in os.listdir(BASE_REPO_PATH):
+            full_path = os.path.join(BASE_REPO_PATH, item)
+            
+            # Check if it's a directory and contains a .git directory
+            if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, '.git')):
+                # Get the last modified time
+                last_modified = os.path.getmtime(full_path)
+                
+                # Get repository origin URL
+                origin_url = get_repo_origin_url(full_path)
+                
+                repos.append({
+                    'name': item,
+                    'path': full_path,
+                    'last_modified': last_modified,
+                    'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
+                    'origin_url': origin_url or ""
+                })
+        
+        # Sort repositories by last modified time (newest first)
+        repos.sort(key=lambda x: x['last_modified'], reverse=True)
+        
+    except Exception as e:
+        app.logger.error(f"Error listing repositories: {e}")
+    
+    return repos
 
 def find_todos(repo_path):
     """Find TODO comments in all text files in the repository."""
@@ -103,17 +226,24 @@ def index():
         
         return redirect(url_for('scan_repo', repo_url=repo_url))
     
-    return render_template('index.html')
+    # Get list of local repositories to display
+    local_repos = list_local_repositories()
+    
+    return render_template('index.html', local_repos=local_repos)
 
 @app.route('/scan/<path:repo_url>')
 def scan_repo(repo_url):
+    """Scan a repository for TODOs."""
     try:
         repo_path = clone_repository(repo_url)
         todos = find_todos(repo_path)
         repo_name = os.path.basename(repo_path)
         
+        # Get the repository's origin URL
+        origin_url = get_repo_origin_url(repo_path) or repo_url
+        
         return render_template('results.html', 
-                              repo_url=repo_url,
+                              repo_url=origin_url,
                               repo_name=repo_name,
                               todos=todos,
                               count=len(todos))
@@ -121,6 +251,26 @@ def scan_repo(repo_url):
     except Exception as e:
         app.logger.error(f"Error scanning repository: {e}")
         return render_template('index.html', error=f"Error scanning repository: {str(e)}")
+
+@app.route('/pull/<path:repo_name>')
+def pull_repo(repo_name):
+    """Pull the latest changes for a repository and redirect to the scan page."""
+    try:
+        repo_path = os.path.join(BASE_REPO_PATH, repo_name)
+        
+        # Pull the latest changes
+        result = pull_repository(repo_path)
+        
+        if result["success"]:
+            flash_message = f"Successfully pulled latest changes: {result.get('details', '')}"
+            return redirect(url_for('scan_repo', repo_url=repo_name))
+        else:
+            error_message = f"Failed to pull latest changes: {result.get('details', '')}"
+            return render_template('index.html', error=error_message, local_repos=list_local_repositories())
+        
+    except Exception as e:
+        app.logger.error(f"Error pulling repository: {e}")
+        return render_template('index.html', error=f"Error pulling repository: {str(e)}", local_repos=list_local_repositories())
 
 @app.template_filter('highlight_todo')
 def highlight_todo(text):
@@ -178,6 +328,16 @@ def get_api_schema():
         }
     }
     
+    # Define the schema for Repository item
+    repo_item_schema = {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string"},
+            "last_modified": {"type": "string"},
+            "scan_url": {"type": "string"}
+        }
+    }
+    
     # Generate the base specification
     spec = {
         "openapi": "3.0.1",
@@ -192,6 +352,79 @@ def get_api_schema():
             }
         ],
         "paths": {}
+    }
+    
+    # Add list_repositories endpoint
+    spec["paths"]["/list_repositories"] = {
+        "get": {
+            "operationId": "listRepositories",
+            "summary": "List all local repositories that have been scanned",
+            "responses": {
+                "200": {
+                    "description": "List of repositories available locally",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "repositories": {
+                                        "type": "array",
+                                        "items": repo_item_schema
+                                    },
+                                    "count": {"type": "integer"}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    # Add pull_repository endpoint
+    spec["paths"]["/pull_repository"] = {
+        "post": {
+            "operationId": "pullRepository",
+            "summary": "Pull the latest changes for a repository",
+            "requestBody": {
+                "required": True,
+                "content": {
+                    "application/json": {
+                        "schema": {
+                            "type": "object",
+                            "required": ["repo_name"],
+                            "properties": {
+                                "repo_name": {
+                                    "type": "string",
+                                    "description": "Name of the repository to pull updates for"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "responses": {
+                "200": {
+                    "description": "Result of the pull operation",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "properties": {
+                                    "success": {"type": "boolean"},
+                                    "message": {"type": "string"},
+                                    "details": {"type": "string"},
+                                    "repo_name": {"type": "string"},
+                                    "origin_url": {"type": "string"},
+                                    "last_modified": {"type": "string"},
+                                    "scan_url": {"type": "string"}
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
     
     # Add scan_repository endpoint
@@ -267,17 +500,72 @@ def api_scan_repository():
         # Convert TodoItem objects to dictionaries
         todo_dicts = [todo.to_dict() for todo in todos]
         
+        # Get original repository URL from git config
+        origin_url = get_repo_origin_url(repo_path) or repo_url
+        
+        # Get full server origin URL for web links
+        web_base_url = get_full_origin_url()
+        
         return {
-            "repo_url": repo_url,
+            "repo_url": origin_url,
             "repo_name": repo_name,
             "todo_count": len(todos),
             "todos": todo_dicts,
-            "web_url": f"{request.url_root}scan/{repo_url}"
+            "web_url": f"{web_base_url}/scan/{repo_url}"
         }
         
     except Exception as e:
         app.logger.error(f"Error in API scan: {str(e)}")
         raise
+
+@app.route('/api/mpco/list_repositories', methods=['GET'])
+@mpco_response
+def api_list_repositories():
+    """API endpoint to list all local repositories."""
+    repos = list_local_repositories()
+    
+    # Format the response
+    origin_url = get_full_origin_url()
+    return {
+        "repositories": [
+            {
+                "name": repo["name"],
+                "last_modified": repo["last_modified_str"],
+                "origin_url": repo["origin_url"],
+                "scan_url": f"{origin_url}/scan/{repo['name']}"
+            }
+            for repo in repos
+        ],
+        "count": len(repos)
+    }
+
+@app.route('/api/mpco/pull_repository', methods=['POST'])
+@mpco_response
+def api_pull_repository():
+    """API endpoint to pull the latest changes for a repository."""
+    data = request.json
+    
+    if not data or 'repo_name' not in data:
+        raise ValueError("Repository name is required")
+    
+    repo_name = data['repo_name']
+    repo_path = os.path.join(BASE_REPO_PATH, repo_name)
+    
+    # Pull the latest changes
+    result = pull_repository(repo_path)
+    
+    # Include additional repository info in the response
+    if os.path.isdir(repo_path):
+        origin_url = get_repo_origin_url(repo_path) or ""
+        last_modified = os.path.getmtime(repo_path)
+        result.update({
+            "repo_name": repo_name,
+            "origin_url": origin_url,
+            "last_modified": datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
+            "scan_url": f"{get_full_origin_url()}/scan/{repo_name}"
+        })
+    
+    return result
 
 if __name__ == '__main__':
     # Create the repositories directory if it doesn't exist

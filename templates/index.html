@@ -48,7 +48,8 @@
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.name }}</td>
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.last_modified_str }}</td>
                         <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
-                            <a href="{{ url_for('scan_repo', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">View TODOs</a>
+                            <a href="{{ url_for('scan_repo', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:5px">View TODOs</a>
+                            <a href="{{ url_for('pull_repo', repo_name=repo.name) }}" style="--bgc:#007bff; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">Pull Latest</a>
                         </td>
                     </tr>
                     {% endfor %}
