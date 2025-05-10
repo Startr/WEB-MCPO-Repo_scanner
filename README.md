@@ -2,6 +2,10 @@
 
 A dead simple tool to find what needs to be done. You have code. Your code has TODOs. This will find them.
 
+[![GitHub](https://img.shields.io/badge/View%20on-GitHub-brightgreen)](https://github.com/Startr/WEB-MCPO-Repo_scanner)
+
+The code is open. The project evolves. Get involved.
+
 ![Sage_repo-TODOs.gif](Sage_repo-TODOs.gif)
 
 ## What It Does
