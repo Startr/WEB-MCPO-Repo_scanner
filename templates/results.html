@@ -1,16 +1,9 @@
 <!-- templates/results.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://startr.style/style.css">
-    <title>TODO Results - {{ repo_name }}</title>
-    
-</head>
-<body style="--ff:Arial, sans-serif; --maxw:900px; --m:0 auto; --p:20px; --lh:1.6">
-    <h1 style="--c:#333; --bb:1px solid #ddd; --pb:10px">TODO Scanner Results</h1>
-    
+{% extends "base.html" %}
+
+{% block title %}TODO Results - {{ repo_name }}{% endblock %}
+
+{% block content %}
     <div class="summary" style="--bgc:#f0f8ff; --p:15px; --radius:5px; --mb:20px">
         <h2 style="--c:#333">Repository: {{ repo_name }}</h2>
         <p>URL: {{ repo_url }}</p>
@@ -37,5 +30,4 @@
     <div class="back-link" style="--mt:20px">
         <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">← Scan another repository</a>
     </div>
-</body>
-</html>
+{% endblock %}
