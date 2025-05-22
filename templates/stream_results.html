@@ -27,6 +27,22 @@
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
     }
+    .markdown-content {
+        white-space: pre-wrap;
+        font-family: monospace;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        overflow-x: auto;
+    }
+    .section-title {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        color: #333;
+    }
 </style>
 {% endblock %}
 
@@ -42,6 +58,12 @@
         <span>Scanning repository files...</span>
     </div>
     
+    <div id="todo-md-files-container">
+        <h2 class="section-title">TODO.md Files Found</h2>
+        <div id="todo-md-files"></div>
+    </div>
+    
+    <h2 class="section-title">TODO Comments in Code</h2>
     <div id="todos-container"></div>
     
     <div class="no-results" id="no-results" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --ta:center; --c:#666; display:none;">
@@ -55,11 +77,16 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const todosContainer = document.getElementById('todos-container');
+            const todoMdFilesContainer = document.getElementById('todo-md-files-container');
+            const todoMdFiles = document.getElementById('todo-md-files');
             const repoNameEl = document.getElementById('repo-name');
             const repoUrlEl = document.getElementById('repo-url');
             const todoCountEl = document.getElementById('todo-count');
             const loadingEl = document.getElementById('loading');
             const noResultsEl = document.getElementById('no-results');
+            
+            // Initially hide the TODO.md files section
+            todoMdFilesContainer.style.display = 'none';
             
             // Function to create a TODO item element
             function createTodoElement(todo) {
@@ -98,6 +125,33 @@
                 return todoEl;
             }
             
+            // Function to create a TODO.md file element
+            function createTodoMarkdownElement(mdFile) {
+                const mdFileEl = document.createElement('div');
+                mdFileEl.className = 'todo-md-file';
+                mdFileEl.style = '--bgc:#f0f8ff; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #007bff';
+                
+                const filePath = document.createElement('div');
+                filePath.className = 'file-path';
+                filePath.style = '--weight:bold; --c:#333; --mb:10px';
+                filePath.textContent = mdFile.file_path;
+                mdFileEl.appendChild(filePath);
+                
+                if (mdFile.content) {
+                    const content = document.createElement('div');
+                    content.className = 'markdown-content';
+                    content.textContent = mdFile.content;
+                    mdFileEl.appendChild(content);
+                } else {
+                    const noContent = document.createElement('div');
+                    noContent.style = '--c:#999; --p:10px;';
+                    noContent.textContent = 'Could not read content of file.';
+                    mdFileEl.appendChild(noContent);
+                }
+                
+                return mdFileEl;
+            }
+            
             // Function to highlight TODO in text
             function highlightTodo(text) {
                 if (!text) return '';
@@ -123,6 +177,23 @@
                         const todoEl = createTodoElement(data.todo);
                         todosContainer.appendChild(todoEl);
                         todoCountEl.textContent = `Found ${data.count} TODO items so far...`;
+                        break;
+                        
+                    case 'todo_md_files':
+                        // Show the TODO.md files section
+                        todoMdFilesContainer.style.display = 'block';
+                        
+                        // Add TODO.md files to the page
+                        if (data.files && data.files.length > 0) {
+                            const countText = document.createElement('p');
+                            countText.textContent = `The repository contains ${data.files.length} TODO.md file(s):`;
+                            todoMdFiles.appendChild(countText);
+                            
+                            data.files.forEach(mdFile => {
+                                const mdFileEl = createTodoMarkdownElement(mdFile);
+                                todoMdFiles.appendChild(mdFileEl);
+                            });
+                        }
                         break;
                         
                     case 'complete':

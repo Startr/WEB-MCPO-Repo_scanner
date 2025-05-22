@@ -3,6 +3,31 @@
 
 {% block title %}TODO Results - {{ repo_name }}{% endblock %}
 
+{% block head_extra %}
+<style>
+    .highlight {
+        background-color: #ffff99;
+        font-weight: bold;
+    }
+    .markdown-content {
+        white-space: pre-wrap;
+        font-family: monospace;
+        padding: 15px;
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        overflow-x: auto;
+    }
+    .section-title {
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 5px;
+        margin-top: 30px;
+        margin-bottom: 15px;
+        color: #333;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
     <div class="summary" style="--bgc:#f0f8ff; --p:15px; --radius:5px; --mb:20px">
         <h2 style="--c:#333">Repository: {{ repo_name }}</h2>
@@ -10,6 +35,23 @@
         <p>Found {{ count }} TODO items</p>
     </div>
     
+    {% if todo_md_files %}
+    <h2 class="section-title">TODO.md Files Found</h2>
+    <p>The repository contains {{ todo_md_files|length }} TODO.md file(s):</p>
+    
+    {% for md_file in todo_md_files %}
+    <div class="todo-md-file" style="--bgc:#f0f8ff; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #007bff">
+        <div class="file-path" style="--weight:bold; --c:#333; --mb:10px">{{ md_file.file_path }}</div>
+        {% if md_file.content %}
+        <div class="markdown-content">{{ md_file.content }}</div>
+        {% else %}
+        <div style="--c:#999; --p:10px;">Could not read content of file.</div>
+        {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+    
+    <h2 class="section-title">TODO Comments in Code</h2>
     {% if count == 0 %}
     <div class="no-results" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --ta:center; --c:#666">
         <p>No TODO comments found in this repository.</p>
@@ -19,7 +61,7 @@
         <div class="todo-item" style="--bgc:#f9f9f9; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #4CAF50">
             <div class="file-path" style="--weight:bold; --c:#333; --mb:5px">{{ todo.file_path }}</div>
             <div class="line-num" style="--c:#666; --size:0.9em">Line {{ todo.line_num }}</div>
-            <div class="todo-text" style="--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap">{{ todo.todo_text|highlight_todo|e }}</div>
+            <div class="todo-text" style="--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap">{{ todo.todo_text|highlight_todo|safe }}</div>
             {% if todo.next_line %}
             <div class="next-line" style="--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --ff:monospace; --ws:pre-wrap">{{ todo.next_line|e }}</div>
             {% endif %}
