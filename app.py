@@ -11,7 +11,7 @@ from functools import wraps
 from datetime import datetime
 
 app = Flask(__name__)
-app.logger.setLevel(logging.INFO)
+app.logger.setLevel(logging.INFO)  # Ensure INFO level is set for our logs
 app.secret_key = os.urandom(24)  # Required for flash messages
 
 # Configure base repository path
@@ -53,6 +53,39 @@ def sanitize_for_llm(text):
     # sanitized = sanitized.replace(..., ...)
     
     return sanitized
+
+def is_valid_git_repo(path_to_check: str) -> bool:
+    """Checks if the given path is a valid Git repository work tree."""
+    if not os.path.isdir(path_to_check):
+        app.logger.debug(f"Path {path_to_check} is not a directory, skipping git check.")
+        return False
+
+    try:
+        # This command checks if the path is within a git working tree.
+        process = subprocess.run(
+            ['git', '-C', path_to_check, 'rev-parse', '--is-inside-work-tree'],
+            capture_output=True, text=True, check=False, timeout=5
+        )
+        
+        if process.returncode == 0 and process.stdout.strip() == 'true':
+            app.logger.debug(f"Path {path_to_check} is a valid git work tree.")
+            return True
+        else:
+            app.logger.debug(
+                f"Path {path_to_check} is not recognized as a git work tree by 'rev-parse --is-inside-work-tree'. "
+                f"Return Code: {process.returncode}, Stdout: '{process.stdout.strip()}', Stderr: '{process.stderr.strip()}'"
+            )
+            return False
+            
+    except subprocess.TimeoutExpired:
+        app.logger.error(f"Timeout checking if {path_to_check} is a git repo.")
+        return False
+    except FileNotFoundError:
+        app.logger.error(f"Git command not found. Cannot check if {path_to_check} is a git repo.")
+        return False
+    except Exception as e:
+        app.logger.error(f"Unexpected error checking git status for {path_to_check}: {e}")
+        return False
 
 def get_repo_origin_url(repo_path):
     """Get the remote origin URL of a git repository."""
@@ -178,22 +211,23 @@ def is_text_file(file_path):
 def list_local_repositories():
     """List all local repositories that have been cloned."""
     repos = []
+    app.logger.info(f"Listing local repositories from: {BASE_REPO_PATH}")
     
     try:
-        # Ensure the repository directory exists
         ensure_dir_exists(BASE_REPO_PATH)
         
-        # List all directories in the repository path
-        for item in os.listdir(BASE_REPO_PATH):
+        items_in_base_path = os.listdir(BASE_REPO_PATH)
+        app.logger.info(f"Items found in BASE_REPO_PATH: {items_in_base_path}")
+
+        for item in items_in_base_path:
             full_path = os.path.join(BASE_REPO_PATH, item)
-            
-            # Check if it's a directory and contains a .git directory
-            if os.path.isdir(full_path) and os.path.isdir(os.path.join(full_path, '.git')):
-                # Get the last modified time
+            app.logger.info(f"Processing item: {item} at full_path: {full_path}")
+
+            if is_valid_git_repo(full_path):  # Using new robust check
+                app.logger.info(f"Item {item} at {full_path} is identified as a valid git repo.")
                 last_modified = os.path.getmtime(full_path)
-                
-                # Get repository origin URL
                 origin_url = get_repo_origin_url(full_path)
+                app.logger.info(f"Origin URL for {item}: {origin_url}")
                 
                 repos.append({
                     'name': item,
@@ -202,13 +236,16 @@ def list_local_repositories():
                     'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                     'origin_url': origin_url or ""
                 })
+                app.logger.info(f"Added {item} to repositories list.")
+            else:
+                app.logger.info(f"Skipping {item} at {full_path} as it's not identified as a valid git repo by is_valid_git_repo.")
         
-        # Sort repositories by last modified time (newest first)
         repos.sort(key=lambda x: x['last_modified'], reverse=True)
         
     except Exception as e:
-        app.logger.error(f"Error listing repositories: {e}")
+        app.logger.error(f"Error listing repositories: {e}", exc_info=True)
     
+    app.logger.info(f"Final list of repository names to be returned: {[repo['name'] for repo in repos]}")
     return repos
 
 def find_todos(repo_path):
