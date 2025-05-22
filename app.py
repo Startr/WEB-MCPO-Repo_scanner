@@ -135,6 +135,32 @@ def clone_repository(repo_url):
     
     return repo_path
 
+def is_git_ignored(repo_path, file_path):
+    """Check if a file is ignored by git.
+    
+    Args:
+        repo_path: The path to the git repository
+        file_path: The path to the file to check (relative or absolute)
+        
+    Returns:
+        bool: True if the file is ignored by git, False otherwise
+    """
+    try:
+        # Convert to relative path if absolute
+        if os.path.isabs(file_path):
+            file_path = os.path.relpath(file_path, repo_path)
+            
+        # Use git check-ignore to determine if the file is ignored
+        result = subprocess.run(
+            ['git', '-C', repo_path, 'check-ignore', '-q', file_path],
+            capture_output=True
+        )
+        # Return code 0 means the file is ignored
+        return result.returncode == 0
+    except Exception as e:
+        app.logger.error(f"Error checking if file is ignored: {e}")
+        return False
+
 def is_text_file(file_path):
     """Check if a file is a text file using the file command."""
     try:
@@ -197,6 +223,11 @@ def find_todos(repo_path):
             file_path = os.path.join(root, file)
             rel_path = os.path.relpath(file_path, repo_path)
             
+            # Skip files that are ignored by git
+            if is_git_ignored(repo_path, file_path):
+                app.logger.debug(f"Skipping git-ignored file: {rel_path}")
+                continue
+                
             if not is_text_file(file_path):
                 continue
                 
