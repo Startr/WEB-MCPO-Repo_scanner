@@ -19,9 +19,9 @@
         <div class="todo-item" style="--bgc:#f9f9f9; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #4CAF50">
             <div class="file-path" style="--weight:bold; --c:#333; --mb:5px">{{ todo.file_path }}</div>
             <div class="line-num" style="--c:#666; --size:0.9em">Line {{ todo.line_num }}</div>
-            <div class="todo-text" style="--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap">{{ todo.todo_text|highlight_todo|safe }}</div>
+            <div class="todo-text" style="--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap">{{ todo.todo_text|highlight_todo|e }}</div>
             {% if todo.next_line %}
-            <div class="next-line" style="--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --ff:monospace; --ws:pre-wrap">{{ todo.next_line }}</div>
+            <div class="next-line" style="--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --ff:monospace; --ws:pre-wrap">{{ todo.next_line|e }}</div>
             {% endif %}
         </div>
         {% endfor %}

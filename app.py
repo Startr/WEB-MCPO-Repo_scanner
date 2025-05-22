@@ -212,8 +212,11 @@ def list_local_repositories():
     return repos
 
 def find_todos(repo_path):
-    """Find TODO comments in all text files in the repository."""
-    todos = []
+    """Find TODO comments in all text files in the repository.
+    
+    This is now a generator function that yields TodoItem objects as they're found,
+    allowing for streaming results as the scan progresses.
+    """
     
     for root, _, files in os.walk(repo_path):
         for file in files:
@@ -242,11 +245,10 @@ def find_todos(repo_path):
                     if re.search(r'#+\s*TODO|//\s*TODO|TODO:', line, re.IGNORECASE):
                         todo_text = line.strip()
                         next_line_text = lines[i+1].strip() if i+1 < len(lines) else None
-                        todos.append(TodoItem(rel_path, i+1, todo_text, next_line_text))
+                        # Yield the TodoItem as it's found instead of accumulating them
+                        yield TodoItem(rel_path, i+1, todo_text, next_line_text)
             except Exception as e:
                 app.logger.error(f"Error processing file {rel_path}: {e}")
-    
-    return todos
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -267,7 +269,7 @@ def scan_repo(repo_url):
     """Scan a repository for TODOs."""
     try:
         repo_path = clone_repository(repo_url)
-        todos = find_todos(repo_path)
+        todos = list(find_todos(repo_path))
         repo_name = os.path.basename(repo_path)
         
         # Get the repository's origin URL
@@ -282,6 +284,43 @@ def scan_repo(repo_url):
     except Exception as e:
         app.logger.error(f"Error scanning repository: {e}")
         return render_template('index.html', error=f"Error scanning repository: {str(e)}")
+
+@app.route('/stream_data/<path:repo_url>')
+def stream_data(repo_url):
+    """Stream the scan results for a repository."""
+    def generate():
+        try:
+            repo_path = clone_repository(repo_url)
+            repo_name = os.path.basename(repo_path)
+            origin_url = get_repo_origin_url(repo_path) or repo_url
+            
+            # Send initial metadata about the repository
+            yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
+            
+            # Counter for todos
+            todo_count = 0
+            
+            # Stream each TODO as it's found
+            for todo in find_todos(repo_path):
+                todo_count += 1
+                yield f"data: {json.dumps({'type': 'todo', 'todo': todo.to_dict(), 'count': todo_count})}\n\n"
+            
+            # Send completion event
+            yield f"data: {json.dumps({'type': 'complete', 'count': todo_count})}\n\n"
+            
+        except Exception as e:
+            app.logger.error(f"Error streaming scan: {str(e)}")
+            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+    
+    return app.response_class(
+        generate(),
+        mimetype='text/event-stream'
+    )
+
+@app.route('/scan_stream/<path:repo_url>')
+def scan_stream(repo_url):
+    """Render the streaming scan page for a repository."""
+    return render_template('stream_results.html', repo_url=repo_url)
 
 @app.route('/pull/<path:repo_name>')
 def pull_repo(repo_name):
@@ -525,7 +564,7 @@ def api_scan_repository():
     
     try:
         repo_path = clone_repository(repo_url)
-        todos = find_todos(repo_path)
+        todos = list(find_todos(repo_path))
         repo_name = os.path.basename(repo_path)
         
         # Convert TodoItem objects to dictionaries

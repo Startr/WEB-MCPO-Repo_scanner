@@ -7,7 +7,10 @@
     <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
         <h2>Enter Repository URL</h2>
         <input type="text" name="repo_url" placeholder="https://github.com/username/repository.git" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
-        <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer">Scan Repository</button>
+        <div style="--d:flex; --ai:center">
+            <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer; --mr:10px">Scan Repository</button>
+            <a href="#" id="stream-link" style="--c:#0066cc; --td:none">Use streaming scan (see results in real-time)</a>
+        </div>
     </form>
     
     {% if local_repos %}
@@ -30,6 +33,7 @@
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.last_modified_str }}</td>
                         <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
                             <a href="{{ url_for('scan_repo', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:5px">View TODOs</a>
+                            <a href="{{ url_for('scan_stream', repo_url=repo.name) }}" style="--bgc:#2196F3; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:5px">Stream</a>
                             <a href="{{ url_for('pull_repo', repo_name=repo.name) }}" style="--bgc:#007bff; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">Pull Latest</a>
                         </td>
                     </tr>
@@ -39,5 +43,26 @@
         </div>
     </div>
     {% endif %}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('form');
+            const input = document.querySelector('input[name="repo_url"]');
+            const streamLink = document.getElementById('stream-link');
+            
+            // Update the stream link when the repo URL changes
+            function updateStreamLink() {
+                const repoUrl = input.value.trim();
+                if (repoUrl) {
+                    streamLink.href = `/scan_stream/${encodeURIComponent(repoUrl)}`;
+                } else {
+                    streamLink.href = "#";
+                }
+            }
+            
+            input.addEventListener('input', updateStreamLink);
+            updateStreamLink();
+        });
+    </script>
 {% endblock %}
 

@@ -1,0 +1,156 @@
+<!-- templates/stream_results.html -->
+{% extends "base.html" %}
+
+{% block title %}Streaming TODO Results{% endblock %}
+
+{% block head_extra %}
+<style>
+    .highlight {
+        background-color: #ffff99;
+        font-weight: bold;
+    }
+    .loading {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .loading-spinner {
+        width: 20px;
+        height: 20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-right: 10px;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <div class="summary" style="--bgc:#f0f8ff; --p:15px; --radius:5px; --mb:20px">
+        <h2 style="--c:#333" id="repo-name">Repository: Loading...</h2>
+        <p id="repo-url">URL: {{ repo_url }}</p>
+        <p id="todo-count">Scanning for TODOs...</p>
+    </div>
+    
+    <div id="loading" class="loading">
+        <div class="loading-spinner"></div>
+        <span>Scanning repository files...</span>
+    </div>
+    
+    <div id="todos-container"></div>
+    
+    <div class="no-results" id="no-results" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --ta:center; --c:#666; display:none;">
+        <p>No TODO comments found in this repository.</p>
+    </div>
+    
+    <div class="back-link" style="--mt:20px">
+        <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">← Scan another repository</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const todosContainer = document.getElementById('todos-container');
+            const repoNameEl = document.getElementById('repo-name');
+            const repoUrlEl = document.getElementById('repo-url');
+            const todoCountEl = document.getElementById('todo-count');
+            const loadingEl = document.getElementById('loading');
+            const noResultsEl = document.getElementById('no-results');
+            
+            // Function to create a TODO item element
+            function createTodoElement(todo) {
+                const todoEl = document.createElement('div');
+                todoEl.className = 'todo-item';
+                todoEl.style = '--bgc:#f9f9f9; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #4CAF50';
+                
+                const filePath = document.createElement('div');
+                filePath.className = 'file-path';
+                filePath.style = '--weight:bold; --c:#333; --mb:5px';
+                filePath.textContent = todo.file_path;
+                
+                const lineNum = document.createElement('div');
+                lineNum.className = 'line-num';
+                lineNum.style = '--c:#666; --size:0.9em';
+                lineNum.textContent = `Line ${todo.line_num}`;
+                
+                const todoText = document.createElement('div');
+                todoText.className = 'todo-text';
+                todoText.style = '--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap';
+                todoText.innerHTML = highlightTodo(todo.todo_text);
+                
+                todoEl.appendChild(filePath);
+                todoEl.appendChild(lineNum);
+                todoEl.appendChild(todoText);
+                
+                // Add next line if it exists
+                if (todo.next_line) {
+                    const nextLine = document.createElement('div');
+                    nextLine.className = 'next-line';
+                    nextLine.style = '--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --ff:monospace; --ws:pre-wrap';
+                    nextLine.textContent = todo.next_line;
+                    todoEl.appendChild(nextLine);
+                }
+                
+                return todoEl;
+            }
+            
+            // Function to highlight TODO in text
+            function highlightTodo(text) {
+                if (!text) return '';
+                return text.replace(/(#+\s*TODO|\/\/\s*TODO|TODO:)/gi, '<span class="highlight">$1</span>');
+            }
+            
+            // Connect to the event stream
+            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url) }}");
+            
+            // Handle events from the server
+            evtSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                switch(data.type) {
+                    case 'init':
+                        // Initialize the page with repository information
+                        repoNameEl.textContent = `Repository: ${data.repo_name}`;
+                        repoUrlEl.textContent = `URL: ${data.repo_url}`;
+                        break;
+                        
+                    case 'todo':
+                        // Add the new TODO to the page
+                        const todoEl = createTodoElement(data.todo);
+                        todosContainer.appendChild(todoEl);
+                        todoCountEl.textContent = `Found ${data.count} TODO items so far...`;
+                        break;
+                        
+                    case 'complete':
+                        // Mark the scan as complete
+                        loadingEl.style.display = 'none';
+                        if (data.count === 0) {
+                            noResultsEl.style.display = 'block';
+                        }
+                        todoCountEl.textContent = `Found ${data.count} TODO items`;
+                        // Close the event source
+                        evtSource.close();
+                        break;
+                        
+                    case 'error':
+                        // Display error message
+                        loadingEl.style.display = 'none';
+                        todoCountEl.textContent = `Error: ${data.message}`;
+                        evtSource.close();
+                        break;
+                }
+            };
+            
+            // Handle connection error
+            evtSource.onerror = function() {
+                loadingEl.style.display = 'none';
+                todoCountEl.textContent = "Error connecting to server stream";
+                evtSource.close();
+            };
+        });
+    </script>
+{% endblock %}
