@@ -147,3 +147,5 @@ This setup will ensure that only your actual code and configuration files are tr
 Note that I've kept `Pipfile` and `Pipfile.lock` as tracked files (they aren't ignored) since these should be version-controlled according to Pipenv's recommendations. This ensures that anyone using your project can recreate the exact same environment.
 
 Would you like me to make any additional adjustments to the `.gitignore` file?
+
+*.code-workspace
