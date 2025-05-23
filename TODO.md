@@ -1,8 +1,11 @@
 # TODO List for Repo Scanner
+
 <!-- All content below this line has been revised for clarity, conciseness, vigorous language, tagging, and DRY principles. Uncompleted items from the original '''Completed''' section have been moved to '''Medium Priority'''. -->
+
 ## High Priority
-- [ ] Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE). #core #parser
-- [ ] Implement priority inference from TODO comments. #core #parser
+- [x] Implement a robust error handling mechanism for the scanner. #core #error-handling
+- [x] Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE). #core #parser
+- [ ] DRY Makefile targets. (Allow passing args to targets?)#development #testing
 - [ ] Enable streaming of API results for improved responsiveness. #api #performance
 
 ## Medium Priority
@@ -18,12 +21,17 @@
 
 ## Low Priority
 - [ ] Introduce user authentication for secure access. #security #auth
+- [ ] Implement priority inference from TODO comments. #core #parser
 - [ ] Design a plugin system to extend scanner functionality. #architecture #extensibility
 - [ ] Facilitate integration with task managers (Jira, Asana, Trello). #integration #external
 - [ ] Create a command-line interface (CLI) for versatile use. #cli #accessibility
 - [ ] Improve visibility of scrollable local repositories list on the main page. #ux #frontend
 
 ## Completed
-- [x] Honor .gitignore patterns during repository scans.
-- [x] Stream scan results efficiently in the web UI.
-- [x] Ensure proper HTML escaping for multi-line display.
+- [x] Implement comprehensive error handling with custom exceptions, retries, and recovery strategies. #core #error-handling
+- [x] Create testing infrastructure with unit and integration tests. #core #testing
+- [x] Add Makefile targets and test runner for easy test execution. #development #testing
+- [x] Honor .gitignore patterns during repository scans. #core
+- [x] Stream scan results efficiently in the web UI. #ux #frontend
+- [x] Ensure proper HTML escaping for multi-line display. #security #rendering
+- [x] Broaden TODO pattern recognition to include FIXME, BUG, and NOTE in various comment formats. #core #parser

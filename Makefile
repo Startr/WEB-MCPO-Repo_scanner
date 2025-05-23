@@ -6,7 +6,7 @@ CONTAINER_NAME := repo-scanner-app
 HOST_PORT := 5000
 CONTAINER_PORT := 5000
 
-.PHONY: all sync-todos docker-build docker-run docker-stop docker-logs docker-clean docker-prune run-dev
+.PHONY: all sync-todos docker-build docker-run docker-stop docker-logs docker-clean docker-prune run-dev test test-error test-unit test-coverage test-verbose
 
 all: docker-build # Default target
 
@@ -17,6 +17,43 @@ sync-todos:
 		chmod +x tools/sync_readme_todos.sh; \
 	fi
 	@tools/sync_readme_todos.sh
+
+# --- Test Targets ---
+test:
+	@echo "Running all tests..."
+	@if [ ! -x tools/run_tests.sh ]; then \
+		echo "Making tools/run_tests.sh executable..."; \
+		chmod +x tools/run_tests.sh; \
+	fi
+	@tools/run_tests.sh --all
+
+test-error:
+	@echo "Running error handling tests..."
+	@if [ ! -x tools/run_tests.sh ]; then \
+		chmod +x tools/run_tests.sh; \
+	fi
+	@tools/run_tests.sh --error
+
+test-unit:
+	@echo "Running unit tests..."
+	@if [ ! -x tools/run_tests.sh ]; then \
+		chmod +x tools/run_tests.sh; \
+	fi
+	@tools/run_tests.sh --unit
+
+test-coverage:
+	@echo "Running tests with coverage report..."
+	@if [ ! -x tools/run_tests.sh ]; then \
+		chmod +x tools/run_tests.sh; \
+	fi
+	@tools/run_tests.sh --all --coverage
+
+test-verbose:
+	@echo "Running tests with verbose output..."
+	@if [ ! -x tools/run_tests.sh ]; then \
+		chmod +x tools/run_tests.sh; \
+	fi
+	@tools/run_tests.sh --all --verbose
 
 # --- Docker Targets ---
 docker-build:
@@ -51,6 +88,14 @@ docker-prune: docker-clean
 run-dev:
 	@echo "Starting Flask development server..."
 	@FLASK_APP=app.py FLASK_ENV=development flask run --host=0.0.0.0 --port=$(HOST_PORT) --debug
+
+run-tunnel:
+	@echo "Starting Flask with Cloudflare tunnel..."
+	@if [ ! -x tools/run_with_cloudflared.sh ]; then \
+		echo "Making tools/run_with_cloudflared.sh executable..."; \
+		chmod +x tools/run_with_cloudflared.sh; \
+	fi
+	@tools/run_with_cloudflared.sh
 
 # Note on two-way sync (from previous version, kept for context if needed):
 # True two-way synchronization is complex to implement reliably in a Makefile...

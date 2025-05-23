@@ -10,12 +10,75 @@ from datetime import datetime
 from functools import wraps
 from datetime import datetime
 
+# Import our robust error handling system
+from error_handling import (
+    ErrorCategory, ErrorSeverity, ErrorContext, ScannerError,
+    ValidationError, NetworkError, GitOperationError, FileSystemError,
+    ProcessingError, SystemError, ErrorHandler, RetryConfig,
+    with_error_handling, error_context, safe_operation
+)
+
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)  # Ensure INFO level is set for our logs
 app.secret_key = os.urandom(24)  # Required for flash messages
 
+# Initialize the centralized error handler
+app.error_handler = ErrorHandler(app.logger)
+
 # Configure base repository path
 BASE_REPO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repositories")
+
+# Register recovery strategies for different error types
+def git_recovery_strategy(error: ScannerError):
+    """Recovery strategy for git operation failures"""
+    if isinstance(error, GitOperationError):
+        app.logger.info(f"Attempting git recovery for {error.error_id}")
+        # Could implement strategies like:
+        # - Retry with different credentials
+        # - Fall back to different git methods
+        # - Clean up corrupted repositories
+
+def network_recovery_strategy(error: ScannerError):
+    """Recovery strategy for network failures"""
+    if isinstance(error, NetworkError):
+        app.logger.info(f"Attempting network recovery for {error.error_id}")
+        # Could implement strategies like:
+        # - Switch to backup servers
+        # - Adjust timeout settings
+        # - Use different network protocols
+
+app.error_handler.register_recovery_strategy(ErrorCategory.GIT_OPERATION, git_recovery_strategy)
+app.error_handler.register_recovery_strategy(ErrorCategory.NETWORK, network_recovery_strategy)
+
+# Flask error handlers for different error types
+@app.errorhandler(ScannerError)
+def handle_scanner_error(error: ScannerError):
+    """Handle custom scanner errors"""
+    app.error_handler.handle_error(error)
+    
+    if request.path.startswith('/api/'):
+        return jsonify({
+            "status": "error",
+            "error_id": error.error_id,
+            "message": error.user_message,
+            "category": error.category.value,
+            "recoverable": error.recoverable
+        }), 500
+    else:
+        return render_template('index.html', 
+                             error=error.user_message,
+                             error_id=error.error_id,
+                             local_repos=safe_list_local_repositories()), 500
+
+@app.errorhandler(500)
+def handle_internal_error(error):
+    """Handle unexpected internal errors"""
+    scanner_error = SystemError(
+        "An unexpected internal error occurred",
+        original_exception=error,
+        context=ErrorContext("internal_error", "flask_app")
+    )
+    return handle_scanner_error(scanner_error)
 
 class TodoItem:
     def __init__(self, file_path, line_num, todo_text, next_line=None):
@@ -32,16 +95,17 @@ class TodoItem:
             'next_line': sanitize_for_llm(self.next_line)
         }
 
+@safe_operation(default_return=None)
 def ensure_dir_exists(path):
     """Ensure the directory exists, creating it if necessary."""
-    os.makedirs(path, exist_ok=True)
+    try:
+        os.makedirs(path, exist_ok=True)
+    except OSError as e:
+        raise FileSystemError(f"Failed to create directory {path}", path=path, original_exception=e)
 
+@safe_operation(default_return=None)
 def sanitize_for_llm(text):
-    """Sanitize text to avoid issues with LLM processing.
-    
-    Replaces triple quotes with single quotes to prevent confusion in LLM contexts.
-    Also handles other potential problematic patterns for LLMs.
-    """
+    """Sanitize text to avoid issues with LLM processing."""
     if text is None:
         return None
         
@@ -49,13 +113,14 @@ def sanitize_for_llm(text):
     sanitized = text.replace('"""', '"')
     sanitized = sanitized.replace("'''", "'")
     
-    # Additional sanitization if needed
-    # sanitized = sanitized.replace(..., ...)
-    
     return sanitized
 
+@with_error_handling("git_validation", "repository_manager", RetryConfig(max_attempts=1))
 def is_valid_git_repo(path_to_check: str) -> bool:
     """Checks if the given path is a valid Git repository work tree."""
+    if not path_to_check:
+        raise ValidationError("Repository path cannot be empty", field="path")
+    
     if not os.path.isdir(path_to_check):
         app.logger.debug(f"Path {path_to_check} is not a directory, skipping git check.")
         return False
@@ -77,71 +142,79 @@ def is_valid_git_repo(path_to_check: str) -> bool:
             )
             return False
             
-    except subprocess.TimeoutExpired:
-        app.logger.error(f"Timeout checking if {path_to_check} is a git repo.")
-        return False
-    except FileNotFoundError:
-        app.logger.error(f"Git command not found. Cannot check if {path_to_check} is a git repo.")
-        return False
+    except subprocess.TimeoutExpired as e:
+        raise GitOperationError(f"Timeout checking if {path_to_check} is a git repo", 
+                               git_command="git rev-parse", original_exception=e)
+    except FileNotFoundError as e:
+        raise SystemError("Git command not found. Please ensure Git is installed", original_exception=e)
     except Exception as e:
-        app.logger.error(f"Unexpected error checking git status for {path_to_check}: {e}")
-        return False
+        raise GitOperationError(f"Unexpected error checking git status for {path_to_check}", 
+                               git_command="git rev-parse", original_exception=e)
 
+@with_error_handling("get_origin_url", "repository_manager")
 def get_repo_origin_url(repo_path):
     """Get the remote origin URL of a git repository."""
+    if not repo_path:
+        raise ValidationError("Repository path cannot be empty", field="repo_path")
+    
     try:
         # Run git command to get the remote origin URL
         result = subprocess.run(
             ['git', '-C', repo_path, 'config', '--get', 'remote.origin.url'],
-            capture_output=True, text=True, check=True
+            capture_output=True, text=True, check=True, timeout=10
         )
         return result.stdout.strip()
-    except subprocess.CalledProcessError:
-        app.logger.error(f"Failed to get origin URL for repo at {repo_path}")
-        return None
+    except subprocess.CalledProcessError as e:
+        raise GitOperationError(f"Failed to get origin URL for repo at {repo_path}", 
+                               git_command="git config", original_exception=e)
+    except subprocess.TimeoutExpired as e:
+        raise GitOperationError(f"Timeout getting origin URL for {repo_path}", 
+                               git_command="git config", original_exception=e)
 
+@with_error_handling("pull_repository", "repository_manager", RetryConfig(max_attempts=2))
 def pull_repository(repo_path):
-    """Pull the latest changes from the remote repository.
+    """Pull the latest changes from the remote repository."""
+    if not repo_path:
+        raise ValidationError("Repository path cannot be empty", field="repo_path")
     
-    Args:
-        repo_path: The local path to the repository
-        
-    Returns:
-        dict: Status of the pull operation with details
-    """
-    try:
+    with error_context("pull_repository", "git_operations", repo_path=repo_path):
         app.logger.info(f"Pulling latest changes for repository at {repo_path}")
         
         # Check if the repository exists locally
-        if not os.path.isdir(repo_path) or not os.path.isdir(os.path.join(repo_path, '.git')):
-            return {"success": False, "message": "Not a valid git repository"}
+        if not os.path.isdir(repo_path):
+            raise FileSystemError(f"Repository directory does not exist: {repo_path}", path=repo_path)
+        
+        if not os.path.isdir(os.path.join(repo_path, '.git')):
+            raise GitOperationError(f"Not a valid git repository: {repo_path}", git_command="git pull")
         
         # Run git pull
-        result = subprocess.run(
-            ['git', '-C', repo_path, 'pull'],
-            capture_output=True, text=True
-        )
-        
-        if result.returncode == 0:
-            # Update the modification time of the directory after a successful pull
-            # This ensures the "Last Updated" timestamp is refreshed
-            current_time = datetime.now().timestamp()
-            os.utime(repo_path, (current_time, current_time))
+        try:
+            result = subprocess.run(
+                ['git', '-C', repo_path, 'pull'],
+                capture_output=True, text=True, timeout=30
+            )
             
-            return {
-                "success": True,
-                "message": "Successfully pulled latest changes",
-                "details": sanitize_for_llm(result.stdout.strip())
-            }
-        else:
-            return {
-                "success": False,
-                "message": "Failed to pull latest changes",
-                "details": sanitize_for_llm(result.stderr.strip())
-            }
-    except Exception as e:
-        app.logger.error(f"Error pulling repository: {str(e)}")
-        return {"success": False, "message": f"Error: {str(e)}"}
+            if result.returncode == 0:
+                # Update the modification time of the directory after a successful pull
+                current_time = datetime.now().timestamp()
+                os.utime(repo_path, (current_time, current_time))
+                
+                return {
+                    "success": True,
+                    "message": "Successfully pulled latest changes",
+                    "details": sanitize_for_llm(result.stdout.strip())
+                }
+            else:
+                raise GitOperationError(
+                    f"Git pull failed with return code {result.returncode}",
+                    git_command="git pull",
+                    context=ErrorContext("pull_repository", "git_operations", 
+                                        additional_data={"stderr": result.stderr.strip()})
+                )
+                
+        except subprocess.TimeoutExpired as e:
+            raise GitOperationError("Git pull operation timed out", 
+                                   git_command="git pull", original_exception=e)
 
 def get_full_origin_url():
     """Get the full origin URL including protocol and hostname."""
@@ -153,8 +226,15 @@ def get_full_origin_url():
     # Build and return the full origin URL
     return f"{proto}://{host}"
 
+@with_error_handling("clone_repository", "repository_manager", RetryConfig(max_attempts=2))
 def clone_repository(repo_url):
     """Clone the repository if it doesn't exist."""
+    if not repo_url:
+        raise ValidationError("Repository URL cannot be empty", field="repo_url")
+    
+    if not repo_url.startswith(('http://', 'https://', 'git@')):
+        raise ValidationError("Invalid repository URL format", field="repo_url")
+    
     repo_name = os.path.basename(repo_url)
     if repo_name.endswith('.git'):
         repo_name = repo_name[:-4]
@@ -162,22 +242,38 @@ def clone_repository(repo_url):
     repo_path = os.path.join(BASE_REPO_PATH, repo_name)
     
     if not os.path.isdir(repo_path):
-        app.logger.info(f"Cloning repository: {repo_url}")
-        ensure_dir_exists(os.path.dirname(repo_path))
-        subprocess.run(['git', 'clone', repo_url, repo_path], check=True)
+        with error_context("clone_repository", "git_operations", repo_url=repo_url):
+            app.logger.info(f"Cloning repository: {repo_url}")
+            ensure_dir_exists(os.path.dirname(repo_path))
+            
+            try:
+                result = subprocess.run(
+                    ['git', 'clone', repo_url, repo_path], 
+                    check=True, capture_output=True, text=True, timeout=120
+                )
+            except subprocess.CalledProcessError as e:
+                raise GitOperationError(
+                    f"Failed to clone repository {repo_url}",
+                    git_command="git clone",
+                    original_exception=e,
+                    context=ErrorContext("clone_repository", "git_operations", 
+                                        additional_data={"stderr": e.stderr})
+                )
+            except subprocess.TimeoutExpired as e:
+                raise GitOperationError(
+                    f"Git clone operation timed out for {repo_url}",
+                    git_command="git clone",
+                    original_exception=e
+                )
     
     return repo_path
 
+@with_error_handling("git_ignore_check", "file_processor")
 def is_git_ignored(repo_path, file_path):
-    """Check if a file is ignored by git.
-    
-    Args:
-        repo_path: The path to the git repository
-        file_path: The path to the file to check (relative or absolute)
+    """Check if a file is ignored by git."""
+    if not repo_path or not file_path:
+        return False
         
-    Returns:
-        bool: True if the file is ignored by git, False otherwise
-    """
     try:
         # Convert to relative path if absolute
         if os.path.isabs(file_path):
@@ -186,106 +282,150 @@ def is_git_ignored(repo_path, file_path):
         # Use git check-ignore to determine if the file is ignored
         result = subprocess.run(
             ['git', '-C', repo_path, 'check-ignore', '-q', file_path],
-            capture_output=True
+            capture_output=True, timeout=5
         )
         # Return code 0 means the file is ignored
         return result.returncode == 0
-    except Exception as e:
-        app.logger.error(f"Error checking if file is ignored: {e}")
+    except subprocess.TimeoutExpired:
+        app.logger.warning(f"Timeout checking git ignore status for {file_path}")
         return False
+    except Exception as e:
+        raise ProcessingError(f"Error checking if file is ignored: {file_path}", original_exception=e)
 
+@with_error_handling("file_type_check", "file_processor")
 def is_text_file(file_path):
     """Check if a file is a text file using the file command."""
+    if not file_path or not os.path.exists(file_path):
+        return False
+        
     try:
         mime_type = mimetypes.guess_type(file_path)[0]
         if mime_type is None:
             # If mime type can't be guessed from extension, use file command
-            result = subprocess.run(['file', '--brief', '--mime', file_path], 
-                                    capture_output=True, text=True, check=True)
+            result = subprocess.run(
+                ['file', '--brief', '--mime', file_path], 
+                capture_output=True, text=True, check=True, timeout=5
+            )
             return result.stdout.strip().startswith('text/')
         return mime_type.startswith('text/')
-    except Exception as e:
-        app.logger.error(f"Error checking file type: {e}")
+    except subprocess.TimeoutExpired:
+        app.logger.warning(f"Timeout checking file type for {file_path}")
         return False
+    except Exception as e:
+        raise ProcessingError(f"Error checking file type: {file_path}", original_exception=e)
 
+@safe_operation(default_return=[], log_errors=True)
+def safe_list_local_repositories():
+    """Safe wrapper for list_local_repositories that won't crash the app"""
+    return list_local_repositories()
+
+@with_error_handling("list_repositories", "repository_manager")
 def list_local_repositories():
     """List all local repositories that have been cloned."""
     repos = []
-    app.logger.info(f"Listing local repositories from: {BASE_REPO_PATH}")
     
-    try:
+    with error_context("list_repositories", "repository_manager", base_path=BASE_REPO_PATH):
+        app.logger.info(f"Listing local repositories from: {BASE_REPO_PATH}")
+        
         ensure_dir_exists(BASE_REPO_PATH)
         
-        items_in_base_path = os.listdir(BASE_REPO_PATH)
+        try:
+            items_in_base_path = os.listdir(BASE_REPO_PATH)
+        except OSError as e:
+            raise FileSystemError(f"Cannot access repository directory {BASE_REPO_PATH}", 
+                                 path=BASE_REPO_PATH, original_exception=e)
+        
         app.logger.info(f"Items found in BASE_REPO_PATH: {items_in_base_path}")
 
         for item in items_in_base_path:
             full_path = os.path.join(BASE_REPO_PATH, item)
             app.logger.info(f"Processing item: {item} at full_path: {full_path}")
 
-            if is_valid_git_repo(full_path):  # Using new robust check
-                app.logger.info(f"Item {item} at {full_path} is identified as a valid git repo.")
-                last_modified = os.path.getmtime(full_path)
-                origin_url = get_repo_origin_url(full_path)
-                app.logger.info(f"Origin URL for {item}: {origin_url}")
-                
-                repos.append({
-                    'name': item,
-                    'path': full_path,
-                    'last_modified': last_modified,
-                    'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
-                    'origin_url': origin_url or ""
-                })
-                app.logger.info(f"Added {item} to repositories list.")
-            else:
-                app.logger.info(f"Skipping {item} at {full_path} as it's not identified as a valid git repo by is_valid_git_repo.")
+            try:
+                if is_valid_git_repo(full_path):
+                    app.logger.info(f"Item {item} at {full_path} is identified as a valid git repo.")
+                    
+                    try:
+                        last_modified = os.path.getmtime(full_path)
+                        origin_url = get_repo_origin_url(full_path)
+                    except Exception as e:
+                        app.logger.warning(f"Error getting metadata for {item}: {e}")
+                        continue
+                    
+                    app.logger.info(f"Origin URL for {item}: {origin_url}")
+                    
+                    repos.append({
+                        'name': item,
+                        'path': full_path,
+                        'last_modified': last_modified,
+                        'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
+                        'origin_url': origin_url or ""
+                    })
+                    app.logger.info(f"Added {item} to repositories list.")
+                else:
+                    app.logger.info(f"Skipping {item} at {full_path} as it's not identified as a valid git repo.")
+            except Exception as e:
+                app.logger.warning(f"Error processing repository {item}: {e}")
+                continue
         
         repos.sort(key=lambda x: x['last_modified'], reverse=True)
-        
-    except Exception as e:
-        app.logger.error(f"Error listing repositories: {e}", exc_info=True)
     
     app.logger.info(f"Final list of repository names to be returned: {[repo['name'] for repo in repos]}")
     return repos
 
+@with_error_handling("find_todos", "file_processor")
 def find_todos(repo_path):
-    """Find TODO comments in all text files in the repository.
+    """Find TODO comments in all text files in the repository."""
+    if not repo_path:
+        raise ValidationError("Repository path cannot be empty", field="repo_path")
     
-    This is now a generator function that yields TodoItem objects as they're found,
-    allowing for streaming results as the scan progresses.
-    """
+    if not os.path.isdir(repo_path):
+        raise FileSystemError(f"Repository path does not exist: {repo_path}", path=repo_path)
     
-    for root, _, files in os.walk(repo_path):
-        for file in files:
-            if file.startswith('.git'):
-                continue
-                
-            file_path = os.path.join(root, file)
-            rel_path = os.path.relpath(file_path, repo_path)
-            
-            # Skip files that are ignored by git
-            if is_git_ignored(repo_path, file_path):
-                app.logger.debug(f"Skipping git-ignored file: {rel_path}")
-                continue
-                
-            if not is_text_file(file_path):
-                continue
-                
-            app.logger.info(f"Processing file: {rel_path}")
-            
-            try:
-                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                    lines = f.readlines()
+    # Expanded pattern to match more comment styles and annotation types
+    # This includes TODO, FIXME, BUG, and NOTE in various comment formats
+    todo_pattern = re.compile(
+        r'(?:#+|//|/\*|<!--|;)\s*(?:TODO|FIXME|BUG|NOTE)(?:\s*:|(?:\s+))', 
+        re.IGNORECASE
+    )
+    
+    with error_context("find_todos", "file_processor", repo_path=repo_path):
+        for root, _, files in os.walk(repo_path):
+            for file in files:
+                if file.startswith('.git'):
+                    continue
                     
-                for i, line in enumerate(lines):
-                    # Look for common TODO patterns
-                    if re.search(r'#+\s*TODO|//\s*TODO|TODO:', line, re.IGNORECASE):
-                        todo_text = line.strip()
-                        next_line_text = lines[i+1].strip() if i+1 < len(lines) else None
-                        # Yield the TodoItem as it's found instead of accumulating them
-                        yield TodoItem(rel_path, i+1, todo_text, next_line_text)
-            except Exception as e:
-                app.logger.error(f"Error processing file {rel_path}: {e}")
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, repo_path)
+                
+                try:
+                    # Skip files that are ignored by git
+                    if is_git_ignored(repo_path, file_path):
+                        app.logger.debug(f"Skipping git-ignored file: {rel_path}")
+                        continue
+                        
+                    if not is_text_file(file_path):
+                        continue
+                        
+                    app.logger.info(f"Processing file: {rel_path}")
+                    
+                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                        lines = f.readlines()
+                        
+                    for i, line in enumerate(lines):
+                        # Look for expanded TODO patterns
+                        if todo_pattern.search(line):
+                            todo_text = line.strip()
+                            next_line_text = lines[i+1].strip() if i+1 < len(lines) else None
+                            # Yield the TodoItem as it's found instead of accumulating them
+                            yield TodoItem(rel_path, i+1, todo_text, next_line_text)
+                            
+                except ProcessingError:
+                    # Re-raise processing errors
+                    raise
+                except Exception as e:
+                    # Convert other exceptions to ProcessingError
+                    raise ProcessingError(f"Error processing file {rel_path}", original_exception=e)
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -381,8 +521,13 @@ def pull_repo(repo_name):
 
 @app.template_filter('highlight_todo')
 def highlight_todo(text):
-    """Highlight the TODO keyword in the text."""
-    return re.sub(r'(#+\s*TODO|//\s*TODO|TODO:)', r'<span class="highlight">\1</span>', text, flags=re.IGNORECASE)
+    """Highlight the TODO, FIXME, BUG, and NOTE keywords in the text."""
+    return re.sub(
+        r'(#+\s*(TODO|FIXME|BUG|NOTE)|//\s*(TODO|FIXME|BUG|NOTE)|/\*\s*(TODO|FIXME|BUG|NOTE)|<!--\s*(TODO|FIXME|BUG|NOTE)|;\s*(TODO|FIXME|BUG|NOTE)|(TODO|FIXME|BUG|NOTE):)',
+        r'<span class="highlight">\1</span>',
+        text, 
+        flags=re.IGNORECASE
+    )
 
 # ----- MPCO API Endpoints -----
 
@@ -671,7 +816,9 @@ def api_pull_repository():
             "last_modified": datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
             "scan_url": f"{get_full_origin_url()}/scan/{repo_name}"
         })
-    
+    else:
+        raise FileSystemError(f"Repository path does not exist after pull: {repo_path}", path=repo_path)
+
     return result
 
 if __name__ == '__main__':
