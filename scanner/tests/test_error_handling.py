@@ -10,7 +10,7 @@ from contextlib import contextmanager
 import tempfile
 import os
 
-from error_handling import (
+from scanner.error_handling import (
     ErrorSeverity, ErrorCategory, ErrorContext, ScannerError,
     ValidationError, NetworkError, GitOperationError, FileSystemError,
     ProcessingError, SystemError, ErrorHandler, RetryConfig,

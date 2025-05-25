@@ -3,13 +3,28 @@
 <!-- All content below this line has been revised for clarity, conciseness, vigorous language, tagging, and DRY principles. Uncompleted items from the original '''Completed''' section have been moved to '''Medium Priority'''. -->
 
 ## High Priority
+- [x] Fix the MAJOR issue with existing repositories not working. #core #bug
 - [x] Implement a robust error handling mechanism for the scanner. #core #error-handling
 - [x] Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE). #core #parser
-- [ ] DRY Makefile targets. (Allow passing args to targets?)#development #testing
-- [ ] Enable streaming of API results for improved responsiveness. #api #performance
+- [x] DRY Makefile targets. (Allow passing args to targets?) #development #testing
+- [x] Enable streaming of API results for improved responsiveness. #api #performance
+- [ ] Migrate Python files and dependencies to subdirectory structure. #development #structure
+    - [x] Create scanner subdirectory. #development #structure
+    - [x] Implement __init__.py for the subdirectory. #development #structure
+    - [x] Move error_handling.py to scanner subdirectory. #development #structure
+    - [x] Update imports in app.py. #development #structure
+    - [x] Move remaining Python files (test files) to scanner/tests. #development #structure
+    - [x] Move Pipfile and Pipfile.lock to scanner subdirectory. #development #structure
+    - [ ] Test and update the Makefile accordingly. #development #testing
+
+
 
 ## Medium Priority
-- [ ] Add detection for language-specific comment syntax. #core #parser #enhancement
+- [ ] Add detection of TODO.md and TODO.txt files. #feature #core (no capitalization needed)
+- [ ] Implement a user-friendly web interface for displaying TODO files. #ux #frontend
+- [ ] Include the option to look at the TODO files with our MCPo Api. #api #integration
+- [ ] Add summary from repo readme files to the web interface. (optioanlly the top 20lines) #ux #frontend
+- [ ] Implement a search feature for TODO comments. #search #ux
 - [ ] Develop a dashboard to visualize TODO metrics across projects. #reporting #ux
 - [ ] Offer report downloads in multiple formats (CSV, JSON, PDF). #reporting #feature
 - [ ] Integrate with GitHub webhooks for automated repository scanning. #integration #automation

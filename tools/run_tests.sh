@@ -80,6 +80,9 @@ fi
 # Navigate to the project root directory (assuming script is in tools/)
 cd "$(dirname "$0")/.." || { echo "Failed to navigate to project root"; exit 1; }
 
+# The new test files directory
+TEST_DIR="scanner/tests"
+
 echo -e "${BLUE}======================================================${NC}"
 echo -e "${BLUE}         Repository Scanner Test Runner               ${NC}"
 echo -e "${BLUE}======================================================${NC}"
@@ -92,11 +95,14 @@ if ! command -v pipenv &> /dev/null; then
     exit 1
 fi
 
+# Ensure we're using the Pipfile in the scanner directory
+export PIPENV_PIPFILE=scanner/Pipfile
+
 # Run tests with appropriate options
 if [[ "$RUN_COVERAGE" == "true" ]]; then
     echo -e "${YELLOW}Installing coverage dependencies...${NC}"
     pipenv install pytest-cov --dev
-    COVERAGE_ARGS="--cov=. --cov-report=term --cov-report=html"
+    COVERAGE_ARGS="--cov=scanner --cov-report=term --cov-report=html"
 else
     COVERAGE_ARGS=""
 fi
@@ -129,15 +135,15 @@ run_test() {
 
 # Run tests based on flags
 if [[ "$RUN_ALL" == "true" || "$RUN_ERROR" == "true" ]]; then
-    # Run error handling tests
-    run_test "test_error_handling.py" "Error handling tests"
+    # Run error handling tests (now in scanner/tests directory)
+    run_test "${TEST_DIR}/test_error_handling.py" "Error handling tests"
 fi
 
 if [[ "$RUN_ALL" == "true" || "$RUN_UNIT" == "true" ]]; then
-    # Check if any unit tests exist
-    if ls test_*.py 2>/dev/null | grep -v "test_error_handling.py" > /dev/null; then
+    # Check if any unit tests exist in scanner/tests
+    if ls ${TEST_DIR}/test_*.py 2>/dev/null | grep -v "test_error_handling.py" > /dev/null; then
         # Run all other unit tests
-        for test_file in $(find . -name "test_*.py" -not -name "test_error_handling.py"); do
+        for test_file in $(find ${TEST_DIR} -name "test_*.py" -not -name "test_error_handling.py"); do
             run_test "$test_file" "Unit tests for $(basename "$test_file" .py)"
         done
     else
