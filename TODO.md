@@ -2,6 +2,41 @@
 
 <!-- All content below this line has been revised for clarity, conciseness, vigorous language, tagging, and DRY principles. Uncompleted items from the original '''Completed''' section have been moved to '''Medium Priority'''. -->
 
+## High Priority Blockers
+
+- [ ] **Fix server hanging issue**: Repo_Scanner server becomes unresponsive after completing scans #critical #backend
+   - [ ] Investigate potential resource leaks (file descriptors, database connections)
+   - [ ] Add proper cleanup procedures in scan completion handlers
+   - [ ] Implement timeout mechanism for long-running operations
+   - [ ] Add health check endpoint to monitor server status
+
+## Documentation & Planning TODOs
+- [ ] **Create comprehensive API documentation**: Standalone API reference guide #documentation #api
+  - [ ] Document all endpoints with request/response examples
+  - [ ] Add error code reference
+  - [ ] Include authentication plans
+  - [ ] Test API documentation completeness
+- [ ] **Add architecture documentation**: System design and component overview #documentation #architecture
+  - [ ] Create component diagram
+  - [ ] Document data flow
+  - [ ] Document deployment options
+  - [ ] Verify architecture docs match current implementation
+- [ ] **Create contributor guide**: Detailed guide for new contributors #documentation #community
+  - [ ] Define code style guide
+  - [ ] Document testing requirements
+  - [ ] Define pull request process
+  - [ ] Test contributor onboarding process
+- [ ] **Enhance code documentation**: Add comprehensive docstrings #documentation #code
+  - [ ] Add docstrings to TodoItem class
+  - [ ] Document API endpoints with proper docstrings
+  - [ ] Add inline comments for complex logic
+  - [ ] Verify documentation generation works
+- [ ] **Create development workflow documentation**: Detailed workflow guide #documentation #development
+  - [ ] Document setup process
+  - [ ] Document feature development cycle
+  - [ ] Document testing procedures
+  - [ ] Test workflow documentation with new developer
+
 ## High Priority
 - [x] Fix the MAJOR issue with existing repositories not working. #core #bug
 - [x] Implement a robust error handling mechanism for the scanner. #core #error-handling
