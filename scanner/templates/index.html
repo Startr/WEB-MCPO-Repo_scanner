@@ -1,7 +1,7 @@
 <!-- templates/index.html -->
 {% extends "base.html" %}
 
-{% block title %}Git TODO Scanner{% endblock %}
+{% block title %}Todoscope{% endblock %}
 
 {% block content %}
     <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
@@ -11,30 +11,55 @@
             <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer; --mr:10px">Scan Repository</button>
             <a href="#" id="stream-link" style="--c:#0066cc; --td:none">Use streaming scan (see results in real-time)</a>
         </div>
+        <label style="--d:flex; --ai:center; --mt:10px; --c:#555; --size:0.9em">
+            <input type="checkbox" name="shallow" style="--mr:6px">
+            Shallow clone (faster, fetches only latest commit)
+        </label>
     </form>
     
+    <details style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
+        <summary style="--cur:pointer; --weight:bold">Add Local Repository</summary>
+        <form method="POST" action="{{ url_for('add_local_repo') }}" style="--mt:10px">
+            <input type="text" name="local_path" placeholder="/path/to/your/repo" required style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
+            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)" style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
+            <button type="submit" style="--bgc:#007bff; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">Register</button>
+            <span style="--c:#888; --size:0.85em; --ml:10px">Path stays on this machine — never sent to the browser.</span>
+        </form>
+    </details>
+
     {% if local_repos %}
     <div style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
-        <h2>Local Repositories</h2>
-        <p>Previously scanned repositories available locally:</p>
+        <h2>Repositories</h2>
+        <p>Registered local and previously cloned repositories:</p>
         <div style="--maxh:400px; --ofy:auto; --bb:1px solid #eee;">
             <table style="--w:100%; border-collapse:collapse; --mb: 1.6rem">
                 <thead>
                     <tr>
                         <th style="--ta:left; --p:8px; --bb:2px solid #ddd">Repository</th>
                         <th style="--ta:left; --p:8px; --bb:2px solid #ddd">Last Updated</th>
-                        <th style="--ta:center; --p:8px; --bb:2px solid #ddd">Actions</th>
+                        <th style="--ta:center; --p:8px; --bb:2px solid #ddd"></th>
+                        <th style="--ta:center; --p:8px; --bb:2px solid #ddd"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for repo in local_repos %}
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #ddd">{{ repo.name }}</td>
+                        <td style="--p:8px; --bb:1px solid #ddd">
+                            {{ repo.name }}
+                            {% if repo.source == 'local' %}
+                            <span style="--bgc:#e8f5e9; --c:#2e7d32; --p:2px 6px; --radius:3px; --size:0.75em; --ml:6px">local</span>
+                            {% endif %}
+                        </td>
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.last_modified_str }}</td>
                         <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
-                            <a href="{{ url_for('scan_repo', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:5px">View TODOs</a>
-                            <a href="{{ url_for('scan_stream', repo_url=repo.name) }}" style="--bgc:#2196F3; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:5px">Stream</a>
+                            <a href="{{ url_for('scan_stream', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">View TODOs</a>
+                        </td>
+                        <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
+                            {% if repo.source == 'local' %}
+                            <a href="{{ url_for('remove_local_repo', repo_name=repo.name) }}" style="--bgc:#dc3545; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block" onclick="return confirm('Remove this repo from the list?')">Remove</a>
+                            {% else %}
                             <a href="{{ url_for('pull_repo', repo_name=repo.name) }}" style="--bgc:#007bff; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">Pull Latest</a>
+                            {% endif %}
                         </td>
                     </tr>
                     {% endfor %}

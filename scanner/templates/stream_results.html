@@ -28,13 +28,17 @@
         100% { transform: rotate(360deg); }
     }
     .markdown-content {
-        white-space: pre-wrap;
-        font-family: monospace;
         padding: 15px;
         background-color: #f9f9f9;
         border: 1px solid #ddd;
         border-radius: 3px;
         overflow-x: auto;
+        overflow-y: auto;
+        max-height: 70vh;
+    }
+    /* Hide list bullet when a checkbox serves as the marker */
+    .markdown-content li:has(> input[type="checkbox"]) {
+        list-style: none;
     }
     .section-title {
         border-bottom: 1px solid #ddd;
@@ -70,6 +74,11 @@
         <p>No TODO comments found in this repository.</p>
     </div>
     
+    <div id="rescan-bar" style="display:none; --mt:20px; --p:12px; --radius:5px; --bgc:#f0f8ff; --b:1px solid #007bff; --ai:center; --jc:space-between">
+        <span id="rescan-msg">Scan complete.</span>
+        <button id="rescan-btn" onclick="location.reload()" style="--bgc:#4CAF50; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">Rescan</button>
+    </div>
+
     <div class="back-link" style="--mt:20px">
         <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">← Scan another repository</a>
     </div>
@@ -140,7 +149,7 @@
                 if (mdFile.content) {
                     const content = document.createElement('div');
                     content.className = 'markdown-content';
-                    content.textContent = mdFile.content;
+                    content.innerHTML = marked.parse(mdFile.content);
                     mdFileEl.appendChild(content);
                 } else {
                     const noContent = document.createElement('div');
@@ -159,28 +168,41 @@
             }
             
             // Connect to the event stream
-            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url) }}");
+            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url, shallow=shallow) }}");
             
             // Handle events from the server
             evtSource.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 
                 switch(data.type) {
+                    case 'status':
+                        // Update the spinner text with server progress messages
+                        loadingEl.querySelector('span').textContent = data.message;
+                        break;
+
                     case 'init':
                         // Initialize the page with repository information
                         repoNameEl.textContent = `Repository: ${data.repo_name}`;
                         repoUrlEl.textContent = `URL: ${data.repo_url}`;
+                        // Single source of truth: guide users to the repo for contributions
+                        const guidance = document.createElement('p');
+                        guidance.style = '--c:#555; --mt:10px; --size:0.9em';
+                        guidance.innerHTML = 'This is a read-only scan. To file issues, add TODOs, or contribute fixes, work directly on the repository:<br>'
+                            + '<a href="' + data.repo_url + '" target="_blank" style="--c:#0066cc">' + data.repo_url + '</a>';
+                        document.querySelector('.summary').appendChild(guidance);
                         break;
                         
                     case 'todo':
-                        // Add the new TODO to the page
+                        // Hide spinner once results start flowing — the count is the progress indicator now
+                        loadingEl.style.display = 'none';
                         const todoEl = createTodoElement(data.todo);
                         todosContainer.appendChild(todoEl);
                         todoCountEl.textContent = `Found ${data.count} TODO items so far...`;
                         break;
                         
                     case 'todo_md_files':
-                        // Show the TODO.md files section
+                        // Show TODO.md files, update spinner to reflect progress
+                        loadingEl.querySelector('span').textContent = 'Scanning code for inline TODOs...';
                         todoMdFilesContainer.style.display = 'block';
                         
                         // Add TODO.md files to the page
@@ -203,8 +225,10 @@
                             noResultsEl.style.display = 'block';
                         }
                         todoCountEl.textContent = `Found ${data.count} TODO items`;
-                        // Close the event source
                         evtSource.close();
+                        // Show rescan bar and start watching for repo changes
+                        document.getElementById('rescan-bar').style.display = 'flex';
+                        if (data.repo_name) { watchForChanges(data.repo_name, data.source); }
                         break;
                         
                     case 'error':
@@ -223,5 +247,50 @@
                 evtSource.close();
             };
         });
+
+        // Poll the repo fingerprint — live-refresh TODO.md on change,
+        // prompt full rescan only when commits change
+        function watchForChanges(repoName, source) {
+            let baseline = null;
+            const rescanMsg = document.getElementById('rescan-msg');
+            const rescanBtn = document.getElementById('rescan-btn');
+            const interval = setInterval(async () => {
+                try {
+                    const resp = await fetch(`/api/repo_fingerprint/${encodeURIComponent(repoName)}`);
+                    const data = await resp.json();
+                    if (baseline === null) {
+                        baseline = data;
+                        return;
+                    }
+                    const headChanged = data.fingerprint !== baseline.fingerprint;
+                    const todoChanged = data.todo_hash !== baseline.todo_hash;
+
+                    if (todoChanged && !headChanged) {
+                        // Only TODO.md changed — live refresh just that section
+                        baseline = data;
+                        const todoResp = await fetch(`/api/todo_files/${encodeURIComponent(repoName)}`);
+                        const todoData = await todoResp.json();
+                        const container = document.getElementById('todo-md-files');
+                        if (container && todoData.files && todoData.files.length > 0) {
+                            container.innerHTML = '';
+                            const countText = document.createElement('p');
+                            countText.textContent = `The repository contains ${todoData.files.length} TODO.md file(s):`;
+                            container.appendChild(countText);
+                            todoData.files.forEach(mdFile => {
+                                const el = createTodoMarkdownElement(mdFile);
+                                container.appendChild(el);
+                            });
+                            document.getElementById('todo-md-files-container').style.display = 'block';
+                        }
+                    } else if (headChanged) {
+                        // Commit changed — prompt full rescan
+                        rescanMsg.textContent = 'New changes detected in repository.';
+                        rescanBtn.style.backgroundColor = '#ff9800';
+                        rescanBtn.textContent = 'Rescan now';
+                        clearInterval(interval);
+                    }
+                } catch (e) { /* Silently ignore poll errors */ }
+            }, 3000);  // 3s for snappy local feedback
+        }
     </script>
 {% endblock %}

@@ -8,6 +8,7 @@ import logging
 import json
 from datetime import datetime
 from functools import wraps
+import hashlib
 
 # Import our robust error handling system - now import directly since we're in the scanner package
 from .error_handling import (
@@ -26,6 +27,38 @@ app.error_handler = ErrorHandler(app.logger)
 
 # Configure base repository path
 BASE_REPO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repositories")
+
+# Local repos config — maps safe display names to filesystem paths (never exposed to web)
+LOCAL_REPOS_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "local_repos.json")
+
+def load_local_repos():
+    """Load the name->path mapping for registered local repositories."""
+    if os.path.exists(LOCAL_REPOS_CONFIG):
+        with open(LOCAL_REPOS_CONFIG, 'r') as f:
+            return json.load(f)
+    return {}
+
+def save_local_repos(repos):
+    """Persist the name->path mapping."""
+    with open(LOCAL_REPOS_CONFIG, 'w') as f:
+        json.dump(repos, f, indent=2)
+
+def resolve_repo_path(name):
+    """Resolve a repo display name to its filesystem path.
+    Checks registered local repos first, then BASE_REPO_PATH.
+    Returns None if not found.
+    """
+    # Check registered local repos
+    local_repos = load_local_repos()
+    if name in local_repos:
+        path = local_repos[name]
+        if os.path.isdir(path):
+            return path
+    # Check cloned repos in BASE_REPO_PATH
+    cloned_path = os.path.join(BASE_REPO_PATH, name)
+    if os.path.isdir(cloned_path):
+        return cloned_path
+    return None
 
 # Register recovery strategies for different error types
 def git_recovery_strategy(error: ScannerError):
@@ -226,19 +259,29 @@ def get_full_origin_url():
     return f"{proto}://{host}"
 
 @with_error_handling("clone_repository", "repository_manager", RetryConfig(max_attempts=2))
-def clone_repository(repo_url):
-    """Clone the repository if it doesn't exist or return the path to an existing local repository."""
+def clone_repository(repo_url, shallow=False):
+    """Clone the repository if it doesn't exist or return the path to an existing local repository.
+    Set shallow=True for --depth 1 clones (faster, less disk, sufficient for scanning).
+    """
     if not repo_url:
         raise ValidationError("Repository URL cannot be empty", field="repo_url")
-    
-    # First check if this is a name of an existing local repository
-    local_repo_path = os.path.join(BASE_REPO_PATH, repo_url)
-    if os.path.isdir(local_repo_path):
-        app.logger.info(f"Using existing local repository: {local_repo_path}")
-        if is_valid_git_repo(local_repo_path):
-            return local_repo_path
+
+    # Check registered local repos first (name->path mapping, path never exposed)
+    resolved = resolve_repo_path(repo_url)
+    if resolved:
+        app.logger.info(f"Using resolved repository: {repo_url}")
+        if is_valid_git_repo(resolved):
+            # Auto-pull if the repo is stale (last modified > 5 minutes ago)
+            age_seconds = datetime.now().timestamp() - os.path.getmtime(resolved)
+            if age_seconds > 300:
+                app.logger.info(f"Repo stale ({int(age_seconds)}s old), auto-pulling: {repo_url}")
+                try:
+                    pull_repository(resolved)
+                except Exception as e:
+                    app.logger.warning(f"Auto-pull failed, using cached repo: {e}")
+            return resolved
         else:
-            raise GitOperationError(f"Directory exists but is not a valid git repository: {local_repo_path}", 
+            raise GitOperationError(f"Not a valid git repository: {repo_url}",
                                    git_command="git check")
     
     # If not a local repository, validate it's a proper git URL
@@ -252,14 +295,28 @@ def clone_repository(repo_url):
     
     repo_path = os.path.join(BASE_REPO_PATH, repo_name)
     
-    if not os.path.isdir(repo_path):
+    if os.path.isdir(repo_path):
+        # Repo exists from a previous clone — auto-pull if stale (> 5 min)
+        age_seconds = datetime.now().timestamp() - os.path.getmtime(repo_path)
+        if age_seconds > 300:
+            app.logger.info(f"Repo stale ({int(age_seconds)}s old), auto-pulling: {repo_path}")
+            try:
+                pull_repository(repo_path)
+            except Exception as e:
+                app.logger.warning(f"Auto-pull failed, using cached repo: {e}")
+    else:
         with error_context("clone_repository", "git_operations", repo_url=repo_url):
             app.logger.info(f"Cloning repository: {repo_url}")
             ensure_dir_exists(os.path.dirname(repo_path))
             
             try:
+                # --depth 1 fetches only the latest commit (faster, less disk)
+                clone_cmd = ['git', 'clone']
+                if shallow:
+                    clone_cmd += ['--depth', '1']
+                clone_cmd += [repo_url, repo_path]
                 result = subprocess.run(
-                    ['git', 'clone', repo_url, repo_path], 
+                    clone_cmd,
                     check=True, capture_output=True, text=True, timeout=120
                 )
             except subprocess.CalledProcessError as e:
@@ -332,56 +389,57 @@ def safe_list_local_repositories():
 
 @with_error_handling("list_repositories", "repository_manager")
 def list_local_repositories():
-    """List all local repositories that have been cloned."""
+    """List all repositories: registered local repos + cloned repos.
+    Never exposes filesystem paths — only names and origin URLs.
+    """
     repos = []
-    
+    seen_names = set()
+
+    # 1. Registered local repos (name->path mapping, paths stay server-side)
+    for name, path in load_local_repos().items():
+        try:
+            if os.path.isdir(path) and is_valid_git_repo(path):
+                last_modified = os.path.getmtime(path)
+                origin_url = get_repo_origin_url(path)
+                repos.append({
+                    'name': name,
+                    'last_modified': last_modified,
+                    'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
+                    'origin_url': origin_url or "",
+                    'source': 'local'
+                })
+                seen_names.add(name)
+        except Exception as e:
+            app.logger.warning(f"Error listing registered repo {name}: {e}")
+
+    # 2. Cloned repos in BASE_REPO_PATH
     with error_context("list_repositories", "repository_manager", base_path=BASE_REPO_PATH):
-        app.logger.info(f"Listing local repositories from: {BASE_REPO_PATH}")
-        
         ensure_dir_exists(BASE_REPO_PATH)
-        
         try:
             items_in_base_path = os.listdir(BASE_REPO_PATH)
         except OSError as e:
-            raise FileSystemError(f"Cannot access repository directory {BASE_REPO_PATH}", 
+            raise FileSystemError(f"Cannot access repository directory {BASE_REPO_PATH}",
                                  path=BASE_REPO_PATH, original_exception=e)
-        
-        app.logger.info(f"Items found in BASE_REPO_PATH: {items_in_base_path}")
 
         for item in items_in_base_path:
+            if item in seen_names:
+                continue  # Registered local repo takes precedence
             full_path = os.path.join(BASE_REPO_PATH, item)
-            app.logger.info(f"Processing item: {item} at full_path: {full_path}")
-
             try:
                 if is_valid_git_repo(full_path):
-                    app.logger.info(f"Item {item} at {full_path} is identified as a valid git repo.")
-                    
-                    try:
-                        last_modified = os.path.getmtime(full_path)
-                        origin_url = get_repo_origin_url(full_path)
-                    except Exception as e:
-                        app.logger.warning(f"Error getting metadata for {item}: {e}")
-                        continue
-                    
-                    app.logger.info(f"Origin URL for {item}: {origin_url}")
-                    
+                    last_modified = os.path.getmtime(full_path)
+                    origin_url = get_repo_origin_url(full_path)
                     repos.append({
                         'name': item,
-                        'path': full_path,
                         'last_modified': last_modified,
                         'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
-                        'origin_url': origin_url or ""
+                        'origin_url': origin_url or "",
+                        'source': 'cloned'
                     })
-                    app.logger.info(f"Added {item} to repositories list.")
-                else:
-                    app.logger.info(f"Skipping {item} at {full_path} as it's not identified as a valid git repo.")
             except Exception as e:
                 app.logger.warning(f"Error processing repository {item}: {e}")
-                continue
-        
-        repos.sort(key=lambda x: x['last_modified'], reverse=True)
-    
-    app.logger.info(f"Final list of repository names to be returned: {[repo['name'] for repo in repos]}")
+
+    repos.sort(key=lambda x: x['last_modified'], reverse=True)
     return repos
 
 @with_error_handling("find_todos", "file_processor")
@@ -400,10 +458,17 @@ def find_todos(repo_path):
         re.IGNORECASE
     )
     
+    # Directories to skip entirely (version control, IDE/editor state, dependency caches)
+    SKIP_DIRS = {'.git', '.obsidian', 'node_modules', '__pycache__', '.venv', 'venv'}
+    # Files handled separately by find_todo_files() — don't scan for inline comments
+    SKIP_FILES = {'todo.md', 'todo.txt'}
+
     with error_context("find_todos", "file_processor", repo_path=repo_path):
-        for root, _, files in os.walk(repo_path):
+        for root, dirs, files in os.walk(repo_path):
+            # Prune noisy directories so os.walk never descends into them
+            dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
             for file in files:
-                if file.startswith('.git'):
+                if file.lower() in SKIP_FILES:
                     continue
                     
                 file_path = os.path.join(root, file)
@@ -418,7 +483,7 @@ def find_todos(repo_path):
                     if not is_text_file(file_path):
                         continue
                         
-                    app.logger.info(f"Processing file: {rel_path}")
+                    app.logger.debug(f"Processing file: {rel_path}")
                     
                     with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                         lines = f.readlines()
@@ -438,36 +503,106 @@ def find_todos(repo_path):
                     # Convert other exceptions to ProcessingError
                     raise ProcessingError(f"Error processing file {rel_path}", original_exception=e)
 
+@with_error_handling("find_todo_files", "file_processor")
+def find_todo_files(repo_path):
+    """Find standalone TODO.md/TODO.txt files in the repository.
+    Returns list of dicts: [{'file_path': str, 'content': str|None}, ...]
+    Distinct from find_todos() which scans inline code comments.
+    """
+    if not repo_path or not os.path.isdir(repo_path):
+        return []
+    TODO_FILENAMES = {'todo.md', 'todo.txt'}
+    results = []
+    with error_context("find_todo_files", "file_processor", repo_path=repo_path):
+        for root, dirs, files in os.walk(repo_path):
+            # Prune .git directories from traversal
+            dirs[:] = [d for d in dirs if not d.startswith('.git')]
+            for filename in files:
+                if filename.lower() in TODO_FILENAMES:
+                    file_path = os.path.join(root, filename)
+                    rel_path = os.path.relpath(file_path, repo_path)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            content = f.read()
+                        results.append({'file_path': rel_path, 'content': content})
+                    except Exception as e:
+                        app.logger.warning(f"Could not read TODO file {rel_path}: {e}")
+                        results.append({'file_path': rel_path, 'content': None})
+    return results
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         repo_url = request.form.get('repo_url')
         if not repo_url:
             return render_template('index.html', error="Repository URL is required")
-        
-        return redirect(url_for('scan_repo', repo_url=repo_url))
+        shallow = '1' if request.form.get('shallow') == 'on' else ''
+        return redirect(url_for('scan_repo', repo_url=repo_url, shallow=shallow))
     
     # Get list of local repositories to display
     local_repos = list_local_repositories()
     
     return render_template('index.html', local_repos=local_repos)
 
+@app.route('/add_local', methods=['POST'])
+def add_local_repo():
+    """Register a local repository path. The path is stored server-side only
+    and never exposed to the web — only the display name is visible.
+    """
+    local_path = request.form.get('local_path', '').strip()
+    display_name = request.form.get('display_name', '').strip()
+
+    if not local_path:
+        return render_template('index.html', error="Path is required",
+                             local_repos=list_local_repositories())
+
+    if not os.path.isdir(local_path):
+        return render_template('index.html', error="Path does not exist on this machine",
+                             local_repos=list_local_repositories())
+
+    if not is_valid_git_repo(local_path):
+        return render_template('index.html', error="Path is not a git repository",
+                             local_repos=list_local_repositories())
+
+    # Default display name to directory basename
+    if not display_name:
+        display_name = os.path.basename(os.path.normpath(local_path))
+
+    repos = load_local_repos()
+    repos[display_name] = os.path.abspath(local_path)
+    save_local_repos(repos)
+    app.logger.info(f"Registered local repo: {display_name}")
+
+    return redirect(url_for('index'))
+
+@app.route('/remove_local/<path:repo_name>')
+def remove_local_repo(repo_name):
+    """Unregister a local repository. Only removes the mapping — never deletes files."""
+    repos = load_local_repos()
+    repos.pop(repo_name, None)
+    save_local_repos(repos)
+    app.logger.info(f"Unregistered local repo: {repo_name}")
+    return redirect(url_for('index'))
+
 @app.route('/scan/<path:repo_url>')
 def scan_repo(repo_url):
     """Scan a repository for TODOs."""
     try:
-        repo_path = clone_repository(repo_url)
+        shallow = request.args.get('shallow') == '1'
+        repo_path = clone_repository(repo_url, shallow=shallow)
         todos = list(find_todos(repo_path))
+        todo_md_files = find_todo_files(repo_path)
         repo_name = os.path.basename(repo_path)
-        
+
         # Get the repository's origin URL
         origin_url = get_repo_origin_url(repo_path) or repo_url
-        
-        return render_template('results.html', 
+
+        return render_template('results.html',
                               repo_url=origin_url,
                               repo_name=repo_name,
                               todos=todos,
-                              count=len(todos))
+                              count=len(todos),
+                              todo_md_files=todo_md_files)
     
     except Exception as e:
         app.logger.error(f"Error scanning repository: {e}")
@@ -476,45 +611,120 @@ def scan_repo(repo_url):
 @app.route('/stream_data/<path:repo_url>')
 def stream_data(repo_url):
     """Stream the scan results for a repository."""
+    shallow = request.args.get('shallow') == '1'
     def generate():
         try:
-            repo_path = clone_repository(repo_url)
-            repo_name = os.path.basename(repo_path)
-            origin_url = get_repo_origin_url(repo_path) or repo_url
-            
-            # Send initial metadata about the repository
-            yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
-            
-            # Counter for todos
-            todo_count = 0
-            
+            # Flush padding — forces proxies (Cloudflare, nginx) to send the stream immediately
+            yield ": padding\n\n"
+
+            # Try to resolve an existing repo path BEFORE clone/pull so we can
+            # show TODO.md instantly while the heavier operations run after
+            existing_path = resolve_repo_path(repo_url)
+
+            if existing_path:
+                repo_name = os.path.basename(os.path.normpath(existing_path))
+                origin_url = get_repo_origin_url(existing_path) or repo_url
+
+                # Send repo metadata and TODO.md immediately — no waiting
+                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
+                todo_md_files = find_todo_files(existing_path)
+                if todo_md_files:
+                    yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
+
+                # Now pull/refresh in the background (user already sees TODO.md)
+                yield f"data: {json.dumps({'type': 'status', 'message': 'Updating repository...'})}\n\n"
+                repo_path = clone_repository(repo_url, shallow=shallow)
+            else:
+                # New repo — must clone first
+                yield f"data: {json.dumps({'type': 'status', 'message': 'Cloning repository...'})}\n\n"
+                repo_path = clone_repository(repo_url, shallow=shallow)
+                repo_name = os.path.basename(repo_path)
+                origin_url = get_repo_origin_url(repo_path) or repo_url
+
+                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
+                todo_md_files = find_todo_files(repo_path)
+                if todo_md_files:
+                    yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
+
+            yield f"data: {json.dumps({'type': 'status', 'message': 'Scanning code for inline TODOs...'})}\n\n"
+
             # Stream each TODO as it's found
+            todo_count = 0
             for todo in find_todos(repo_path):
                 todo_count += 1
                 yield f"data: {json.dumps({'type': 'todo', 'todo': todo.to_dict(), 'count': todo_count})}\n\n"
-            
-            # Send completion event
-            yield f"data: {json.dumps({'type': 'complete', 'count': todo_count})}\n\n"
-            
+
+            # Send completion event with repo_name for fingerprint polling
+            # Tell the client whether this is a local or cloned repo (for refresh behavior)
+            source = 'local' if repo_url in load_local_repos() else 'cloned'
+            yield f"data: {json.dumps({'type': 'complete', 'count': todo_count, 'repo_name': repo_name, 'source': source})}\n\n"
+
         except Exception as e:
             app.logger.error(f"Error streaming scan: {str(e)}")
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
     
-    return app.response_class(
-        generate(),
-        mimetype='text/event-stream'
+    # Use Response directly with headers that disable all buffering layers
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache, no-transform',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        }
     )
 
 @app.route('/scan_stream/<path:repo_url>')
 def scan_stream(repo_url):
     """Render the streaming scan page for a repository."""
-    return render_template('stream_results.html', repo_url=repo_url)
+    shallow = request.args.get('shallow', '')
+    return render_template('stream_results.html', repo_url=repo_url, shallow=shallow)
+
+@app.route('/api/repo_fingerprint/<path:repo_name>')
+def repo_fingerprint(repo_name):
+    """Return a lightweight fingerprint of the repo's current state.
+    Combines HEAD commit hash + working tree dirty flag so the client
+    can detect local edits or new commits without rescanning.
+    """
+    repo_path = resolve_repo_path(repo_name)
+    if not repo_path:
+        return jsonify({'fingerprint': '', 'dirty': False})
+    try:
+        result = subprocess.run(
+            ['git', '-C', repo_path, 'status', '--porcelain=v1'],
+            capture_output=True, text=True, timeout=5
+        )
+        dirty = len(result.stdout.strip()) > 0
+        head = subprocess.run(
+            ['git', '-C', repo_path, 'rev-parse', '--short', 'HEAD'],
+            capture_output=True, text=True, timeout=5
+        )
+        # Hash TODO.md content so the client can detect TODO-only changes
+        todo_files = find_todo_files(repo_path)
+        todo_content = ''.join(f.get('content', '') or '' for f in todo_files)
+        todo_hash = hashlib.md5(todo_content.encode()).hexdigest()[:8]
+        return jsonify({'fingerprint': head.stdout.strip(), 'dirty': dirty, 'todo_hash': todo_hash})
+    except Exception:
+        return jsonify({'fingerprint': '', 'dirty': False, 'todo_hash': ''})
+
+@app.route('/api/todo_files/<path:repo_name>')
+def api_todo_files(repo_name):
+    """Return just the TODO.md/TODO.txt content for live refresh.
+    Lightweight — no code scanning, just reads the TODO files.
+    """
+    repo_path = resolve_repo_path(repo_name)
+    if not repo_path:
+        return jsonify({'files': []})
+    return jsonify({'files': find_todo_files(repo_path)})
 
 @app.route('/pull/<path:repo_name>')
 def pull_repo(repo_name):
     """Pull the latest changes for a repository and redirect to the scan page."""
     try:
-        repo_path = os.path.join(BASE_REPO_PATH, repo_name)
+        repo_path = resolve_repo_path(repo_name)
+        if not repo_path:
+            return render_template('index.html', error=f"Repository not found: {repo_name}",
+                                 local_repos=list_local_repositories())
         
         # Pull the latest changes
         result = pull_repository(repo_path)
@@ -783,7 +993,7 @@ def get_api_schema():
                                         "properties": {
                                             "type": {"type": "string", "enum": ["todo"]},
                                             "status": {"type": "string", "enum": ["success"]},
-                                            "todo": {"$ref": "#/components/schemas/TodoItem"},
+                                            "todo": todo_item_schema,
                                             "count": {"type": "integer"}
                                         }
                                     },
@@ -816,14 +1026,6 @@ def get_api_schema():
         }
     }
     
-    # Add component schemas section for reusable schemas
-    spec["components"] = {
-        "schemas": {
-            "TodoItem": todo_item_schema,
-            "RepositoryItem": repo_item_schema
-        }
-    }
-    
     return spec
 
 @app.route('/api/mpco/openapi.json', methods=['GET'])
@@ -841,26 +1043,28 @@ def api_scan_repository():
         raise ValueError("Repository URL is required")
     
     repo_url = data['repo_url']
-    
+    shallow = data.get('shallow', False)
+
     try:
-        repo_path = clone_repository(repo_url)
+        repo_path = clone_repository(repo_url, shallow=shallow)
         todos = list(find_todos(repo_path))
         repo_name = os.path.basename(repo_path)
-        
+
         # Convert TodoItem objects to dictionaries
         todo_dicts = [todo.to_dict() for todo in todos]
-        
+
         # Get original repository URL from git config
         origin_url = get_repo_origin_url(repo_path) or repo_url
-        
+
         # Get full server origin URL for web links
         web_base_url = get_full_origin_url()
-        
+
         return {
             "repo_url": origin_url,
             "repo_name": repo_name,
             "todo_count": len(todos),
             "todos": todo_dicts,
+            "todo_md_files": find_todo_files(repo_path),
             "web_url": f"{web_base_url}/scan/{repo_url}"
         }
         
@@ -935,15 +1139,16 @@ def api_scan_repository_stream():
         }), 400
     
     repo_url = data['repo_url']
-    
+    shallow = data.get('shallow', False)
+
     def generate():
         try:
             # Clone the repository first
-            repo_path = clone_repository(repo_url)
+            repo_path = clone_repository(repo_url, shallow=shallow)
             repo_name = os.path.basename(repo_path)
             origin_url = get_repo_origin_url(repo_path) or repo_url
             web_base_url = get_full_origin_url()
-            
+
             # Send initial metadata
             yield json.dumps({
                 "type": "init",
@@ -952,10 +1157,19 @@ def api_scan_repository_stream():
                 "repo_url": origin_url,
                 "web_url": f"{web_base_url}/scan/{repo_url}"
             }) + "\n"
-            
+
+            # Send standalone TODO.md/TODO.txt files before code comments
+            todo_md_files = find_todo_files(repo_path)
+            if todo_md_files:
+                yield json.dumps({
+                    "type": "todo_md_files",
+                    "status": "success",
+                    "files": todo_md_files
+                }) + "\n"
+
             # Counter for todos
             todo_count = 0
-            
+
             # Stream each TODO as it's found
             for todo in find_todos(repo_path):
                 todo_count += 1

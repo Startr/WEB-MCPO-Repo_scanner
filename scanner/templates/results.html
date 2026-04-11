@@ -10,13 +10,17 @@
         font-weight: bold;
     }
     .markdown-content {
-        white-space: pre-wrap;
-        font-family: monospace;
         padding: 15px;
         background-color: #f9f9f9;
         border: 1px solid #ddd;
         border-radius: 3px;
         overflow-x: auto;
+        overflow-y: auto;
+        max-height: 70vh;
+    }
+    /* Hide list bullet when a checkbox serves as the marker */
+    .markdown-content li:has(> input[type="checkbox"]) {
+        list-style: none;
     }
     .section-title {
         border-bottom: 1px solid #ddd;
@@ -33,6 +37,11 @@
         <h2 style="--c:#333">Repository: {{ repo_name }}</h2>
         <p>URL: {{ repo_url }}</p>
         <p>Found {{ count }} TODO items</p>
+        <p style="--c:#555; --mt:10px; --size:0.9em">
+            This is a read-only scan. To file issues, add TODOs, or contribute fixes,
+            work directly on the repository:<br>
+            <a href="{{ repo_url }}" target="_blank" style="--c:#0066cc">{{ repo_url }}</a>
+        </p>
     </div>
     
     {% if todo_md_files %}
@@ -43,7 +52,7 @@
     <div class="todo-md-file" style="--bgc:#f0f8ff; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #007bff">
         <div class="file-path" style="--weight:bold; --c:#333; --mb:10px">{{ md_file.file_path }}</div>
         {% if md_file.content %}
-        <div class="markdown-content">{{ md_file.content }}</div>
+        <div class="markdown-content rendered-md" data-markdown="{{ md_file.content|e }}"></div>
         {% else %}
         <div style="--c:#999; --p:10px;">Could not read content of file.</div>
         {% endif %}
@@ -72,4 +81,10 @@
     <div class="back-link" style="--mt:20px">
         <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">← Scan another repository</a>
     </div>
+    <script>
+        // Render TODO.md content as styled markdown via marked.js
+        document.querySelectorAll('.rendered-md').forEach(el => {
+            el.innerHTML = marked.parse(el.dataset.markdown);
+        });
+    </script>
 {% endblock %}
