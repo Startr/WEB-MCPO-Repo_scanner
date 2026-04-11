@@ -125,6 +125,7 @@ venv.bak/
 # Project specific - repository clones and local path config
 scanner/repositories/*
 scanner/local_repos.json
+scanner/access_keys.csv
 
 !</function_results>
 

@@ -1,0 +1,48 @@
+<!-- templates/login.html -->
+{% extends "base.html" %}
+
+{% block title %}Sign In — Todoscope{% endblock %}
+
+{% block content %}
+    <div style="--maxw:400px; --m:60px auto; --bgc:#f9f9f9; --p:30px; --radius:8px; --b:1px solid #ddd">
+        <h2 style="--mt:0; --c:#333">Enter access key</h2>
+
+        {% if error %}
+        <p style="--c:#c0392b; --bgc:#fdecea; --p:10px; --radius:4px; --mb:15px">{{ error }}</p>
+        {% endif %}
+
+        <form method="POST">
+            <input type="text" name="label" id="login-label" placeholder="Label (e.g. my-laptop)"
+                   autocomplete="username"
+                   style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
+            <span style="position:relative; --d:flex; --ai:center; --mb:15px">
+                <input type="password" name="key" id="login-key" placeholder="Your access key" autofocus required
+                       autocomplete="current-password"
+                       style="--w:100%; --p:10px; --pr:40px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
+                <button type="button" onclick="toggleVis('login-key','login-eye')"
+                        style="position:absolute; right:10px; background:none; border:none; cursor:pointer; --size:1.1em; --c:#888" title="Show/hide">
+                    <span id="login-eye">👁</span>
+                </button>
+            </span>
+            <button type="submit"
+                    style="--bgc:#4CAF50; --c:white; --p:10px 20px; --b:none; --radius:4px; --cur:pointer; --w:100%">
+                Sign in
+            </button>
+        </form>
+        <script>
+            // Default to hostname only if the password manager hasn't already filled it in
+            const _lbl = document.getElementById('login-label');
+            if (!_lbl.value) _lbl.value = location.hostname || 'todoscope';
+            function toggleVis(fieldId, eyeId) {
+                const f = document.getElementById(fieldId);
+                const show = f.type === 'password';
+                f.type = show ? 'text' : 'password';
+                document.getElementById(eyeId).textContent = show ? '🙈' : '👁';
+            }
+        </script>
+
+        <p style="--c:#888; --size:0.85em; --mt:20px; --mb:0">
+            API clients: pass <code>?key=&lt;value&gt;</code> or <code>Authorization: Bearer &lt;key&gt;</code>.
+        </p>
+    </div>
+{% endblock %}

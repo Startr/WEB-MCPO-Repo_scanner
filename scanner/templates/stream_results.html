@@ -246,11 +246,10 @@
                 todoCountEl.textContent = "Error connecting to server stream";
                 evtSource.close();
             };
-        });
 
-        // Poll the repo fingerprint — live-refresh TODO.md on change,
-        // prompt full rescan only when commits change
-        function watchForChanges(repoName, source) {
+            // Poll the repo fingerprint — live-refresh TODO.md on change,
+            // prompt full rescan only when commits change
+            function watchForChanges(repoName, source) {
             let baseline = null;
             const rescanMsg = document.getElementById('rescan-msg');
             const rescanBtn = document.getElementById('rescan-btn');
@@ -265,25 +264,28 @@
                     const headChanged = data.fingerprint !== baseline.fingerprint;
                     const todoChanged = data.todo_hash !== baseline.todo_hash;
 
-                    if (todoChanged && !headChanged) {
-                        // Only TODO.md changed — live refresh just that section
+                    if (todoChanged) {
+                        // TODO.md changed — live refresh just that section
                         baseline = data;
                         const todoResp = await fetch(`/api/todo_files/${encodeURIComponent(repoName)}`);
                         const todoData = await todoResp.json();
                         const container = document.getElementById('todo-md-files');
+                        const outer = document.getElementById('todo-md-files-container');
                         if (container && todoData.files && todoData.files.length > 0) {
+                            // Build off-screen, then swap atomically — avoids blank flash on empty response
+                            const frag = document.createDocumentFragment();
+                            const p = document.createElement('p');
+                            p.textContent = `The repository contains ${todoData.files.length} TODO.md file(s):`;
+                            frag.appendChild(p);
+                            todoData.files.forEach(f => frag.appendChild(createTodoMarkdownElement(f)));
                             container.innerHTML = '';
-                            const countText = document.createElement('p');
-                            countText.textContent = `The repository contains ${todoData.files.length} TODO.md file(s):`;
-                            container.appendChild(countText);
-                            todoData.files.forEach(mdFile => {
-                                const el = createTodoMarkdownElement(mdFile);
-                                container.appendChild(el);
-                            });
-                            document.getElementById('todo-md-files-container').style.display = 'block';
+                            container.appendChild(frag);
+                            outer.style.display = 'block';
                         }
-                    } else if (headChanged) {
-                        // Commit changed — prompt full rescan
+                        // If API returned empty, keep existing content — don't wipe
+                    }
+                    if (headChanged) {
+                        // Commit changed — prompt full rescan (independent of TODO refresh)
                         rescanMsg.textContent = 'New changes detected in repository.';
                         rescanBtn.style.backgroundColor = '#ff9800';
                         rescanBtn.textContent = 'Rescan now';
@@ -291,6 +293,7 @@
                     }
                 } catch (e) { /* Silently ignore poll errors */ }
             }, 3000);  // 3s for snappy local feedback
-        }
+            }
+        });
     </script>
 {% endblock %}

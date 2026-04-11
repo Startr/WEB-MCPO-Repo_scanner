@@ -2,14 +2,6 @@
 
 <!-- All content below this line has been revised for clarity, conciseness, vigorous language, tagging, and DRY principles. Uncompleted items from the original '''Completed''' section have been moved to '''Medium Priority'''. -->
 
-## High Priority Blockers
-
-- [ ] **Fix server hanging issue**: Repo_Scanner server becomes unresponsive after completing scans #critical #backend
-   - [ ] Investigate potential resource leaks (file descriptors, database connections)
-   - [ ] Add proper cleanup procedures in scan completion handlers
-   - [ ] Implement timeout mechanism for long-running operations
-   - [ ] Add health check endpoint to monitor server status
-
 ## Documentation & Planning TODOs
 - [ ] **Create comprehensive API documentation**: Standalone API reference guide #documentation #api
   - [ ] Document all endpoints with request/response examples
@@ -70,6 +62,8 @@
     - [ ] Display content from identified TODO files. #rendering #ux
 
 ## Low Priority
+- [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover. #deployment #caprover
+- [ ] Add Todoscope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service. #deployment #homebrew
 - [ ] Introduce user authentication for secure access. #security #auth
 - [ ] Implement priority inference from TODO comments. #core #parser
 - [ ] Design a plugin system to extend scanner functionality. #architecture #extensibility
@@ -85,3 +79,5 @@
 - [x] Stream scan results efficiently in the web UI. #ux #frontend
 - [x] Ensure proper HTML escaping for multi-line display. #security #rendering
 - [x] Broaden TODO pattern recognition to include FIXME, BUG, and NOTE in various comment formats. #core #parser
+- [x] Fix server hanging issue: server no longer becomes unresponsive after completing scans. #critical #backend
+- [x] Skip `scanner/repositories/` when scanning this project as a local repo — prevents recursing into managed cloned repos. #core #backend

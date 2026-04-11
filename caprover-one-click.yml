@@ -1,0 +1,48 @@
+captainVersion: 4
+services:
+  $$cap_appname:
+    image: ghcr.io/startr/web-mcpo-repo_scanner:$$cap_app_version
+    environment:
+      SECRET_KEY: $$cap_secret_key
+      FLASK_DEBUG: "0"
+    volumes:
+      - $$cap_appname-repositories:/app/scanner/repositories
+      - $$cap_appname-keys:/app/scanner
+    caproverExtra:
+      containerHttpPort: "5000"
+
+caproverOneClickApp:
+  variables:
+    - id: $$cap_appname
+      label: App Name
+      defaultValue: todoscope
+      description: Name for this CapRover app instance.
+      validRegex: /^[a-z0-9-]+$/
+
+    - id: $$cap_app_version
+      label: Image Version
+      defaultValue: latest
+      description: Docker image tag to deploy (e.g. latest, v1.0.0).
+
+    - id: $$cap_secret_key
+      label: Secret Key
+      description: >
+        A long random string used to sign session cookies. Generate one with:
+        python3 -c "import secrets; print(secrets.token_hex(32))"
+      validRegex: /.{16,}/
+
+  instructions:
+    start: >-
+      Todoscope scans Git repositories for TODO comments and exposes them
+      via a web UI and MCP-compatible API. After deployment, visit the app URL
+      to configure your first access key.
+    end: >-
+      Todoscope is running. Open the app URL, expand the security warning,
+      and set your first access key to lock down the instance.
+
+  displayName: Todoscope
+  isOfficial: false
+  description: >-
+    Scan Git repos for TODO comments. Web UI + MCP API for AI assistants
+    like Sage.is and Claude.ai.
+  documentation: https://github.com/Startr/WEB-MCPO-Repo_scanner

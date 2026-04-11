@@ -9,6 +9,7 @@ import json
 from datetime import datetime
 from functools import wraps
 import hashlib
+import csv
 
 # Import our robust error handling system - now import directly since we're in the scanner package
 from .error_handling import (
@@ -20,7 +21,56 @@ from .error_handling import (
 
 app = Flask(__name__)
 app.logger.setLevel(logging.INFO)  # Ensure INFO level is set for our logs
-app.secret_key = os.urandom(24)  # Required for flash messages
+app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
+
+# --- Access key auth ---
+ACCESS_KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_keys.csv")
+# Routes that must stay public for MCP discovery and auth itself
+_PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login'}
+
+def load_access_keys():
+    """Return set of valid keys from access_keys.csv. Empty set = auth disabled."""
+    if not os.path.exists(ACCESS_KEYS_FILE):
+        return set()
+    keys = set()
+    with open(ACCESS_KEYS_FILE, newline='') as f:
+        for row in csv.DictReader(f):
+            k = (row.get('key') or '').strip()
+            if k:
+                keys.add(k)
+    return keys
+
+def _auth_enabled():
+    return bool(load_access_keys())
+
+def _is_authenticated():
+    keys = load_access_keys()
+    if not keys:
+        return True  # No keys file → open access
+    from flask import session as _session
+    if _session.get('authed_key') in keys:
+        return True
+    if request.args.get('key') in keys:
+        return True
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer ') and auth_header[7:] in keys:
+        return True
+    return False
+
+@app.context_processor
+def inject_auth_status():
+    return {'auth_enabled': _auth_enabled()}
+
+@app.before_request
+def require_auth():
+    if request.path in _PUBLIC_ROUTES or request.path.startswith('/static'):
+        return
+    if _is_authenticated():
+        return
+    # API clients get 401 JSON; browsers get redirected to /login
+    if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
+        return jsonify({'error': 'Unauthorized', 'hint': 'Pass ?key=<your-key> or Authorization: Bearer <key>'}), 401
+    return redirect(url_for('login', next=request.url))
 
 # Initialize the centralized error handler
 app.error_handler = ErrorHandler(app.logger)
@@ -462,11 +512,19 @@ def find_todos(repo_path):
     SKIP_DIRS = {'.git', '.obsidian', 'node_modules', '__pycache__', '.venv', 'venv'}
     # Files handled separately by find_todo_files() — don't scan for inline comments
     SKIP_FILES = {'todo.md', 'todo.txt'}
+    # Never scan repos we manage — avoids recursing into cloned repos when this
+    # project itself is registered as a local repo to track.
+    _base_repo_real = os.path.realpath(BASE_REPO_PATH)
 
     with error_context("find_todos", "file_processor", repo_path=repo_path):
         for root, dirs, files in os.walk(repo_path):
-            # Prune noisy directories so os.walk never descends into them
-            dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+            # Prune noisy directories so os.walk never descends into them,
+            # and skip the managed-repos directory to avoid scanning cloned repos.
+            dirs[:] = [
+                d for d in dirs
+                if d not in SKIP_DIRS
+                and os.path.commonpath([os.path.realpath(os.path.join(root, d)), _base_repo_real]) != _base_repo_real
+            ]
             for file in files:
                 if file.lower() in SKIP_FILES:
                     continue
@@ -530,6 +588,23 @@ def find_todo_files(repo_path):
                         results.append({'file_path': rel_path, 'content': None})
     return results
 
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    from flask import session as _session
+    if request.method == 'POST':
+        key = request.form.get('key', '').strip()
+        if key in load_access_keys():
+            _session['authed_key'] = key
+            return redirect(request.args.get('next') or url_for('index'))
+        return render_template('login.html', error='Invalid key.', auth_enabled=_auth_enabled())
+    return render_template('login.html', error=None, auth_enabled=_auth_enabled())
+
+@app.route('/logout')
+def logout():
+    from flask import session as _session
+    _session.pop('authed_key', None)
+    return redirect(url_for('login'))
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
@@ -543,6 +618,30 @@ def index():
     local_repos = list_local_repositories()
     
     return render_template('index.html', local_repos=local_repos)
+
+@app.route('/setup/add_key', methods=['POST'])
+def setup_add_key():
+    """Write a new key+label row to access_keys.csv (bootstrap flow when auth is not yet enabled)."""
+    if _auth_enabled():
+        return jsonify({'error': 'Auth already configured. Edit access_keys.csv directly.'}), 403
+    key = request.form.get('key', '').strip()
+    key_confirm = request.form.get('key_confirm', '').strip()
+    label = request.form.get('label', 'default').strip()
+    if not key:
+        return render_template('index.html', local_repos=list_local_repositories(),
+                               setup_error="Key cannot be empty.")
+    if key != key_confirm:
+        return render_template('index.html', local_repos=list_local_repositories(),
+                               setup_error="Keys do not match — please try again.")
+    write_header = not os.path.exists(ACCESS_KEYS_FILE)
+    with open(ACCESS_KEYS_FILE, 'a', newline='') as f:
+        writer = csv.writer(f)
+        if write_header:
+            writer.writerow(['key', 'label'])
+        writer.writerow([key, label])
+    from flask import session as _session
+    _session['authed_key'] = key
+    return redirect(url_for('index'))
 
 @app.route('/add_local', methods=['POST'])
 def add_local_repo():
@@ -1211,4 +1310,5 @@ if __name__ == '__main__':
     ensure_dir_exists(BASE_REPO_PATH)
     
     # Run the Flask application
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    debug = os.environ.get('FLASK_DEBUG', '0') == '1'
+    app.run(debug=debug, host='0.0.0.0', port=5000)

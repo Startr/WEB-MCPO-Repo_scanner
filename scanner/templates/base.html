@@ -11,7 +11,12 @@
     {% block head_extra %}{% endblock %}
 </head>
 <body style="--ff:Arial, sans-serif; --maxw:800px; --m:0 auto; --p:20px; --lh:1.6">
-    <h1 style="--c:#333; --bb:1px solid #ddd; --pb:10px"><a href="/">Todoscope</a></h1>
+    <h1 style="--c:#333; --bb:1px solid #ddd; --pb:10px; --d:flex; --jc:space-between; --ai:baseline">
+        <a href="/">Todoscope</a>
+        {% if session.get('authed_key') %}
+        <a href="{{ url_for('logout') }}" style="--size:0.55em; --c:#888; --td:none; --weight:normal">Sign out</a>
+        {% endif %}
+    </h1>
     <div style="--mb:20px">
         <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner" target="_blank" style="--d:flex; --ai:center; --td:none; --c:#333; --w:fit-content">
             <svg height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" style="--mr:8px">
@@ -21,10 +26,66 @@
         </a>
     </div>
     
+    {% if not auth_enabled %}
+    <details style="--bgc:#fff8e1; --p:16px 20px; --radius:5px; --b:2px solid #f9a825; --mb:20px">
+        <summary style="--cur:pointer; --weight:bold; --c:#7a5c00">
+            ⚠ No access keys configured — this instance is open to anyone
+        </summary>
+        <p style="--c:#555; --mt:10px; --mb:12px; --size:0.9em">
+            Create an <code>access_keys.csv</code> in the scanner directory, or add your first key here to lock down access.
+        </p>
+        {% if setup_error %}
+        <p style="--c:#c0392b; --mb:10px; --size:0.9em">{{ setup_error }}</p>
+        {% endif %}
+        <form method="POST" action="{{ url_for('setup_add_key') }}" id="setup-key-form" style="--d:flex; --gap:8px; --ai:flex-end; --fw:wrap">
+            <label style="--d:flex; --fd:column; --gap:4px; --size:0.85em; --c:#555">
+                Access key
+                <span style="position:relative; --d:flex; --ai:center">
+                    <input type="password" name="key" id="setup-key" placeholder="Long random string" required
+                           autocomplete="new-password"
+                           style="--p:8px; --pr:36px; --b:1px solid #ddd; --radius:4px; --w:240px">
+                    <button type="button" onclick="toggleVis('setup-key','setup-key-confirm','eye1')"
+                            style="position:absolute; right:6px; background:none; border:none; cursor:pointer; --size:1.1em; --c:#888" title="Show/hide">
+                        <span id="eye1">👁</span>
+                    </button>
+                </span>
+            </label>
+            <label style="--d:flex; --fd:column; --gap:4px; --size:0.85em; --c:#555">
+                Confirm key
+                <input type="password" name="key_confirm" id="setup-key-confirm" placeholder="Repeat key" required
+                       autocomplete="new-password"
+                       style="--p:8px; --b:1px solid #ddd; --radius:4px; --w:200px">
+            </label>
+            <label style="--d:flex; --fd:column; --gap:4px; --size:0.85em; --c:#555">
+                Label
+                <input type="text" name="label" placeholder="e.g. my-laptop"
+                       autocomplete="username"
+                       style="--p:8px; --b:1px solid #ddd; --radius:4px; --w:140px">
+            </label>
+            <button type="submit" style="--bgc:#f9a825; --c:#333; --p:8px 16px; --b:none; --radius:4px; --cur:pointer; --weight:bold">
+                Save key &amp; lock
+            </button>
+        </form>
+        <script>
+            function toggleVis(...ids) {
+                const eye = document.getElementById(ids.pop());
+                const show = ids.some(id => document.getElementById(id).type === 'password');
+                ids.forEach(id => document.getElementById(id).type = show ? 'text' : 'password');
+                eye.textContent = show ? '🙈' : '👁';
+            }
+            document.getElementById('setup-key-form').addEventListener('submit', function(e) {
+                const k = document.getElementById('setup-key').value;
+                const c = document.getElementById('setup-key-confirm').value;
+                if (k !== c) { e.preventDefault(); alert('Keys do not match — please try again.'); }
+            });
+        </script>
+    </details>
+    {% endif %}
+
     {% if error %}
     <div class="error" style="--c:#ff0000; --bgc:#ffeeee; --p:10px; --radius:5px; --mb:20px">{{ error }}</div>
     {% endif %}
-    
+
     {% block content %}{% endblock %}
     
     <div class="footer" style="--mt:30px; --pt:10px; --bb:1px solid #ddd; --c:#666; --ta:center">

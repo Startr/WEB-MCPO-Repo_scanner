@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:startr.style)",
+      "WebFetch(domain:sage.is)"
+    ]
+  }
+}

@@ -48,13 +48,26 @@ docker-build:
 	@echo "Building Docker image '$(IMAGE_NAME)'..."
 	@docker build -t $(IMAGE_NAME) .
 
+SECRET_KEY ?= $(shell python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || echo "changeme")
+
 docker-run: DOCKER_ARGS ?=
 docker-run:
 	@echo "Running Docker container '$(CONTAINER_NAME)' from image '$(IMAGE_NAME)'..."
+	@# Ensure host-side persistence dirs/files exist before mounting
+	@mkdir -p scanner/repositories
+	@test -f scanner/access_keys.csv || touch scanner/access_keys.csv
 	@# Stop and remove if already running to avoid conflicts
 	@docker stop $(CONTAINER_NAME) >/dev/null 2>&1 || true
 	@docker rm $(CONTAINER_NAME) >/dev/null 2>&1 || true
-	@docker run -d -p $(HOST_PORT):$(CONTAINER_PORT) --name $(CONTAINER_NAME) $(DOCKER_ARGS) $(IMAGE_NAME)
+	@docker run -d \
+		-p $(HOST_PORT):$(CONTAINER_PORT) \
+		--name $(CONTAINER_NAME) \
+		--restart unless-stopped \
+		-v "$(PWD)/scanner/repositories:/app/scanner/repositories" \
+		-v "$(PWD)/scanner/access_keys.csv:/app/scanner/access_keys.csv" \
+		-e SECRET_KEY="$(SECRET_KEY)" \
+		$(DOCKER_ARGS) \
+		$(IMAGE_NAME)
 	@echo "Container '$(CONTAINER_NAME)' started on port $(HOST_PORT)."
 
 docker-stop:

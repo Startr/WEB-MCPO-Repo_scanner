@@ -2,88 +2,83 @@
 
 [![GitHub](https://img.shields.io/badge/View%20on-GitHub-brightgreen)](https://github.com/Startr/WEB-MCPO-Repo_scanner)
 
-**A straightforward and efficient tool designed to meticulously scan your Git repositories for TODO comments, bringing them to your attention so nothing gets overlooked.**
+**Give your AI assistant a live view of every TODO across all your repos.**
+
+Connect [Sage.is](https://sage.is), [Claude.ai](https://claude.ai), or any MCP-compatible assistant and ask: *"What's still TODO in this project?"* Todoscope answers instantly. It also gives your team a clean web UI to browse, track, and stay on top of inline TODOs and TODO.md files — without leaving the codebase.
 
 The code is open. The project evolves. Get involved.
 
 ![Sage_repo-TODOs.gif](Sage_repo-TODOs.gif)
 
+## AI & MCP Integration
+
+Todoscope implements the [Model Context Protocol](https://modelcontextprotocol.io), making it a first-class tool for AI assistants.
+
+*   **Sage.is AI** and **Claude.ai** can call Todoscope directly — ask your assistant to list, summarize, or prioritize TODOs across any repo it has access to.
+*   Any MCP-compatible client discovers Todoscope automatically via its manifest endpoint.
+*   The OpenAPI spec is generated dynamically — the docs always match the live API.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/mpco/manifest` | Service discovery for MCP clients |
+| `GET /api/mpco/openapi.json` | Live OpenAPI 3.0 spec |
+| `POST /api/mpco/scan_repository` | Scan a repo, return all TODOs as JSON |
+
 ## What It Does
 
-In the fast-paced world of software development, it's easy for small tasks and reminders, often marked as TODOs within the codebase, to get lost or forgotten. TODO Scanner addresses this by:
+TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten across repos. Todoscope finds them all:
 
-*   **Cloning Repositories:** Provide a Git repository URL, and the scanner will clone it locally.
-*   **Comprehensive Scanning:** It meticulously searches through all text files within the repository.
-*   **Pattern Recognition:** Identifies common TODO patterns (e.g., `TODO:`, `# TODO`, `// TODO`) in comments.
-*   **Clear Reporting:** Presents the found TODO items in a clean, user-friendly web interface, showing the file path, line number, and the TODO text itself.
-*   **Streaming Results:** Offers a real-time streaming view of TODOs as they are found during a scan.
-*   **Local Repository Management:** Keeps track of previously scanned repositories for quick re-scans and updates.
-
-## Why It Matters
-
-Developers often leave notes for future improvements, bug fixes, or pending tasks directly in the code. While convenient, these TODOs can accumulate and become difficult to track across a growing codebase. This tool brings visibility to these hidden tasks, helping teams:
-
-*   **Maintain Code Quality:** By ensuring that reminders for refactoring or fixes are not forgotten.
-*   **Improve Project Management:** By providing a clear overview of pending micro-tasks.
-*   **Enhance Collaboration:** By making it easier for team members to see and address outstanding items.
-
-## Key Features
-
-*   **Web Interface:** Intuitive and easy-to-use UI for scanning and viewing results.
-*   **API Access:** A simple REST API for programmatic scanning and integration into CI/CD pipelines or other tools.
-*   **Model Context Protocol (MCP) Compliant:** Implements the MCP standard with a dynamic OpenAPI specification, allowing AI assistants and other services to interact with it seamlessly.
-*   **Cloudflare Tunnel Integration:** Includes a script to easily expose the local scanner via a public Cloudflare Quick Tunnel for demos or remote team access.
-*   **.gitignore Aware:** Respects `.gitignore` rules to avoid scanning irrelevant files.
-*   **Efficient Streaming:** Results can be streamed in real-time, providing immediate feedback on large repositories.
+*   **AI-ready API:** MCP-compliant — Sage.is, Claude.ai, and other assistants query it directly.
+*   **Streaming scan:** See TODOs appear in real time as files are scanned.
+*   **TODO.md support:** Detects and renders standalone TODO files alongside inline code comments.
+*   **Live refresh:** Watches local repos for changes and updates the view without a full rescan.
+*   **Local repo management:** Register local paths — paths stay on the server, never exposed to the browser.
+*   **.gitignore aware:** Skips files and directories your project ignores.
 
 ## How It Works
 
-1.  **Input:** Provide a Git repository URL via the web interface or API.
-2.  **Clone:** The application clones the repository into a local `repositories` directory.
-3.  **Scan:** It traverses the repository, reading text files and looking for predefined TODO patterns.
-4.  **Display/Return:** TODOs are displayed in the web UI or returned as JSON via the API.
+1.  Provide a Git URL or register a local repo path.
+2.  Todoscope clones (or reads) the repository.
+3.  It scans all text files for TODO patterns and finds standalone TODO.md files.
+4.  Results stream to the web UI and are available via the API.
 
 ## Installation
 
-Ensure you have Python 3.x and Git installed.
+### Local development
+
+Requires Python 3.11+ and Git.
 
 ```bash
-git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git # Or your fork
-cd repo_scanner
-pip install -r requirements.txt # Assuming requirements.txt is present or use Pipfile
-# If using Pipfile:
-# pip install pipenv
-# pipenv install
-# pipenv shell
+git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
+cd WEB-MCPO-Repo_scanner
+pip install pipenv
+cd scanner && pipenv install && pipenv run python ../app.py
 ```
-*(Note: The original README mentioned `requirements.txt`. If you are primarily using `Pipfile`, you might want to adjust these instructions or ensure `requirements.txt` is kept up-to-date via `pipenv lock -r > requirements.txt`)*
 
-## Usage
+Open `http://localhost:5000`. The security warning on the page walks you through setting your first access key.
 
-### Web Interface
-
-Start the Flask development server:
+### Docker
 
 ```bash
-python app.py
+git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
+cd WEB-MCPO-Repo_scanner
+make docker-build
+make docker-run SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
 ```
-Or, if you used `pipenv`:
+
+Cloned repositories and your `access_keys.csv` are mounted from the host, so they survive container restarts.
+
+### CapRover
+
+Deploy from the CapRover dashboard using the included `caprover-one-click.yml`, or add this repo as a custom one-click source. Set the `SECRET_KEY` variable during setup. After deployment, visit the app URL and set your first access key via the security panel.
+
+### Cloudflare Quick Tunnel
+
+To share a local instance publicly for demos:
+
 ```bash
-pipenv run python app.py
+make run-tunnel
 ```
-
-Navigate to `http://localhost:5000` (or the port specified) in your web browser.
-*   Enter a Git repository URL to scan.
-*   View results, stream scans, or manage previously scanned local repositories.
-
-### Cloudflare Quick Tunnels
-
-To temporarily share your local scanner instance:
-
-```bash
-./run_with_cloudflared.sh
-```
-This script will start the application and create a Cloudflare tunnel, providing a public URL. The tunnel closes when the script is stopped.
 
 ### API Endpoints
 
@@ -125,15 +120,6 @@ The scanner provides a RESTful API. Key endpoints include:
   "web_url": "http://localhost:5000/scan/https://github.com/username/repository.git"
 }
 ```
-
-## Model Context Protocol (MCP) & OpenAPI
-
-This tool adheres to the Model Context Protocol, making it discoverable and usable by AI agents and other MCP-compatible services.
-
-*   **Manifest:** `GET /api/mpco/manifest`
-    *   Provides metadata about the tool for service discovery.
-*   **OpenAPI Specification:** `GET /api/mpco/openapi.json`
-    *   Offers a dynamically generated OpenAPI 3.0.x specification of the API, ensuring that the documentation always matches the current API capabilities.
 
 ## Project TODOs
 
