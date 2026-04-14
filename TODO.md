@@ -2,6 +2,71 @@
 
 <!-- All content below this line has been revised for clarity, conciseness, vigorous language, tagging, and DRY principles. Uncompleted items from the original '''Completed''' section have been moved to '''Medium Priority'''. -->
 
+## Brand & Landing Page (CEO Review — scoped by surface)
+
+These items align the product surface with the voice we locked in via [docs/brand-interview.md](docs/brand-interview.md).
+The one-line pitch is: *"See every TODO across all your repos. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished."*
+
+### Scope A — Logged-Out Landing (login page) #brand #landing
+
+The current login page is a cold password prompt with zero context. Turn it into a proper landing page.
+
+- [ ] **Promote login.html into a real landing page**: hero, pitch, features, sign-in #brand #landing #critical
+  - [ ] Add brand hero: headline, subhead (use the one-line pitch verbatim), and a short "what it is" paragraph
+  - [ ] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
+  - [ ] Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold
+  - [ ] Move the sign-in form into a right-hand card or section below the hero — secondary action, not primary
+  - [ ] Add "New to TodoScope?" copy with a link to the README / GitHub for evaluators who aren't signing in
+  - [ ] Add social proof / cross-links to [sage.is](https://sage.is) and [startr.style](https://startr.style)
+  - [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`) so shared links render properly
+- [ ] **Surface the MCP / AI agent story on the landing page** #brand #ai #mcp
+  - [ ] Add a "Connect your AI agent" section showing how to point Sage / Claude / any MCP client at the instance
+  - [ ] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json` from the landing page
+  - [ ] Include a one-paragraph framing: "AI agents are part of your team"
+
+### Scope B — Logged-In Dashboard (index page) #ux #dashboard
+
+The dashboard is functional but has no brand presence and no empty state.
+
+- [ ] **Add a dashboard header**: restate the one-line pitch in short form, orient the user #ux #brand
+- [ ] **Unify repo entry**: one input that accepts a git URL *or* a local path, with smart detection #ux #simplify
+- [ ] **Empty state for Repositories**: when no repos are registered, show a friendly onboarding card with 2-3 suggested quick-start actions (scan a demo repo, register a local path, copy MCP endpoint) #ux #onboarding
+- [ ] **Surface MCP endpoints on the dashboard**: a small "Connect to an AI agent" card with copy-to-clipboard buttons for the manifest URL and a sample cURL #ai #mcp #ux
+- [ ] **Add search/filter to the Repositories table** (relevant as soon as the list grows past ~10) #ux #search
+- [ ] **Add a visible "last scanned" timestamp + manual refresh control** per repo row #ux
+- [ ] **Move the GitHub contribute banner to the footer** — it's competing with the primary action #ux #hierarchy
+- [ ] **Clarify the "shallow clone" checkbox**: tooltip or inline help explaining when to use it #ux #copy
+
+### Scope C — MCP / Sage.is Integration Surface #ai #mcp #integration
+
+This is our killer differentiator and it's currently invisible in the UI.
+
+- [ ] **Create a dedicated `/connect` or `/mcp` page** with step-by-step instructions to wire TodoScope into Sage, Claude Desktop, and generic MCP clients #mcp #docs
+- [ ] **Add a "Copy MCP manifest URL" button** visible on the logged-in dashboard #mcp #ux
+- [ ] **Write a short guide** — `docs/connect-sage.md` — with screenshots showing an end-to-end Sage → TodoScope query #docs #mcp
+- [ ] **Add an MCP health indicator** to the dashboard: green dot when the manifest endpoint is responding, red when not #observability #mcp
+
+### Scope D — Brand Consistency & Copy #brand #copy
+
+Small touches that make the product feel like it belongs to the Startr / Sage family.
+
+- [ ] **Audit all user-facing copy** against the brand interview voice: honest founder tone, clarity-first, never buzzwordy #copy #brand
+- [x] **Footer update**: added cross-links to sage.is and startr.style; "Part of the Startr ecosystem" framing #brand #footer
+- [x] **Rename "Todoscope" → "TodoScope"** consistently across templates, README, caprover manifest, and page titles #brand #consistency
+- [x] **Favicon**: replaced the clipboard emoji with a telescope (🔭) — consistent with the "scope" metaphor in the name #brand #visual
+- [x] **Page titles**: descriptive, brand-consistent `<title>` tags applied to base / index / login #brand #seo
+- [x] **Noindex on login page**: added `<meta name="robots" content="noindex, nofollow">` so self-hosted instances don't get indexed #seo #privacy
+- [x] **Meta description**: added the one-line pitch as the default meta description in base.html #brand #seo
+- [ ] **Error messages**: review for tone — should match the honest founder voice, not generic flask errors #copy #ux
+
+### Scope E — First-Run & Onboarding Experience #onboarding
+
+A new user's first 60 seconds decides whether they come back.
+
+- [ ] **First-run wizard**: after setting the first access key, walk the user through registering a repo and connecting an AI agent #onboarding #ux
+- [ ] **Include a demo/sample repo option** on first visit so the user can see streaming results before registering anything of their own #onboarding #demo
+- [ ] **Add a "Try it live" section** to the logged-out landing that runs a preview scan against a public demo repo #onboarding #landing
+
 ## Documentation & Planning TODOs
 - [ ] **Create comprehensive API documentation**: Standalone API reference guide #documentation #api
   - [ ] Document all endpoints with request/response examples
@@ -63,7 +128,7 @@
 
 ## Low Priority
 - [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover. #deployment #caprover
-- [ ] Add Todoscope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service. #deployment #homebrew
+- [ ] Add TodoScope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service. #deployment #homebrew
 - [ ] Introduce user authentication for secure access. #security #auth
 - [ ] Implement priority inference from TODO comments. #core #parser
 - [ ] Design a plugin system to extend scanner functionality. #architecture #extensibility

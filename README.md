@@ -4,7 +4,7 @@
 
 **Give your AI assistant a live view of every TODO across all your repos.**
 
-Connect [Sage.is](https://sage.is), [Claude.ai](https://claude.ai), or any MCP-compatible assistant and ask: *"What's still TODO in this project?"* Todoscope answers instantly. It also gives your team a clean web UI to browse, track, and stay on top of inline TODOs and TODO.md files — without leaving the codebase.
+Connect [Sage.is](https://sage.is), [Claude.ai](https://claude.ai), or any MCP-compatible assistant and ask: *"What's still TODO in this project?"* TodoScope answers instantly. It also gives your team a clean web UI to browse, track, and stay on top of inline TODOs and TODO.md files — without leaving the codebase.
 
 The code is open. The project evolves. Get involved.
 
@@ -12,10 +12,10 @@ The code is open. The project evolves. Get involved.
 
 ## AI & MCP Integration
 
-Todoscope implements the [Model Context Protocol](https://modelcontextprotocol.io), making it a first-class tool for AI assistants.
+TodoScope implements the [Model Context Protocol](https://modelcontextprotocol.io), making it a first-class tool for AI assistants.
 
-*   **Sage.is AI** and **Claude.ai** can call Todoscope directly — ask your assistant to list, summarize, or prioritize TODOs across any repo it has access to.
-*   Any MCP-compatible client discovers Todoscope automatically via its manifest endpoint.
+*   **Sage.is AI** and **Claude.ai** can call TodoScope directly — ask your assistant to list, summarize, or prioritize TODOs across any repo it has access to.
+*   Any MCP-compatible client discovers TodoScope automatically via its manifest endpoint.
 *   The OpenAPI spec is generated dynamically — the docs always match the live API.
 
 | Endpoint | Purpose |
@@ -26,7 +26,7 @@ Todoscope implements the [Model Context Protocol](https://modelcontextprotocol.i
 
 ## What It Does
 
-TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten across repos. Todoscope finds them all:
+TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten across repos. TodoScope finds them all:
 
 *   **AI-ready API:** MCP-compliant — Sage.is, Claude.ai, and other assistants query it directly.
 *   **Streaming scan:** See TODOs appear in real time as files are scanned.
@@ -38,7 +38,7 @@ TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten ac
 ## How It Works
 
 1.  Provide a Git URL or register a local repo path.
-2.  Todoscope clones (or reads) the repository.
+2.  TodoScope clones (or reads) the repository.
 3.  It scans all text files for TODO patterns and finds standalone TODO.md files.
 4.  Results stream to the web UI and are available via the API.
 

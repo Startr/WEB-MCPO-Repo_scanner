@@ -33,16 +33,19 @@ caproverOneClickApp:
 
   instructions:
     start: >-
-      Todoscope scans Git repositories for TODO comments and exposes them
-      via a web UI and MCP-compatible API. After deployment, visit the app URL
-      to configure your first access key.
+      TodoScope is the awareness layer for teams — and the AI agents on them —
+      who need to know what's actually unfinished. It scans Git repositories
+      for TODO comments and exposes them via a web UI and MCP-compatible API.
+      After deployment, visit the app URL to configure your first access key.
     end: >-
-      Todoscope is running. Open the app URL, expand the security warning,
-      and set your first access key to lock down the instance.
+      TodoScope is running. Open the app URL, expand the security warning,
+      and set your first access key to lock down the instance. Then connect
+      your AI agent via the MCP endpoint.
 
-  displayName: Todoscope
+  displayName: TodoScope
   isOfficial: false
   description: >-
-    Scan Git repos for TODO comments. Web UI + MCP API for AI assistants
-    like Sage.is and Claude.ai.
+    See every TODO across all your repos. MCP-native so Sage.is, Claude, and
+    other AI agents can query your codebase state directly. Part of the Startr
+    ecosystem.
   documentation: https://github.com/Startr/WEB-MCPO-Repo_scanner

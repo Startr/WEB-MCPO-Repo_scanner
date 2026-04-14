@@ -1,12 +1,12 @@
 <!-- templates/index.html -->
 {% extends "base.html" %}
 
-{% block title %}Todoscope{% endblock %}
+{% block title %}TodoScope — Dashboard{% endblock %}
 
 {% block content %}
-    <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
+    <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
         <h2>Enter Repository URL</h2>
-        <input type="text" name="repo_url" placeholder="https://github.com/username/repository.git" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
+        <input type="text" name="repo_url" placeholder="https://github.com/username/repository.git" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
         <div style="--d:flex; --ai:center">
             <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer; --mr:10px">Scan Repository</button>
             <a href="#" id="stream-link" style="--c:#0066cc; --td:none">Use streaming scan (see results in real-time)</a>
@@ -17,18 +17,18 @@
         </label>
     </form>
     
-    <details style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
+    <details style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
         <summary style="--cur:pointer; --weight:bold">Add Local Repository</summary>
         <form method="POST" action="{{ url_for('add_local_repo') }}" style="--mt:10px">
-            <input type="text" name="local_path" placeholder="/path/to/your/repo" required style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
-            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)" style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
+            <input type="text" name="local_path" placeholder="/path/to/your/repo" required style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
+            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)" style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
             <button type="submit" style="--bgc:#007bff; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">Register</button>
             <span style="--c:#888; --size:0.85em; --ml:10px">Path stays on this machine — never sent to the browser.</span>
         </form>
     </details>
 
     {% if local_repos %}
-    <div style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd">
+    <div style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
         <h2>Repositories</h2>
         <p>Registered local and previously cloned repositories:</p>
         <div style="--maxh:400px; --ofy:auto; --bb:1px solid #eee;">

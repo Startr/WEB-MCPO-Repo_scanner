@@ -115,7 +115,7 @@
                 
                 const todoText = document.createElement('div');
                 todoText.className = 'todo-text';
-                todoText.style = '--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --m:10px 0; --ff:monospace; --ws:pre-wrap';
+                todoText.style = '--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --shadow:4;; --m:10px 0; --ff:monospace; --ws:pre-wrap';
                 todoText.innerHTML = highlightTodo(todo.todo_text);
                 
                 todoEl.appendChild(filePath);
@@ -126,7 +126,7 @@
                 if (todo.next_line) {
                     const nextLine = document.createElement('div');
                     nextLine.className = 'next-line';
-                    nextLine.style = '--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --ff:monospace; --ws:pre-wrap';
+                    nextLine.style = '--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --shadow:4;; --ff:monospace; --ws:pre-wrap';
                     nextLine.textContent = todo.next_line;
                     todoEl.appendChild(nextLine);
                 }

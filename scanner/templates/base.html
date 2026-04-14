@@ -4,19 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="See every TODO across all your repos. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished.">
     <link rel="stylesheet" href="https://startr.style/style.css">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📋</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <title>{% block title %}Todoscope{% endblock %}</title>
+    <title>{% block title %}TodoScope — See every TODO across your repos{% endblock %}</title>
     {% block head_extra %}{% endblock %}
 </head>
 <body style="--ff:Arial, sans-serif; --maxw:800px; --m:0 auto; --p:20px; --lh:1.6">
     <h1 style="--c:#333; --bb:1px solid #ddd; --pb:10px; --d:flex; --jc:space-between; --ai:baseline">
-        <a href="/">Todoscope</a>
+        <a href="/">TodoScope</a>
         {% if session.get('authed_key') %}
         <a href="{{ url_for('logout') }}" style="--size:0.55em; --c:#888; --td:none; --weight:normal">Sign out</a>
         {% endif %}
     </h1>
+    {% block github_banner %}
     <div style="--mb:20px">
         <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner" target="_blank" style="--d:flex; --ai:center; --td:none; --c:#333; --w:fit-content">
             <svg height="32" aria-hidden="true" viewBox="0 0 16 16" version="1.1" width="32" style="--mr:8px">
@@ -25,6 +27,7 @@
             <span>View on GitHub: Contribute to the project</span>
         </a>
     </div>
+    {% endblock %}
     
     {% if not auth_enabled %}
     <details style="--bgc:#fff8e1; --p:16px 20px; --radius:5px; --b:2px solid #f9a825; --mb:20px">
@@ -37,30 +40,30 @@
         {% if setup_error %}
         <p style="--c:#c0392b; --mb:10px; --size:0.9em">{{ setup_error }}</p>
         {% endif %}
-        <form method="POST" action="{{ url_for('setup_add_key') }}" id="setup-key-form" style="--d:flex; --gap:8px; --ai:flex-end; --fw:wrap">
-            <label style="--d:flex; --fd:column; --gap:4px; --size:0.85em; --c:#555">
+        <form method="POST" action="{{ url_for('setup_add_key') }}" id="setup-key-form" style="--d:flex; gap:8px; --ai:flex-end; --fw:wrap">
+            <label style="--d:flex; --fd:column; gap:4px; --size:0.85em; --c:#555">
                 Access key
                 <span style="position:relative; --d:flex; --ai:center">
                     <input type="password" name="key" id="setup-key" placeholder="Long random string" required
                            autocomplete="new-password"
-                           style="--p:8px; --pr:36px; --b:1px solid #ddd; --radius:4px; --w:240px">
+                           style="--p:8px; --pr:36px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --w:240px">
                     <button type="button" onclick="toggleVis('setup-key','setup-key-confirm','eye1')"
                             style="position:absolute; right:6px; background:none; border:none; cursor:pointer; --size:1.1em; --c:#888" title="Show/hide">
                         <span id="eye1">👁</span>
                     </button>
                 </span>
             </label>
-            <label style="--d:flex; --fd:column; --gap:4px; --size:0.85em; --c:#555">
+            <label style="--d:flex; --fd:column; gap:4px; --size:0.85em; --c:#555">
                 Confirm key
                 <input type="password" name="key_confirm" id="setup-key-confirm" placeholder="Repeat key" required
                        autocomplete="new-password"
-                       style="--p:8px; --b:1px solid #ddd; --radius:4px; --w:200px">
+                       style="--p:8px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --w:200px">
             </label>
-            <label style="--d:flex; --fd:column; --gap:4px; --size:0.85em; --c:#555">
+            <label style="--d:flex; --fd:column; gap:4px; --size:0.85em; --c:#555">
                 Label
                 <input type="text" name="label" placeholder="e.g. my-laptop"
                        autocomplete="username"
-                       style="--p:8px; --b:1px solid #ddd; --radius:4px; --w:140px">
+                       style="--p:8px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --w:140px">
             </label>
             <button type="submit" style="--bgc:#f9a825; --c:#333; --p:8px 16px; --b:none; --radius:4px; --cur:pointer; --weight:bold">
                 Save key &amp; lock
@@ -88,8 +91,17 @@
 
     {% block content %}{% endblock %}
     
-    <div class="footer" style="--mt:30px; --pt:10px; --bb:1px solid #ddd; --c:#666; --ta:center">
-        <p>Copyright © 2025 Startr LLC. Released under the <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner/blob/main/LICENSE" style="--c:#0066cc">AGPL-3.0 License</a>.</p>
+    <div class="footer" style="--mt:30px; --pt:16px; --bt:1px solid #ddd; --c:#666; --ta:center; --size:0.9em">
+        <p style="--mb:6px">
+            Part of the Startr ecosystem —
+            <a href="https://sage.is" target="_blank" rel="noopener" style="--c:#0066cc">Sage.is</a> ·
+            <a href="https://startr.style" target="_blank" rel="noopener" style="--c:#0066cc">Startr.Style</a> ·
+            <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner" target="_blank" rel="noopener" style="--c:#0066cc">GitHub</a>
+        </p>
+        <p style="--mb:0; --c:#888; --size:0.85em">
+            © 2025 Startr LLC. Released under the
+            <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner/blob/main/LICENSE" style="--c:#0066cc">AGPL-3.0 License</a>.
+        </p>
     </div>
 </body>
 </html>

@@ -1,48 +1,220 @@
 <!-- templates/login.html -->
 {% extends "base.html" %}
 
-{% block title %}Sign In — Todoscope{% endblock %}
+{% block title %}TodoScope — See every TODO across your repos{% endblock %}
+
+{% block head_extra %}
+    <meta name="robots" content="noindex, nofollow">
+{% endblock %}
+
+{% block github_banner %}{% endblock %}
 
 {% block content %}
-    <div style="--maxw:400px; --m:60px auto; --bgc:#f9f9f9; --p:30px; --radius:8px; --b:1px solid #ddd">
-        <h2 style="--mt:0; --c:#333">Enter access key</h2>
 
-        {% if error %}
-        <p style="--c:#c0392b; --bgc:#fdecea; --p:10px; --radius:4px; --mb:15px">{{ error }}</p>
-        {% endif %}
-
-        <form method="POST">
-            <input type="text" name="label" id="login-label" placeholder="Label (e.g. my-laptop)"
-                   autocomplete="username"
-                   style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
-            <span style="position:relative; --d:flex; --ai:center; --mb:15px">
-                <input type="password" name="key" id="login-key" placeholder="Your access key" autofocus required
-                       autocomplete="current-password"
-                       style="--w:100%; --p:10px; --pr:40px; --b:1px solid #ddd; --radius:4px; --bxs:border-box">
-                <button type="button" onclick="toggleVis('login-key','login-eye')"
-                        style="position:absolute; right:10px; background:none; border:none; cursor:pointer; --size:1.1em; --c:#888" title="Show/hide">
-                    <span id="login-eye">👁</span>
-                </button>
-            </span>
-            <button type="submit"
-                    style="--bgc:#4CAF50; --c:white; --p:10px 20px; --b:none; --radius:4px; --cur:pointer; --w:100%">
-                Sign in
-            </button>
-        </form>
-        <script>
-            // Default to hostname only if the password manager hasn't already filled it in
-            const _lbl = document.getElementById('login-label');
-            if (!_lbl.value) _lbl.value = location.hostname || 'todoscope';
-            function toggleVis(fieldId, eyeId) {
-                const f = document.getElementById(fieldId);
-                const show = f.type === 'password';
-                f.type = show ? 'text' : 'password';
-                document.getElementById(eyeId).textContent = show ? '🙈' : '👁';
-            }
-        </script>
-
-        <p style="--c:#888; --size:0.85em; --mt:20px; --mb:0">
-            API clients: pass <code>?key=&lt;value&gt;</code> or <code>Authorization: Bearer &lt;key&gt;</code>.
+    <!-- 1. Hero -->
+    <div style="--ta:center; --mt:40px; --mb:40px">
+        <h2 style="--size:2em; --weight:800; --c:#333; --mt:0; --mb:12px; --lh:1.2">
+            See every TODO across all your repos.
+        </h2>
+        <p style="--size:1.15em; --c:#666; --mb:30px; --mt:0">
+            Most tools tell you what's done. TodoScope tells you what isn't.
         </p>
+        <img src="{{ url_for('static', filename='Sage_repo-TODOs.gif') }}"
+             alt="TodoScope scanning a repository and streaming TODO results in real time"
+             style="--maxw:100%; --radius:8px; --shadow:4; --d:block; --m:0 auto">
     </div>
+
+    <!-- 2. Two Actions -->
+    <div style="--d:flex; --jc:center; gap:12px; --mb:50px; --fw:wrap">
+        <a href="#sign-in"
+           style="--bgc:#4CAF50; --c:white; --p:12px 28px; --radius:4px; --td:none; --weight:bold; --d:inline-block; --size:1em">
+            Sign in
+        </a>
+        <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner" target="_blank" rel="noopener"
+           style="--bgc:transparent; --c:#333; --p:12px 28px; --radius:4px; --td:none; --b:1px solid #ccc; --d:inline-flex; --ai:center; gap:8px; --size:1em">
+            <svg height="18" aria-hidden="true" viewBox="0 0 16 16" width="18">
+                <path fill-rule="evenodd" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+            </svg>
+            View on GitHub
+        </a>
+    </div>
+
+    <!-- 3. Three Facts -->
+    <div style="--d:flex; gap:20px; --mb:50px; --fw:wrap">
+        <div style="--f:1; --w:100%; --bgc:#f9f9f9; --p:24px; --radius:8px; --b:1px solid #eee; --shadow:4; --m:auto">
+            <h3 style="--mt:0; --mb:8px; --size:1.05em; --c:#333">TODOs pile up and vanish.</h3>
+            <p style="--c:#555; --size:0.9em; --mb:0; --lh:1.5">
+                Inline TODOs, FIXME notes, TODO.md files — scattered across repos, invisible to everyone.
+                TodoScope surfaces them all in one place.
+            </p>
+        </div>
+        <div style="--f:1; --w:100%; --bgc:#f9f9f9; --p:24px; --radius:8px; --b:1px solid #eee; --shadow:4; --m:auto">
+            <h3 style="--mt:0; --mb:8px; --size:1.05em; --c:#333">Built for your whole team — including AI.</h3>
+            <p style="--c:#555; --size:0.9em; --mb:0; --lh:1.5">
+                Your AI assistants are part of the team. Give them the same live view of what is unfinished
+                that you have.
+            </p>
+        </div>
+        <div style="--f:1; --w:100%; --bgc:#f9f9f9; --p:24px; --radius:8px; --b:1px solid #eee; --shadow:4; --m:auto">
+            <h3 style="--mt:0; --mb:8px; --size:1.05em; --c:#333">Self-hosted. Your code stays yours.</h3>
+            <p style="--c:#555; --size:0.9em; --mb:0; --lh:1.5">
+                No SaaS. No data leaves your server. Open source under
+                <a href="https://github.com/Startr/WEB-MCPO-Repo_scanner/blob/main/LICENSE" style="--c:#0066cc">AGPL-3.0</a>.
+                Inspect every line.
+            </p>
+        </div>
+    </div>
+
+    <!-- 4. The AI Story -->
+    <div style="--bgc:#f9f9f9; --p:30px; --radius:8px; --b:1px solid #ddd; --shadow:4; --mb:50px">
+        <h3 style="--mt:0; --mb:12px; --c:#333">Your AI teammates can see what's unfinished.</h3>
+        <p style="--c:#555; --mb:24px">
+            TodoScope gives AI assistants the same awareness your team has.
+            Ask any connected assistant what is left to do — it answers from live data, not guesswork.
+        </p>
+        <ol style="--c:#333; --mb:24px; --pl:20px; --lh:1.8">
+            <li>Point your AI assistant at this server.</li>
+            <li>Give it an access key — the same way you sign in.</li>
+            <li>Ask it: <em>"What's still TODO in this project?"</em></li>
+        </ol>
+        <details style="--mt:16px">
+            <summary style="--cur:pointer; --c:#0066cc; --size:0.9em">Technical details — API endpoints and example</summary>
+            <div style="--mt:16px">
+                <h4 style="--c:#555; --size:0.9em; --mt:0; --mb:8px">Example: scan a repo via API</h4>
+                <div style="position:relative">
+                    <pre style="--bgc:#1e1e1e; --c:#d4d4d4; --p:16px; --radius:6px; --of-x:auto; --size:0.85em; --lh:1.6; --shadow-inset:4;"><code id="api-curl-example"></code></pre>
+                    <button onclick="copyCode('api-curl-example', this)" type="button"
+                            style="position:absolute; top:8px; right:8px; --bgc:#333; --c:#ccc; --b:1px solid #555; --radius:4px; --p:4px 10px; --cur:pointer; --size:0.75em">
+                        Copy
+                    </button>
+                </div>
+
+                <h4 style="--c:#555; --size:0.9em; --mt:20px; --mb:8px">Available endpoints</h4>
+                <p style="--c:#666; --size:0.85em; --mb:12px">
+                    TodoScope currently implements the Model Context Protocol (MCP).
+                    Any compatible client can discover and call these endpoints.
+                </p>
+                <div style="--of-x:auto">
+                    <table style="--w:100%; --size:0.85em; border-collapse:collapse; --lh:1.6">
+                        <thead>
+                            <tr>
+                                <th style="--ta:left; --p:8px; --bb:2px solid #ddd; --c:#333">Endpoint</th>
+                                <th style="--ta:left; --p:8px; --bb:2px solid #ddd; --c:#333">Method</th>
+                                <th style="--ta:center; --p:8px; --bb:2px solid #ddd; --c:#333">Auth</th>
+                                <th style="--ta:left; --p:8px; --bb:2px solid #ddd; --c:#333">Purpose</th>
+                            </tr>
+                        </thead>
+                        <tbody style="--c:#555">
+                            <tr>
+                                <td style="--p:8px; --bb:1px solid #eee"><code data-api-path="/api/mpco/manifest"></code></td>
+                                <td style="--p:8px; --bb:1px solid #eee">GET</td>
+                                <td style="--p:8px; --bb:1px solid #eee; --ta:center">No</td>
+                                <td style="--p:8px; --bb:1px solid #eee">Service discovery</td>
+                            </tr>
+                            <tr>
+                                <td style="--p:8px; --bb:1px solid #eee"><code data-api-path="/api/mpco/openapi.json"></code></td>
+                                <td style="--p:8px; --bb:1px solid #eee">GET</td>
+                                <td style="--p:8px; --bb:1px solid #eee; --ta:center">No</td>
+                                <td style="--p:8px; --bb:1px solid #eee">OpenAPI 3.0 spec</td>
+                            </tr>
+                            <tr>
+                                <td style="--p:8px; --bb:1px solid #eee"><code data-api-path="/api/mpco/scan_repository"></code></td>
+                                <td style="--p:8px; --bb:1px solid #eee">POST</td>
+                                <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
+                                <td style="--p:8px; --bb:1px solid #eee">Scan a repo, return TODOs</td>
+                            </tr>
+                            <tr>
+                                <td style="--p:8px; --bb:1px solid #eee"><code data-api-path="/api/mpco/scan_repository_stream"></code></td>
+                                <td style="--p:8px; --bb:1px solid #eee">POST</td>
+                                <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
+                                <td style="--p:8px; --bb:1px solid #eee">Stream TODOs (NDJSON)</td>
+                            </tr>
+                            <tr>
+                                <td style="--p:8px; --bb:1px solid #eee"><code data-api-path="/api/mpco/list_repositories"></code></td>
+                                <td style="--p:8px; --bb:1px solid #eee">GET</td>
+                                <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
+                                <td style="--p:8px; --bb:1px solid #eee">List registered repos</td>
+                            </tr>
+                            <tr>
+                                <td style="--p:8px; --bb:1px solid #eee"><code data-api-path="/api/mpco/pull_repository"></code></td>
+                                <td style="--p:8px; --bb:1px solid #eee">POST</td>
+                                <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
+                                <td style="--p:8px; --bb:1px solid #eee">Pull latest for a repo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <!-- 5. Sign In -->
+    <div id="sign-in" style="--maxw:400px; --m:0 auto 40px">
+        <h3 style="--ta:center; --c:#333; --mb:20px">Sign in to your instance</h3>
+        <div style="--bgc:#f9f9f9; --p:30px; --radius:8px; --b:1px solid #ddd; --shadow:4;">
+            {% if error %}
+            <p style="--c:#c0392b; --bgc:#fdecea; --p:10px; --radius:4px; --mb:15px">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST">
+                <input type="text" name="label" id="login-label" placeholder="Label (e.g. my-laptop)"
+                       autocomplete="username"
+                       style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
+                <span style="position:relative; --d:flex; --ai:center; --mb:15px">
+                    <input type="password" name="key" id="login-key" placeholder="Your access key" autofocus required
+                           autocomplete="current-password"
+                           style="--w:100%; --p:10px; --pr:40px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
+                    <button type="button" onclick="toggleVis('login-key','login-eye')"
+                            style="position:absolute; right:10px; --bg:none; --b:none; cursor:pointer; --size:1.1em; --c:#888; --h:3ch; --line-height:0; --d:flex; --ai:center; --jc:center" title="Show/hide">
+                        <span id="login-eye">👁</span>
+                    </button>
+                </span>
+                <button type="submit"
+                        style="--bgc:#4CAF50; --c:white; --p:10px 20px; --b:none; --radius:4px; --cur:pointer; --w:100%">
+                    Sign in
+                </button>
+            </form>
+
+            <p style="--c:#888; --size:0.85em; --mt:20px; --mb:0">
+                API clients: pass <code>?key=&lt;value&gt;</code><br>
+                or Authorization: Bearer <code>&lt;key&gt;</code>.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Label auto-fill
+        const _lbl = document.getElementById('login-label');
+        if (!_lbl.value) _lbl.value = location.hostname || 'todoscope';
+
+        // Password visibility toggle
+        function toggleVis(fieldId, eyeId) {
+            const f = document.getElementById(fieldId);
+            const show = f.type === 'password';
+            f.type = show ? 'text' : 'password';
+            document.getElementById(eyeId).textContent = show ? '🙈' : '👁';
+        }
+
+        // Copy-to-clipboard
+        function copyCode(elementId, btn) {
+            navigator.clipboard.writeText(document.getElementById(elementId).textContent).then(function() {
+                btn.textContent = 'Copied';
+                setTimeout(function() { btn.textContent = 'Copy'; }, 2000);
+            });
+        }
+
+        // Dynamic API URLs (self-hosted — no hardcoded domain)
+        (function() {
+            var o = window.location.origin;
+            document.getElementById('api-curl-example').textContent =
+                'curl -X POST ' + o + '/api/mpco/scan_repository \\\n' +
+                '  -H "Content-Type: application/json" \\\n' +
+                '  -H "Authorization: Bearer YOUR_KEY" \\\n' +
+                '  -d \'{"repo_url": "https://github.com/user/repo.git"}\'';
+            document.querySelectorAll('[data-api-path]').forEach(function(el) {
+                el.textContent = o + el.dataset.apiPath;
+            });
+        })();
+    </script>
+
 {% endblock %}
