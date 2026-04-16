@@ -62,7 +62,9 @@ Requires Python 3.11+ and Git.
 git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
 cd WEB-MCPO-Repo_scanner
 pip install pipenv
-cd scanner && pipenv install && pipenv run python ../app.py
+cd scanner && pipenv install
+cd ..
+make it_run_dev
 ```
 
 Open `http://localhost:5000`. The security warning on the page walks you through setting your first access key.

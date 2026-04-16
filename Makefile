@@ -4,7 +4,7 @@
 # Conforms to: WEB-Startr.sh/templates/Makefile.base + Makefile.docker
 #
 # Quick start (no container needed):
-#   make dev_run    — start Flask dev server directly (fastest for development)
+#   make it_run_dev — start Flask dev server via Pipenv outside the container
 #
 # Container workflow:
 #   make it_build   — build container image
@@ -51,7 +51,7 @@ endef
 
 .PHONY: help show_vars setup \
         it_build it_build_no_cache it_build_n_run \
-        it_run it_run_ghcr it_run_local \
+	it_run it_run_ghcr it_run_local it_run_dev \
         it_stop it_logs it_clean it_gone \
         install_hooks uninstall_hooks \
         dev_run run_tunnel \
@@ -164,6 +164,12 @@ it_run_local:
 	@$(MAKE) it_run EXTRA_VOLUMES="-v $(PROJECTS_DIR):/mnt/projects $(EXTRA_VOLUMES)"
 	@echo "Projects mounted at /mnt/projects (from $(PROJECTS_DIR))"
 
+it_run_dev:
+	@echo "Starting Flask development server via Pipenv outside the container..."
+	@cd scanner && \
+	FLASK_APP=../app.py FLASK_ENV=development \
+	pipenv run flask run --host=0.0.0.0 --port=5000 --debug $(DEV_ARGS)
+
 it_stop:
 	$(CONTAINER_RUNTIME) rm -f $(CONTAINER)
 
@@ -182,10 +188,7 @@ it_gone:
 	@echo "Container $(CONTAINER) has been removed."
 
 # --- Development Targets ---
-dev_run:
-	@echo "Starting Flask development server..."
-	@FLASK_APP=app.py FLASK_ENV=development \
-	flask run --host=0.0.0.0 --port=5000 --debug $(DEV_ARGS)
+dev_run: it_run_dev
 
 run_tunnel:
 	$(call ensure-executable,tools/run_with_cloudflared.sh)

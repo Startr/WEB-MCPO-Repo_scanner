@@ -47,6 +47,9 @@
                             {% if repo.source == 'local' %}
                             <span style="--bgc:#e8f5e9; --c:#2e7d32; --p:2px 6px; --radius:3px; --size:0.75em; --ml:6px">local</span>
                             {% endif %}
+                            {% if repo.code_dev_url %}
+                            <a href="{{ repo.code_dev_url }}" target="_blank" rel="noopener noreferrer" style="--c:#0066cc; --size:0.8em; --ml:8px; --td:none">code.dev ↗</a>
+                            {% endif %}
                         </td>
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.last_modified_str }}</td>
                         <td style="--p:8px; --bb:1px solid #ddd; --ta:center">

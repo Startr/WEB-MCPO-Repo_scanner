@@ -271,6 +271,17 @@ def get_repo_origin_url(repo_path):
         raise GitOperationError(f"Timeout getting origin URL for {repo_path}", 
                                git_command="git config", original_exception=e)
 
+def get_repo_branch(repo_path):
+    """Get the current branch name of a git repository. Returns 'HEAD' on failure."""
+    try:
+        result = subprocess.run(
+            ['git', '-C', repo_path, 'rev-parse', '--abbrev-ref', 'HEAD'],
+            capture_output=True, text=True, check=True, timeout=10
+        )
+        return result.stdout.strip() or 'HEAD'
+    except Exception:
+        return 'HEAD'
+
 @with_error_handling("pull_repository", "repository_manager", RetryConfig(max_attempts=2))
 def pull_repository(repo_path):
     """Pull the latest changes from the remote repository."""
@@ -458,6 +469,10 @@ def list_local_repositories():
     repos = []
     seen_names = set()
 
+    def _code_dev_url(origin_url):
+        m = re.match(r'.*github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?$', origin_url or "")
+        return f"https://vscode.dev/github/{m.group(1)}/{m.group(2)}" if m else None
+
     # 1. Registered local repos (name->path mapping, paths stay server-side)
     for name, path in load_local_repos().items():
         try:
@@ -469,6 +484,7 @@ def list_local_repositories():
                     'last_modified': last_modified,
                     'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                     'origin_url': origin_url or "",
+                    'code_dev_url': _code_dev_url(origin_url),
                     'source': 'local'
                 })
                 seen_names.add(name)
@@ -497,6 +513,7 @@ def list_local_repositories():
                         'last_modified': last_modified,
                         'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                         'origin_url': origin_url or "",
+                        'code_dev_url': _code_dev_url(origin_url),
                         'source': 'cloned'
                     })
             except Exception as e:
@@ -745,7 +762,8 @@ def stream_data(repo_url):
                 exclusions = load_exclusions(existing_path)
 
                 # Send repo metadata and TODO.md immediately — no waiting
-                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
+                branch = get_repo_branch(existing_path)
+                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch})}\n\n"
                 todo_md_files = find_todo_files(existing_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
                     yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
@@ -763,7 +781,8 @@ def stream_data(repo_url):
                 origin_url = get_repo_origin_url(repo_path) or repo_url
                 exclusions = load_exclusions(repo_path)
 
-                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
+                branch = get_repo_branch(repo_path)
+                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch})}\n\n"
                 todo_md_files = find_todo_files(repo_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
                     yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
