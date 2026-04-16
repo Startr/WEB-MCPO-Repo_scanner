@@ -1,0 +1,7 @@
+path,reason
+build,Generated output — not meaningful for TODO scanning
+dist,Build artifacts
+vendor,Third-party dependencies (Go)
+docs/generated,Auto-generated API docs
+.terraform,Terraform state and provider caches
+coverage,Test coverage reports

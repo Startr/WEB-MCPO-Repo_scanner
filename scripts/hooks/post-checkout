@@ -1,0 +1,14 @@
+#!/bin/bash
+# Git post-checkout hook for repo_scanner
+# Runs on branch checkouts only (not file checkouts).
+#
+# Installation:  make install_hooks
+# Removal:       make uninstall_hooks
+#
+# Parameters: $1=previous HEAD  $2=new HEAD  $3=flag (1=branch checkout)
+
+if [ "$3" = "1" ]; then
+    if [ ! -f .git/hooks/post-checkout ] || [ ! -x .git/hooks/post-checkout ]; then
+        echo "Note: run 'make install_hooks' to activate git hooks for this project."
+    fi
+fi

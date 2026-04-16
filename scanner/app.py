@@ -10,6 +10,7 @@ from datetime import datetime
 from functools import wraps
 import hashlib
 import csv
+import fnmatch
 
 # Import our robust error handling system - now import directly since we're in the scanner package
 from .error_handling import (
@@ -91,6 +92,46 @@ def save_local_repos(repos):
     """Persist the name->path mapping."""
     with open(LOCAL_REPOS_CONFIG, 'w') as f:
         json.dump(repos, f, indent=2)
+
+def load_exclusions(repo_path):
+    """Read .todoscope-exclude.csv from the repo root.
+    Returns list of dicts: [{'path': str, 'reason': str}, ...]
+    Missing or unreadable file silently returns [].
+    """
+    if not repo_path:
+        return []
+    csv_path = os.path.join(repo_path, '.todoscope-exclude.csv')
+    if not os.path.exists(csv_path):
+        return []
+    exclusions = []
+    try:
+        with open(csv_path, newline='', encoding='utf-8') as f:
+            for row in csv.DictReader(f):
+                p = (row.get('path') or '').strip()
+                r = (row.get('reason') or '').strip()
+                if p:
+                    exclusions.append({'path': p, 'reason': r})
+    except Exception as e:
+        app.logger.warning(f"Could not read .todoscope-exclude.csv in {repo_path}: {e}")
+    return exclusions
+
+
+def is_excluded(rel_path, exclusions):
+    """Return the first matching exclusion dict, or None.
+    Prefix match handles directory subtrees; fnmatch handles glob patterns.
+    Paths are normalised to forward-slash for cross-platform consistency.
+    """
+    if not exclusions:
+        return None
+    norm = rel_path.replace(os.sep, '/')
+    for exc in exclusions:
+        pat = exc['path'].replace(os.sep, '/')
+        if norm == pat or norm.startswith(pat + '/'):
+            return exc
+        if fnmatch.fnmatch(norm, pat):
+            return exc
+    return None
+
 
 def resolve_repo_path(name):
     """Resolve a repo display name to its filesystem path.
@@ -465,21 +506,25 @@ def list_local_repositories():
     return repos
 
 @with_error_handling("find_todos", "file_processor")
-def find_todos(repo_path):
-    """Find TODO comments in all text files in the repository."""
+def find_todos(repo_path, exclusions=None, skipped=None):
+    """Find TODO comments in all text files in the repository.
+
+    exclusions: list of {'path', 'reason'} dicts from load_exclusions()
+    skipped: optional mutable list; matched paths are appended as {'path', 'reason'}
+    """
     if not repo_path:
         raise ValidationError("Repository path cannot be empty", field="repo_path")
-    
+
     if not os.path.isdir(repo_path):
         raise FileSystemError(f"Repository path does not exist: {repo_path}", path=repo_path)
-    
+
     # Expanded pattern to match more comment styles and annotation types
     # This includes TODO, FIXME, BUG, and NOTE in various comment formats
     todo_pattern = re.compile(
-        r'(?:#+|//|/\*|<!--|;)\s*(?:TODO|FIXME|BUG|NOTE)(?:\s*:|(?:\s+))', 
+        r'(?:#+|//|/\*|<!--|;)\s*(?:TODO|FIXME|BUG|NOTE)(?:\s*:|(?:\s+))',
         re.IGNORECASE
     )
-    
+
     # Directories to skip entirely (version control, IDE/editor state, dependency caches)
     SKIP_DIRS = {'.git', '.obsidian', 'node_modules', '__pycache__', '.venv', 'venv'}
     # Files handled separately by find_todo_files() — don't scan for inline comments
@@ -491,25 +536,33 @@ def find_todos(repo_path):
     with error_context("find_todos", "file_processor", repo_path=repo_path):
         for root, dirs, files in os.walk(repo_path):
             # Prune noisy directories so os.walk never descends into them,
-            # and skip the managed-repos directory to avoid scanning cloned repos.
+            # skip the managed-repos directory, and honour .todoscope-exclude.csv.
             dirs[:] = [
                 d for d in dirs
                 if d not in SKIP_DIRS
                 and os.path.commonpath([os.path.realpath(os.path.join(root, d)), _base_repo_real]) != _base_repo_real
+                and not is_excluded(os.path.relpath(os.path.join(root, d), repo_path), exclusions)
             ]
             for file in files:
                 if file.lower() in SKIP_FILES:
                     continue
-                    
+
                 file_path = os.path.join(root, file)
                 rel_path = os.path.relpath(file_path, repo_path)
-                
+
+                # Honour .todoscope-exclude.csv exclusions
+                exc = is_excluded(rel_path, exclusions)
+                if exc:
+                    if skipped is not None:
+                        skipped.append({'path': rel_path, 'reason': exc['reason']})
+                    continue
+
                 try:
                     # Skip files that are ignored by git
                     if is_git_ignored(repo_path, file_path):
                         app.logger.debug(f"Skipping git-ignored file: {rel_path}")
                         continue
-                        
+
                     if not is_text_file(file_path):
                         continue
                         
@@ -534,23 +587,37 @@ def find_todos(repo_path):
                     raise ProcessingError(f"Error processing file {rel_path}", original_exception=e)
 
 @with_error_handling("find_todo_files", "file_processor")
-def find_todo_files(repo_path):
+def find_todo_files(repo_path, exclusions=None, skipped=None):
     """Find standalone TODO.md/TODO.txt files in the repository.
     Returns list of dicts: [{'file_path': str, 'content': str|None}, ...]
     Distinct from find_todos() which scans inline code comments.
+
+    exclusions: list of {'path', 'reason'} dicts from load_exclusions()
+    skipped: optional mutable list; matched paths are appended as {'path', 'reason'}
     """
     if not repo_path or not os.path.isdir(repo_path):
         return []
     TODO_FILENAMES = {'todo.md', 'todo.txt'}
     results = []
+    _base_repo_real = os.path.realpath(BASE_REPO_PATH)
     with error_context("find_todo_files", "file_processor", repo_path=repo_path):
         for root, dirs, files in os.walk(repo_path):
-            # Prune .git directories from traversal
-            dirs[:] = [d for d in dirs if not d.startswith('.git')]
+            # Prune .git dirs, the managed-repos directory, and .todoscope-exclude.csv entries.
+            dirs[:] = [
+                d for d in dirs
+                if not d.startswith('.git')
+                and os.path.commonpath([os.path.realpath(os.path.join(root, d)), _base_repo_real]) != _base_repo_real
+                and not is_excluded(os.path.relpath(os.path.join(root, d), repo_path), exclusions)
+            ]
             for filename in files:
                 if filename.lower() in TODO_FILENAMES:
                     file_path = os.path.join(root, filename)
                     rel_path = os.path.relpath(file_path, repo_path)
+                    exc = is_excluded(rel_path, exclusions)
+                    if exc:
+                        if skipped is not None:
+                            skipped.append({'path': rel_path, 'reason': exc['reason']})
+                        continue
                     try:
                         with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                             content = f.read()
@@ -668,28 +735,36 @@ def stream_data(repo_url):
             # show TODO.md instantly while the heavier operations run after
             existing_path = resolve_repo_path(repo_url)
 
+            skipped = []
+
             if existing_path:
                 repo_name = os.path.basename(os.path.normpath(existing_path))
                 origin_url = get_repo_origin_url(existing_path) or repo_url
 
+                # Load exclusions before the first scan so the fast TODO.md pass is filtered too
+                exclusions = load_exclusions(existing_path)
+
                 # Send repo metadata and TODO.md immediately — no waiting
                 yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
-                todo_md_files = find_todo_files(existing_path)
+                todo_md_files = find_todo_files(existing_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
                     yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
 
                 # Now pull/refresh in the background (user already sees TODO.md)
                 yield f"data: {json.dumps({'type': 'status', 'message': 'Updating repository...'})}\n\n"
                 repo_path = clone_repository(repo_url, shallow=shallow)
+                # Reload exclusions in case the pull updated .todoscope-exclude.csv
+                exclusions = load_exclusions(repo_path)
             else:
                 # New repo — must clone first
                 yield f"data: {json.dumps({'type': 'status', 'message': 'Cloning repository...'})}\n\n"
                 repo_path = clone_repository(repo_url, shallow=shallow)
                 repo_name = os.path.basename(repo_path)
                 origin_url = get_repo_origin_url(repo_path) or repo_url
+                exclusions = load_exclusions(repo_path)
 
                 yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url})}\n\n"
-                todo_md_files = find_todo_files(repo_path)
+                todo_md_files = find_todo_files(repo_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
                     yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
 
@@ -697,9 +772,13 @@ def stream_data(repo_url):
 
             # Stream each TODO as it's found
             todo_count = 0
-            for todo in find_todos(repo_path):
+            for todo in find_todos(repo_path, exclusions=exclusions, skipped=skipped):
                 todo_count += 1
                 yield f"data: {json.dumps({'type': 'todo', 'todo': todo.to_dict(), 'count': todo_count})}\n\n"
+
+            # Report excluded paths before completion so the client can render them
+            if skipped:
+                yield f"data: {json.dumps({'type': 'excluded', 'items': skipped})}\n\n"
 
             # Send completion event with repo_name for fingerprint polling
             # Tell the client whether this is a local or cloned repo (for refresh behavior)
@@ -1122,7 +1201,9 @@ def api_scan_repository():
 
     try:
         repo_path = clone_repository(repo_url, shallow=shallow)
-        todos = list(find_todos(repo_path))
+        exclusions = load_exclusions(repo_path)
+        skipped = []
+        todos = list(find_todos(repo_path, exclusions=exclusions, skipped=skipped))
         repo_name = os.path.basename(repo_path)
 
         # Convert TodoItem objects to dictionaries
@@ -1139,10 +1220,11 @@ def api_scan_repository():
             "repo_name": repo_name,
             "todo_count": len(todos),
             "todos": todo_dicts,
-            "todo_md_files": find_todo_files(repo_path),
+            "todo_md_files": find_todo_files(repo_path, exclusions=exclusions),
+            "excluded": skipped,
             "web_url": f"{web_base_url}/scan/{repo_url}"
         }
-        
+
     except Exception as e:
         app.logger.error(f"Error in API scan: {str(e)}")
         raise
@@ -1223,6 +1305,8 @@ def api_scan_repository_stream():
             repo_name = os.path.basename(repo_path)
             origin_url = get_repo_origin_url(repo_path) or repo_url
             web_base_url = get_full_origin_url()
+            exclusions = load_exclusions(repo_path)
+            skipped = []
 
             # Send initial metadata
             yield json.dumps({
@@ -1234,7 +1318,7 @@ def api_scan_repository_stream():
             }) + "\n"
 
             # Send standalone TODO.md/TODO.txt files before code comments
-            todo_md_files = find_todo_files(repo_path)
+            todo_md_files = find_todo_files(repo_path, exclusions=exclusions, skipped=skipped)
             if todo_md_files:
                 yield json.dumps({
                     "type": "todo_md_files",
@@ -1246,7 +1330,7 @@ def api_scan_repository_stream():
             todo_count = 0
 
             # Stream each TODO as it's found
-            for todo in find_todos(repo_path):
+            for todo in find_todos(repo_path, exclusions=exclusions, skipped=skipped):
                 todo_count += 1
                 yield json.dumps({
                     "type": "todo",
@@ -1254,7 +1338,15 @@ def api_scan_repository_stream():
                     "todo": todo.to_dict(),
                     "count": todo_count
                 }) + "\n"
-            
+
+            # Report excluded paths before completion
+            if skipped:
+                yield json.dumps({
+                    "type": "excluded",
+                    "status": "success",
+                    "items": skipped
+                }) + "\n"
+
             # Send completion event
             yield json.dumps({
                 "type": "complete",

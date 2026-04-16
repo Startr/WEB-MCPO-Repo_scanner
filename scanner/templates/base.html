@@ -8,12 +8,12 @@
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/hyperscript.org@0.9.91"></script>
-    <title>{% block title %}TodoScope — See every TODO across your repos{% endblock %}</title>
+    <title>{% block title %}🔭 TodoScope — See every TODO across your repos{% endblock %}</title>
     {% block head_extra %}{% endblock %}
 </head>
-<body style="--ff:Arial, sans-serif; --maxw:800px; --m:0 auto; --p:20px; --lh:1.6">
+<body style="--ff:Arial, sans-serif; --maxw:80rem; --m:0 auto; --p:20px; --lh:1.6">
     <h1 style="--c:#333; --bb:1px solid #ddd; --pb:10px; --d:flex; --jc:space-between; --ai:baseline">
-        <a href="/">TodoScope</a>
+        <a href="/">🔭 TodoScope</a>
         {% if session.get('authed_key') %}
         <a href="{{ url_for('logout') }}" style="--size:0.55em; --c:#888; --td:none; --weight:normal">Sign out</a>
         {% endif %}

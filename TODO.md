@@ -16,7 +16,6 @@ The current login page is a cold password prompt with zero context. Turn it into
   - [x] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
   - [x] Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold
   - [x] Move the sign-in form into a right-hand card or section below the hero — secondary action, not primary
-  - [ ] Have Sign in hid
   - [ ] Add "New to TodoScope?" copy with a link to the README / GitHub for evaluators who aren't signing in
   - [ ] Add social proof / cross-links to [sage.is](https://sage.is) and [startr.style](https://startr.style)
   - [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`) so shared links render properly

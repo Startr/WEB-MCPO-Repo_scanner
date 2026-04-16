@@ -1,0 +1,6 @@
+path,reason
+scanner/repositories,Managed clone directory — recursing here would scan sub-repos not part of this project
+scanner/__pycache__,Python bytecode cache
+scanner/tests,Test files
+docs,Documentation files
+__pycache__,Root-level Python bytecode cache

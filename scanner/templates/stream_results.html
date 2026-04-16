@@ -53,7 +53,7 @@
     <div class="summary" style="--bgc:#f0f8ff; --p:15px; --radius:5px; --mb:20px; --shadow:6">
         <h2 style="--c:#333" id="repo-name">Repository: Loading...</h2>
         <p id="repo-url">URL: {{ repo_url }}</p>
-        <p id="todo-count">Scanning for TODOs...</p>
+        <p id="todo-count"><span id="todo-md-summary" style="display:none"></span><a href="#todos-container" id="inline-count-link" style="--c:#0066cc; --td:none">Scanning for TODOs...</a></p>
     </div>
     
     <div id="loading" class="loading">
@@ -66,6 +66,15 @@
         <div id="todo-md-files"></div>
     </div>
     
+    <div id="excluded-container" style="display:none; --mt:20px">
+        <details style="--bgc:#fff8e1; --p:15px; --radius:5px; --b:1px solid #f0c040">
+            <summary style="--cur:pointer; --weight:bold; --c:#7a5c00">
+                <span id="excluded-count">0</span> path(s) excluded from scan — click to see why
+            </summary>
+            <div id="excluded-list" style="--mt:10px"></div>
+        </details>
+    </div>
+
     <h2 class="section-title">TODO Comments in Code</h2>
     <div id="todos-container"></div>
     
@@ -96,6 +105,8 @@
             const todoCountEl = document.getElementById('todo-count');
             const loadingEl = document.getElementById('loading');
             const noResultsEl = document.getElementById('no-results');
+            const todoMdSummaryEl = document.getElementById('todo-md-summary');
+            const inlineCountLinkEl = document.getElementById('inline-count-link');
             
             // Initially hide the TODO.md files section
             todoMdFilesContainer.style.display = 'none';
@@ -200,18 +211,21 @@
                         loadingEl.style.display = 'none';
                         const todoEl = createTodoElement(data.todo);
                         todosContainer.appendChild(todoEl);
-                        todoCountEl.textContent = `Found ${data.count} TODO items so far...`;
+                        inlineCountLinkEl.textContent = `Found ${data.count} TODO items so far...`;
                         break;
                         
                     case 'todo_md_files':
                         // Show TODO.md files, update spinner to reflect progress
                         loadingEl.querySelector('span').textContent = 'Scanning code for inline TODOs...';
                         todoMdFilesContainer.style.display = 'block';
-                        
-                        // Add TODO.md files to the page
+
+                        // Add TODO.md files to the page and surface count in the summary
                         if (data.files && data.files.length > 0) {
+                            const mdCount = data.files.length;
+                            todoMdSummaryEl.textContent = `${mdCount} TODO.md file${mdCount !== 1 ? 's' : ''} found · `;
+                            todoMdSummaryEl.style.display = '';
                             const countText = document.createElement('p');
-                            countText.textContent = `The repository contains ${data.files.length} TODO.md file(s):`;
+                            countText.textContent = `The repository contains ${mdCount} TODO.md file(s):`;
                             todoMdFiles.appendChild(countText);
                             
                             data.files.forEach(mdFile => {
@@ -221,13 +235,30 @@
                         }
                         break;
                         
+                    case 'excluded':
+                        if (data.items && data.items.length > 0) {
+                            document.getElementById('excluded-count').textContent = data.items.length;
+                            document.getElementById('excluded-container').style.display = 'block';
+                            const excList = document.getElementById('excluded-list');
+                            data.items.forEach(item => {
+                                const row = document.createElement('div');
+                                row.style = '--p:6px 0; --bb:1px solid #f0e080; --size:0.9em';
+                                row.innerHTML = '<code style="--c:#333">' + item.path + '</code>'
+                                    + (item.reason ? ' — <span style="--c:#666">' + item.reason + '</span>' : '');
+                                excList.appendChild(row);
+                            });
+                        }
+                        break;
+
                     case 'complete':
                         // Mark the scan as complete
                         loadingEl.style.display = 'none';
                         if (data.count === 0) {
                             noResultsEl.style.display = 'block';
+                            inlineCountLinkEl.textContent = 'No inline TODO items found';
+                        } else {
+                            inlineCountLinkEl.textContent = `Found ${data.count} TODO items ↓`;
                         }
-                        todoCountEl.textContent = `Found ${data.count} TODO items`;
                         evtSource.close();
                         // Show rescan bar and start watching for repo changes
                         document.getElementById('rescan-bar').style.display = 'flex';

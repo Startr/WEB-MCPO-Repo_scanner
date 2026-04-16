@@ -1,85 +1,99 @@
 # =============================================================================
-# TodoScope CI/CD Framework
+# repo_scanner — Startr.Cloud
 # =============================================================================
-# Provider-agnostic build and deployment system.
-# Runs on: Linux, macOS, Windows (WSL)
-# Requires: make, bash, git, container runtime (podman or docker)
+# Conforms to: WEB-Startr.sh/templates/Makefile.base + Makefile.docker
 #
-# Quick start:
+# Quick start (no container needed):
+#   make dev_run    — start Flask dev server directly (fastest for development)
+#
+# Container workflow:
 #   make it_build   — build container image
 #   make it_run     — run the container
-#   make dev_run    — start Flask dev server locally
+#   make it_run_local — run with PROJECTS_DIR mounted at /mnt/projects
 #   make deploy     — deploy to CapRover
 #   make help       — list all targets
 # =============================================================================
 
-# Load environment variables from .env if it exists
-ifneq (,$(wildcard ./.env))
-    include .env
-    export
-endif
+# --- Standard .env loading (Makefile.base) ---
+-include .env
 
+# --- Standard variable block (Makefile.base — do not alter names) ---
+PROJECTPATH := $(shell git rev-parse --show-toplevel)
+PROJECT := $(shell echo $$(basename $(PROJECTPATH)) | tr '[:upper:]' '[:lower:]')
+FULL_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
+BRANCH := $(shell echo $(FULL_BRANCH) | sed 's/.*\///' | tr '[:upper:]' '[:lower:]')
+TAG := $(shell git describe --always --tag)
+REMOTE_URL := $(shell git config --get remote.origin.url 2>/dev/null || echo "unknown/unknown")
+OWNER := $(shell echo $(REMOTE_URL) | sed -E 's|.*[:/]([^/]+)/[^/]+(.git)?$$|\1|')
+PROJECT_NAME := $(shell echo $(REMOTE_URL) | sed -E 's|.*[:/][^/]+/([^/]+)(.git)?$$|\1|' | sed 's/\.git$$//')
+CONTAINER := $(PROJECT)-$(BRANCH)
+
+# --- Docker extension variables (Makefile.docker) ---
 SHELL := /bin/bash
-
-# Auto-detect container runtime (prefer podman, fall back to docker)
 CONTAINER_RUNTIME ?= $(shell command -v podman 2>/dev/null || echo docker)
+IMAGE_NAME      ?= $(shell echo $(OWNER)/$(PROJECT_NAME) | tr '[:upper:]' '[:lower:]')
+GHCR_IMAGE_NAME ?= ghcr.io/$(shell echo $(OWNER)/$(PROJECT_NAME) | tr '[:upper:]' '[:lower:]')
+IMAGE_TAG       := $(if $(TAG),$(TAG),latest)
+PORT_MAPPING    ?= 5000:5000
+SECRET_KEY      ?= $(shell python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || echo "changeme")
 
-# Derive org/repo from git remote (e.g. git@github.com:Startr/WEB-MCPO-Repo_scanner.git → startr/web-mcpo-repo_scanner)
-GIT_REPO_SLUG := $(shell git remote get-url origin 2>/dev/null | sed -E 's|\.git$$||; s|.*[:/]([^/]+/[^/]+)$$|\1|' | tr '[:upper:]' '[:lower:]')
-
-IMAGE_NAME      ?= $(GIT_REPO_SLUG)
-GHCR_IMAGE_NAME ?= ghcr.io/$(GIT_REPO_SLUG)
-GIT_TAG         := $(shell git tag --sort=-v:refname | sed 's/^v//' | head -n 1)
-IMAGE_TAG       := $(if $(GIT_TAG),$(GIT_TAG),latest)
-GIT_BRANCH      := $(shell git rev-parse --abbrev-ref HEAD)
-ifeq ($(GIT_BRANCH),HEAD)
-    GIT_BRANCH  := $(shell git describe --tags --exact-match 2>/dev/null || git rev-parse --short HEAD)
-endif
-SAFE_GIT_BRANCH := $(subst /,-,$(GIT_BRANCH))
-SAFE_GIT_BRANCH := $(shell echo $(SAFE_GIT_BRANCH) | tr '[:upper:]' '[:lower:]')
-CONTAINER_NAME  ?= $(shell echo $(GIT_REPO_SLUG) | tr '/' '-')
-
-PORT_MAPPING ?= 5000:5000
-SECRET_KEY   ?= $(shell python3 -c "import secrets; print(secrets.token_hex(32))" 2>/dev/null || echo "changeme")
-
-# Guard macro: prints a helpful error if a required tool is missing
-define require_tool
-	@if [ -z "$($(1))" ]; then \
-		echo "Error: $(2) not found in PATH."; \
-		exit 1; \
-	fi
-endef
+# Project-specific variables
+PROJECTS_DIR    ?= $(HOME)/Documents/Projects/GitHub
+EXTRA_VOLUMES   ?=
+DOCKER_ARGS     ?=
+DEV_ARGS        ?=
+TEST_ARGS       ?=
 
 # Ensure a script is executable before running it
 define ensure-executable
 	@if [ ! -x $(1) ]; then chmod +x $(1); fi
 endef
 
-.PHONY: help \
+.PHONY: help show_vars setup \
         it_build it_build_no_cache it_build_n_run \
-        it_run it_run_ghcr it_stop it_logs it_clean it_gone \
+        it_run it_run_ghcr it_run_local \
+        it_stop it_logs it_clean it_gone \
+        install_hooks uninstall_hooks \
         dev_run run_tunnel \
         sync_todos \
         test test-error test-unit test-coverage test-verbose \
         deploy default-deploy \
-        require_gitflow_next minor_release patch_release major_release \
+        require_gitflow_next patch_release minor_release major_release \
         hotfix release_finish hotfix_finish \
-        things_clean
+        release things_clean
 
+# --- Info Targets ---
 help:
-	@echo "======================================================="
-	@echo "  $(IMAGE_NAME) — TodoScope by Startr.Cloud"
-	@echo ""
-	@echo "Usage examples:"
-	@echo "  1) Build:      make it_build"
-	@echo "  2) Run:        make it_run"
-	@echo "  3) Dev:        make dev_run"
+	@echo "================================================"
+	@echo "       $(OWNER)/$(PROJECT_NAME) by Startr.Cloud"
+	@echo "================================================"
 	@echo ""
 	@echo "Available make commands:"
 	@echo ""
 	@LC_ALL=C $(MAKE) -pRrq -f $(firstword $(MAKEFILE_LIST)) : 2>/dev/null \
 		| awk -v RS= -F: '/(^|\n)# Files(\n|$$)/,/(^|\n)# Finished Make data base/ {if ($$1 !~ "^[#.]") {print $$1}}' \
 		| sort | grep -E -v -e '^[^[:alnum:]]' -e '^$$@$$'
+	@echo ""
+
+show_vars:
+	@echo "=== Standard Variables (Makefile.base) ==="
+	@echo "PROJECTPATH=$(PROJECTPATH)"
+	@echo "PROJECT=$(PROJECT)"
+	@echo "OWNER=$(OWNER)"
+	@echo "PROJECT_NAME=$(PROJECT_NAME)"
+	@echo "FULL_BRANCH=$(FULL_BRANCH)"
+	@echo "BRANCH=$(BRANCH)"
+	@echo "TAG=$(TAG)"
+	@echo "CONTAINER=$(CONTAINER)"
+	@echo ""
+	@echo "=== Docker Extension Variables (Makefile.docker) ==="
+	@echo "CONTAINER_RUNTIME=$(CONTAINER_RUNTIME)"
+	@echo "IMAGE_NAME=$(IMAGE_NAME)"
+	@echo "GHCR_IMAGE_NAME=$(GHCR_IMAGE_NAME)"
+	@echo "IMAGE_TAG=$(IMAGE_TAG)"
+	@echo "PORT_MAPPING=$(PORT_MAPPING)"
+	@echo "PROJECTS_DIR=$(PROJECTS_DIR)"
+	@echo "EXTRA_VOLUMES=$(EXTRA_VOLUMES)"
 	@echo ""
 
 # --- Build Targets ---
@@ -89,8 +103,8 @@ it_build:
 	$(CONTAINER_RUNTIME) build --load \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) \
 		-t $(IMAGE_NAME):latest \
-		-t $(IMAGE_NAME):$(IMAGE_TAG)-$(SAFE_GIT_BRANCH) \
-		-t $(IMAGE_NAME):$(SAFE_GIT_BRANCH) \
+		-t $(IMAGE_NAME):$(IMAGE_TAG)-$(BRANCH) \
+		-t $(IMAGE_NAME):$(BRANCH) \
 		.
 	@afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true
 	@echo ""
@@ -101,8 +115,8 @@ it_build_no_cache:
 	$(CONTAINER_RUNTIME) build --no-cache --load \
 		-t $(IMAGE_NAME):$(IMAGE_TAG) \
 		-t $(IMAGE_NAME):latest \
-		-t $(IMAGE_NAME):$(IMAGE_TAG)-$(SAFE_GIT_BRANCH) \
-		-t $(IMAGE_NAME):$(SAFE_GIT_BRANCH) \
+		-t $(IMAGE_NAME):$(IMAGE_TAG)-$(BRANCH) \
+		-t $(IMAGE_NAME):$(BRANCH) \
 		.
 	@afplay /System/Library/Sounds/Glass.aiff 2>/dev/null || true
 	@echo ""
@@ -111,62 +125,50 @@ it_build_n_run: it_build
 	@$(MAKE) it_run
 
 # --- Run Targets ---
-# Path to your local projects folder — override in .env or on the CLI
-PROJECTS_DIR ?= $(HOME)/Documents/Projects/GitHub
-DOCKER_ARGS  ?=
-
 it_run:
 	@mkdir -p scanner/repositories
 	@test -f scanner/access_keys.csv || touch scanner/access_keys.csv
-	@$(CONTAINER_RUNTIME) stop $(CONTAINER_NAME) >/dev/null 2>&1 || true
-	@$(CONTAINER_RUNTIME) rm   $(CONTAINER_NAME) >/dev/null 2>&1 || true
+	@$(CONTAINER_RUNTIME) stop $(CONTAINER) >/dev/null 2>&1 || true
+	@$(CONTAINER_RUNTIME) rm   $(CONTAINER) >/dev/null 2>&1 || true
 	$(CONTAINER_RUNTIME) run -d \
 		-p $(PORT_MAPPING) \
-		--name $(CONTAINER_NAME) \
+		--name $(CONTAINER) \
 		--restart unless-stopped \
 		-v "$(PWD)/scanner/repositories:/app/scanner/repositories" \
 		-v "$(PWD)/scanner/access_keys.csv:/app/scanner/access_keys.csv" \
 		-e SECRET_KEY="$(SECRET_KEY)" \
+		$(EXTRA_VOLUMES) \
 		$(DOCKER_ARGS) \
 		$(IMAGE_NAME):$(IMAGE_TAG)
-	@echo "Container '$(CONTAINER_NAME)' started on port $(PORT_MAPPING)."
+	@echo "Container '$(CONTAINER)' started on port $(PORT_MAPPING)."
+	@echo "Tip: set EXTRA_VOLUMES in .env to mount additional local repos"
 
 it_run_ghcr:
-	$(CONTAINER_RUNTIME) run -d \
-		-p $(PORT_MAPPING) \
-		--name $(CONTAINER_NAME) \
-		--restart unless-stopped \
-		-v "$(PWD)/scanner/repositories:/app/scanner/repositories" \
-		-v "$(PWD)/scanner/access_keys.csv:/app/scanner/access_keys.csv" \
-		-e SECRET_KEY="$(SECRET_KEY)" \
-		$(GHCR_IMAGE_NAME):$(IMAGE_TAG)
-
-# Like it_run but also mounts PROJECTS_DIR so local repos are accessible
-# without cloning. Register them inside the app from /mnt/projects/<name>.
-# Override PROJECTS_DIR in .env or: make it_run_local PROJECTS_DIR=~/code
-it_run_local:
 	@mkdir -p scanner/repositories
 	@test -f scanner/access_keys.csv || touch scanner/access_keys.csv
-	@$(CONTAINER_RUNTIME) stop $(CONTAINER_NAME) >/dev/null 2>&1 || true
-	@$(CONTAINER_RUNTIME) rm   $(CONTAINER_NAME) >/dev/null 2>&1 || true
+	@$(CONTAINER_RUNTIME) stop $(CONTAINER) >/dev/null 2>&1 || true
+	@$(CONTAINER_RUNTIME) rm   $(CONTAINER) >/dev/null 2>&1 || true
 	$(CONTAINER_RUNTIME) run -d \
 		-p $(PORT_MAPPING) \
-		--name $(CONTAINER_NAME) \
+		--name $(CONTAINER) \
 		--restart unless-stopped \
 		-v "$(PWD)/scanner/repositories:/app/scanner/repositories" \
 		-v "$(PWD)/scanner/access_keys.csv:/app/scanner/access_keys.csv" \
-		-v "$(PROJECTS_DIR):/mnt/projects" \
 		-e SECRET_KEY="$(SECRET_KEY)" \
-		$(DOCKER_ARGS) \
-		$(IMAGE_NAME):$(IMAGE_TAG)
-	@echo "Container '$(CONTAINER_NAME)' started on port $(PORT_MAPPING)."
+		$(EXTRA_VOLUMES) \
+		$(GHCR_IMAGE_NAME):$(IMAGE_TAG)
+
+# Mount PROJECTS_DIR at /mnt/projects — then register repos inside the app.
+# Override PROJECTS_DIR in .env or: make it_run_local PROJECTS_DIR=~/code
+it_run_local:
+	@$(MAKE) it_run EXTRA_VOLUMES="-v $(PROJECTS_DIR):/mnt/projects $(EXTRA_VOLUMES)"
 	@echo "Projects mounted at /mnt/projects (from $(PROJECTS_DIR))"
 
 it_stop:
-	$(CONTAINER_RUNTIME) rm -f $(CONTAINER_NAME)
+	$(CONTAINER_RUNTIME) rm -f $(CONTAINER)
 
 it_logs:
-	$(CONTAINER_RUNTIME) logs -f $(CONTAINER_NAME)
+	$(CONTAINER_RUNTIME) logs -f $(CONTAINER)
 
 it_clean:
 	$(CONTAINER_RUNTIME) system prune -f
@@ -174,14 +176,12 @@ it_clean:
 	@echo ""
 
 it_gone:
-	@echo "Forcefully stopping and removing $(CONTAINER_NAME)..."
-	$(CONTAINER_RUNTIME) stop $(CONTAINER_NAME) || true
-	$(CONTAINER_RUNTIME) rm -f $(CONTAINER_NAME) || true
-	@echo "Container $(CONTAINER_NAME) has been removed."
+	@echo "Forcefully stopping and removing $(CONTAINER)..."
+	$(CONTAINER_RUNTIME) stop $(CONTAINER) || true
+	$(CONTAINER_RUNTIME) rm -f $(CONTAINER) || true
+	@echo "Container $(CONTAINER) has been removed."
 
 # --- Development Targets ---
-DEV_ARGS ?=
-
 dev_run:
 	@echo "Starting Flask development server..."
 	@FLASK_APP=app.py FLASK_ENV=development \
@@ -191,9 +191,38 @@ run_tunnel:
 	$(call ensure-executable,tools/run_with_cloudflared.sh)
 	@tools/run_with_cloudflared.sh
 
-# --- Test Targets ---
-TEST_ARGS ?=
+# --- Setup Targets ---
+setup:
+	@echo "Setting up local development environment..."
+	@if [ ! -f .env ]; then \
+		printf 'PORT_MAPPING=5000:5000\n' > .env; \
+		printf 'SECRET_KEY=changeme\n' >> .env; \
+		printf 'PROJECTS_DIR=$(HOME)/Documents/Projects/GitHub\n' >> .env; \
+		printf '# EXTRA_VOLUMES=-v /path/to/repos:/mnt/repos\n' >> .env; \
+		echo ".env created — edit it to customize your environment."; \
+	else \
+		echo ".env already exists — skipping."; \
+	fi
 
+install_hooks:
+	@if [ ! -d scripts/hooks ]; then echo "ERROR: scripts/hooks not found"; exit 1; fi
+	@for hook in scripts/hooks/*; do \
+		if [ -f "$$hook" ]; then \
+			hook_name=$$(basename "$$hook"); \
+			cp "$$hook" ".git/hooks/$$hook_name" && chmod +x ".git/hooks/$$hook_name"; \
+			echo "Installed: $$hook_name"; \
+		fi; \
+	done
+
+uninstall_hooks:
+	@for hook in scripts/hooks/*; do \
+		if [ -f "$$hook" ]; then \
+			hook_name=$$(basename "$$hook"); \
+			rm -f ".git/hooks/$$hook_name" && echo "Removed: $$hook_name"; \
+		fi; \
+	done
+
+# --- Test Targets ---
 test:
 	@echo "Running tests with args: $(TEST_ARGS)"
 	$(call ensure-executable,tools/run_tests.sh)
@@ -248,11 +277,11 @@ require_gitflow_next:
 		exit 1; \
 	fi
 
-minor_release: require_gitflow_next
-	git flow release start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2+1".0"}')
-
 patch_release: require_gitflow_next
 	git flow release start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2"."$$3+1}')
+
+minor_release: require_gitflow_next
+	git flow release start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2+1".0"}')
 
 major_release: require_gitflow_next
 	git flow release start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1+1".0.0"}')
@@ -265,6 +294,9 @@ release_finish: require_gitflow_next
 
 hotfix_finish: require_gitflow_next
 	git flow hotfix finish && git push origin develop && git push origin master && git push --tags && git checkout develop
+
+release:
+	@scripts/release.sh
 
 things_clean:
 	git clean --exclude=!.env -Xdf
