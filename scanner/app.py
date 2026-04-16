@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, Response, stream_with_context
+from flask import Flask, render_template, request, redirect, url_for, jsonify, flash, Response, stream_with_context, session
 import os
 import subprocess
 import re
@@ -47,8 +47,7 @@ def _is_authenticated():
     keys = load_access_keys()
     if not keys:
         return True  # No keys file → open access
-    from flask import session as _session
-    if _session.get('authed_key') in keys:
+    if session.get('authed_key') in keys:
         return True
     if request.args.get('key') in keys:
         return True
@@ -110,28 +109,6 @@ def resolve_repo_path(name):
         return cloned_path
     return None
 
-# Register recovery strategies for different error types
-def git_recovery_strategy(error: ScannerError):
-    """Recovery strategy for git operation failures"""
-    if isinstance(error, GitOperationError):
-        app.logger.info(f"Attempting git recovery for {error.error_id}")
-        # Could implement strategies like:
-        # - Retry with different credentials
-        # - Fall back to different git methods
-        # - Clean up corrupted repositories
-
-def network_recovery_strategy(error: ScannerError):
-    """Recovery strategy for network failures"""
-    if isinstance(error, NetworkError):
-        app.logger.info(f"Attempting network recovery for {error.error_id}")
-        # Could implement strategies like:
-        # - Switch to backup servers
-        # - Adjust timeout settings
-        # - Use different network protocols
-
-app.error_handler.register_recovery_strategy(ErrorCategory.GIT_OPERATION, git_recovery_strategy)
-app.error_handler.register_recovery_strategy(ErrorCategory.NETWORK, network_recovery_strategy)
-
 # Flask error handlers for different error types
 @app.errorhandler(ScannerError)
 def handle_scanner_error(error: ScannerError):
@@ -150,7 +127,7 @@ def handle_scanner_error(error: ScannerError):
         return render_template('index.html', 
                              error=error.user_message,
                              error_id=error.error_id,
-                             local_repos=safe_list_local_repositories()), 500
+                             local_repos=list_local_repositories()), 500
 
 @app.errorhandler(500)
 def handle_internal_error(error):
@@ -432,11 +409,6 @@ def is_text_file(file_path):
     except Exception as e:
         raise ProcessingError(f"Error checking file type: {file_path}", original_exception=e)
 
-@safe_operation(default_return=[], log_errors=True)
-def safe_list_local_repositories():
-    """Safe wrapper for list_local_repositories that won't crash the app"""
-    return list_local_repositories()
-
 @with_error_handling("list_repositories", "repository_manager")
 def list_local_repositories():
     """List all repositories: registered local repos + cloned repos.
@@ -590,19 +562,17 @@ def find_todo_files(repo_path):
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    from flask import session as _session
     if request.method == 'POST':
         key = request.form.get('key', '').strip()
         if key in load_access_keys():
-            _session['authed_key'] = key
+            session['authed_key'] = key
             return redirect(request.args.get('next') or url_for('index'))
         return render_template('login.html', error='Invalid key.', auth_enabled=_auth_enabled())
     return render_template('login.html', error=None, auth_enabled=_auth_enabled())
 
 @app.route('/logout')
 def logout():
-    from flask import session as _session
-    _session.pop('authed_key', None)
+    session.pop('authed_key', None)
     return redirect(url_for('login'))
 
 @app.route('/', methods=['GET', 'POST'])
@@ -612,7 +582,7 @@ def index():
         if not repo_url:
             return render_template('index.html', error="Repository URL is required")
         shallow = '1' if request.form.get('shallow') == 'on' else ''
-        return redirect(url_for('scan_repo', repo_url=repo_url, shallow=shallow))
+        return redirect(url_for('scan_stream', repo_url=repo_url, shallow=shallow))
     
     # Get list of local repositories to display
     local_repos = list_local_repositories()
@@ -639,8 +609,7 @@ def setup_add_key():
         if write_header:
             writer.writerow(['key', 'label'])
         writer.writerow([key, label])
-    from flask import session as _session
-    _session['authed_key'] = key
+    session['authed_key'] = key
     return redirect(url_for('index'))
 
 @app.route('/add_local', methods=['POST'])
@@ -650,18 +619,16 @@ def add_local_repo():
     """
     local_path = request.form.get('local_path', '').strip()
     display_name = request.form.get('display_name', '').strip()
+    local_repos = list_local_repositories()
 
     if not local_path:
-        return render_template('index.html', error="Path is required",
-                             local_repos=list_local_repositories())
+        return render_template('index.html', error="Path is required", local_repos=local_repos)
 
     if not os.path.isdir(local_path):
-        return render_template('index.html', error="Path does not exist on this machine",
-                             local_repos=list_local_repositories())
+        return render_template('index.html', error="Path does not exist on this machine", local_repos=local_repos)
 
     if not is_valid_git_repo(local_path):
-        return render_template('index.html', error="Path is not a git repository",
-                             local_repos=list_local_repositories())
+        return render_template('index.html', error="Path is not a git repository", local_repos=local_repos)
 
     # Default display name to directory basename
     if not display_name:
@@ -685,27 +652,8 @@ def remove_local_repo(repo_name):
 
 @app.route('/scan/<path:repo_url>')
 def scan_repo(repo_url):
-    """Scan a repository for TODOs."""
-    try:
-        shallow = request.args.get('shallow') == '1'
-        repo_path = clone_repository(repo_url, shallow=shallow)
-        todos = list(find_todos(repo_path))
-        todo_md_files = find_todo_files(repo_path)
-        repo_name = os.path.basename(repo_path)
-
-        # Get the repository's origin URL
-        origin_url = get_repo_origin_url(repo_path) or repo_url
-
-        return render_template('results.html',
-                              repo_url=origin_url,
-                              repo_name=repo_name,
-                              todos=todos,
-                              count=len(todos),
-                              todo_md_files=todo_md_files)
-    
-    except Exception as e:
-        app.logger.error(f"Error scanning repository: {e}")
-        return render_template('index.html', error=f"Error scanning repository: {str(e)}")
+    """Redirect legacy /scan/ URLs to the streaming view."""
+    return redirect(url_for('scan_stream', repo_url=repo_url, shallow=request.args.get('shallow', '')))
 
 @app.route('/stream_data/<path:repo_url>')
 def stream_data(repo_url):
@@ -824,20 +772,16 @@ def pull_repo(repo_name):
         if not repo_path:
             return render_template('index.html', error=f"Repository not found: {repo_name}",
                                  local_repos=list_local_repositories())
-        
-        # Pull the latest changes
         result = pull_repository(repo_path)
-        
         if result["success"]:
-            flash_message = f"Successfully pulled latest changes: {result.get('details', '')}"
-            return redirect(url_for('scan_repo', repo_url=repo_name))
-        else:
-            error_message = f"Failed to pull latest changes: {result.get('details', '')}"
-            return render_template('index.html', error=error_message, local_repos=list_local_repositories())
-        
+            return redirect(url_for('scan_stream', repo_url=repo_name))
+        return render_template('index.html',
+                               error=f"Failed to pull latest changes: {result.get('details', '')}",
+                               local_repos=list_local_repositories())
     except Exception as e:
         app.logger.error(f"Error pulling repository: {e}")
-        return render_template('index.html', error=f"Error pulling repository: {str(e)}", local_repos=list_local_repositories())
+        return render_template('index.html', error=f"Error pulling repository: {str(e)}",
+                               local_repos=list_local_repositories())
 
 @app.template_filter('highlight_todo')
 def highlight_todo(text):

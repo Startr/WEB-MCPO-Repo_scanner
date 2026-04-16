@@ -12,10 +12,11 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 The current login page is a cold password prompt with zero context. Turn it into a proper landing page.
 
 - [ ] **Promote login.html into a real landing page**: hero, pitch, features, sign-in #brand #landing #critical
-  - [ ] Add brand hero: headline, subhead (use the one-line pitch verbatim), and a short "what it is" paragraph
-  - [ ] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
-  - [ ] Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold
-  - [ ] Move the sign-in form into a right-hand card or section below the hero — secondary action, not primary
+  - [x] Add brand hero: headline, subhead (use the one-line pitch verbatim), and a short "what it is" paragraph
+  - [x] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
+  - [x] Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold
+  - [x] Move the sign-in form into a right-hand card or section below the hero — secondary action, not primary
+  - [ ] Have Sign in hid
   - [ ] Add "New to TodoScope?" copy with a link to the README / GitHub for evaluators who aren't signing in
   - [ ] Add social proof / cross-links to [sage.is](https://sage.is) and [startr.style](https://startr.style)
   - [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`) so shared links render properly
@@ -125,6 +126,9 @@ A new user's first 60 seconds decides whether they come back.
     - [ ] Scan TODO files located in the project root directory. #discovery
     - [ ] Extend scanning to TODO files within subdirectories. #discovery
     - [ ] Display content from identified TODO files. #rendering #ux
+
+## Tech Debt
+- [ ] **Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Replace with server-rendered Jinja2 partials + SSE that push HTML fragments, or at minimum extract shared styles into named constants. #frontend #dry
 
 ## Low Priority
 - [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover. #deployment #caprover

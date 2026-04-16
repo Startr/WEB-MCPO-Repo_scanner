@@ -1,4 +1,3 @@
-<!-- templates/index.html -->
 {% extends "base.html" %}
 
 {% block title %}TodoScope — Dashboard{% endblock %}
@@ -6,22 +5,21 @@
 {% block content %}
     <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
         <h2>Enter Repository URL</h2>
-        <input type="text" name="repo_url" placeholder="https://github.com/username/repository.git" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
-        <div style="--d:flex; --ai:center">
-            <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer; --mr:10px">Scan Repository</button>
-            <a href="#" id="stream-link" style="--c:#0066cc; --td:none">Use streaming scan (see results in real-time)</a>
+        <input type="text" name="repo_url" placeholder="https://github.com/username/repository.git" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
+        <div style="--d:flex; --ai:center; gap:12px">
+            <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer">Scan Repository</button>
+            <label style="--d:flex; --ai:center; --c:#555; --size:0.9em">
+                <input type="checkbox" name="shallow" style="--mr:6px">
+                Shallow clone (faster, fetches only latest commit)
+            </label>
         </div>
-        <label style="--d:flex; --ai:center; --mt:10px; --c:#555; --size:0.9em">
-            <input type="checkbox" name="shallow" style="--mr:6px">
-            Shallow clone (faster, fetches only latest commit)
-        </label>
     </form>
-    
+
     <details style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
         <summary style="--cur:pointer; --weight:bold">Add Local Repository</summary>
         <form method="POST" action="{{ url_for('add_local_repo') }}" style="--mt:10px">
-            <input type="text" name="local_path" placeholder="/path/to/your/repo" required style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
-            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)" style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --bxs:border-box">
+            <input type="text" name="local_path" placeholder="/path/to/your/repo" required style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
+            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)" style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
             <button type="submit" style="--bgc:#007bff; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">Register</button>
             <span style="--c:#888; --size:0.85em; --ml:10px">Path stays on this machine — never sent to the browser.</span>
         </form>
@@ -69,26 +67,4 @@
         <hr style="--d:block; --h:3rem; --m:-3rem 0 1rem; --bt:none; --bb: 1px solid #ddd; --bg:linear-gradient(to top, rgba(249, 249, 249, 1) 0%, rgba(249, 249, 249, 0) 100%); --pos:relative; --z:1;">
     </div>
     {% endif %}
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const form = document.querySelector('form');
-            const input = document.querySelector('input[name="repo_url"]');
-            const streamLink = document.getElementById('stream-link');
-            
-            // Update the stream link when the repo URL changes
-            function updateStreamLink() {
-                const repoUrl = input.value.trim();
-                if (repoUrl) {
-                    streamLink.href = `/scan_stream/${encodeURIComponent(repoUrl)}`;
-                } else {
-                    streamLink.href = "#";
-                }
-            }
-            
-            input.addEventListener('input', updateStreamLink);
-            updateStreamLink();
-        });
-    </script>
 {% endblock %}
-

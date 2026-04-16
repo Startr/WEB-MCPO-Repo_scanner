@@ -1,4 +1,3 @@
-<!-- templates/base.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +7,7 @@
     <link rel="stylesheet" href="https://startr.style/style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔭</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hyperscript.org@0.9.91"></script>
     <title>{% block title %}TodoScope — See every TODO across your repos{% endblock %}</title>
     {% block head_extra %}{% endblock %}
 </head>
@@ -40,14 +40,29 @@
         {% if setup_error %}
         <p style="--c:#c0392b; --mb:10px; --size:0.9em">{{ setup_error }}</p>
         {% endif %}
-        <form method="POST" action="{{ url_for('setup_add_key') }}" id="setup-key-form" style="--d:flex; gap:8px; --ai:flex-end; --fw:wrap">
+        <form method="POST" action="{{ url_for('setup_add_key') }}" style="--d:flex; gap:8px; --ai:flex-end; --fw:wrap"
+              _="on submit
+                 if #setup-key.value is not #setup-key-confirm.value
+                   halt the event
+                   alert('Keys do not match — please try again.')
+                 end">
             <label style="--d:flex; --fd:column; gap:4px; --size:0.85em; --c:#555">
                 Access key
                 <span style="position:relative; --d:flex; --ai:center">
                     <input type="password" name="key" id="setup-key" placeholder="Long random string" required
                            autocomplete="new-password"
-                           style="--p:8px; --pr:36px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --w:240px">
-                    <button type="button" onclick="toggleVis('setup-key','setup-key-confirm','eye1')"
+                           style="--p:8px; --pr:36px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --w:240px">
+                    <button type="button"
+                            _="on click
+                               if #setup-key.type is 'password'
+                                 set #setup-key.type to 'text'
+                                 set #setup-key-confirm.type to 'text'
+                                 put '🙈' into #eye1.textContent
+                               else
+                                 set #setup-key.type to 'password'
+                                 set #setup-key-confirm.type to 'password'
+                                 put '👁' into #eye1.textContent
+                               end"
                             style="position:absolute; right:6px; background:none; border:none; cursor:pointer; --size:1.1em; --c:#888" title="Show/hide">
                         <span id="eye1">👁</span>
                     </button>
@@ -57,31 +72,18 @@
                 Confirm key
                 <input type="password" name="key_confirm" id="setup-key-confirm" placeholder="Repeat key" required
                        autocomplete="new-password"
-                       style="--p:8px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --w:200px">
+                       style="--p:8px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --w:200px">
             </label>
             <label style="--d:flex; --fd:column; gap:4px; --size:0.85em; --c:#555">
                 Label
                 <input type="text" name="label" placeholder="e.g. my-laptop"
                        autocomplete="username"
-                       style="--p:8px; --b:1px solid #ddd; --shadow-inset:4;; --radius:4px; --w:140px">
+                       style="--p:8px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --w:140px">
             </label>
             <button type="submit" style="--bgc:#f9a825; --c:#333; --p:8px 16px; --b:none; --radius:4px; --cur:pointer; --weight:bold">
                 Save key &amp; lock
             </button>
         </form>
-        <script>
-            function toggleVis(...ids) {
-                const eye = document.getElementById(ids.pop());
-                const show = ids.some(id => document.getElementById(id).type === 'password');
-                ids.forEach(id => document.getElementById(id).type = show ? 'text' : 'password');
-                eye.textContent = show ? '🙈' : '👁';
-            }
-            document.getElementById('setup-key-form').addEventListener('submit', function(e) {
-                const k = document.getElementById('setup-key').value;
-                const c = document.getElementById('setup-key-confirm').value;
-                if (k !== c) { e.preventDefault(); alert('Keys do not match — please try again.'); }
-            });
-        </script>
     </details>
     {% endif %}
 
