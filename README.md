@@ -7,7 +7,7 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-7C3AED)](https://modelcontextprotocol.io)
 [![GitHub stars](https://img.shields.io/github/stars/Startr/WEB-MCPO-Repo_scanner?style=social)](https://github.com/Startr/WEB-MCPO-Repo_scanner/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/Startr/WEB-MCPO-Repo_scanner)](https://github.com/Startr/WEB-MCPO-Repo_scanner/issues)
+[![TODOs](https://img.shields.io/endpoint?url=https://todoscope.sage.is/api/badge/todos/WEB-Sage.is-repo_scanner)](http://localhost:5000/scan_stream/WEB-Sage.is-repo_scanner)
 [![GitHub last commit](https://img.shields.io/github/last-commit/Startr/WEB-MCPO-Repo_scanner)](https://github.com/Startr/WEB-MCPO-Repo_scanner/commits)
 
 Every codebase has a to-do list. Most of them are a mess. TodoScope is about the gap between what teams say they'll fix and what actually gets done — and what that gap reveals about how software really gets built.

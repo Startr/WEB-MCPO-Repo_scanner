@@ -62,7 +62,7 @@ def inject_auth_status():
 
 @app.before_request
 def require_auth():
-    if request.path in _PUBLIC_ROUTES or request.path.startswith('/static'):
+    if request.path in _PUBLIC_ROUTES or request.path.startswith('/static') or request.path.startswith('/api/badge/'):
         return
     if _is_authenticated():
         return
@@ -726,6 +726,38 @@ def scan_stream(repo_url):
     """Render the streaming scan page for a repository."""
     shallow = request.args.get('shallow', '')
     return render_template('stream_results.html', repo_url=repo_url, shallow=shallow)
+
+@app.route('/api/badge/todos/<path:repo_name>')
+def badge_todos(repo_name):
+    """shields.io endpoint badge — returns live TODO count for a repo.
+    Public route (no auth required) — returns a count only, no code content.
+    Usage: https://img.shields.io/endpoint?url=https://YOUR_HOST/api/badge/todos/<repo_name>
+    """
+    repo_path = resolve_repo_path(repo_name)
+    if not repo_path:
+        return jsonify({
+            "schemaVersion": 1,
+            "label": "TODOs",
+            "message": "repo not found",
+            "color": "lightgrey"
+        })
+    try:
+        count = sum(1 for _ in find_todos(repo_path))
+        color = "brightgreen" if count == 0 else "yellow" if count < 10 else "orange" if count < 50 else "red"
+        return jsonify({
+            "schemaVersion": 1,
+            "label": "TODOs",
+            "message": str(count),
+            "color": color
+        })
+    except Exception as e:
+        app.logger.error(f"Badge scan error for {repo_name}: {e}")
+        return jsonify({
+            "schemaVersion": 1,
+            "label": "TODOs",
+            "message": "error",
+            "color": "lightgrey"
+        })
 
 @app.route('/api/repo_fingerprint/<path:repo_name>')
 def repo_fingerprint(repo_name):
