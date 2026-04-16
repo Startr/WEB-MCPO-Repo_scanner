@@ -132,7 +132,7 @@ repo_scanner/
 ├── tools/                   # Development and deployment tools
 │   ├── run_tests.sh         # Test execution script
 │   ├── run_with_cloudflared.sh # Tunnel setup
-│   └── sync_readme_todos.sh # Documentation sync
+│   └── sync_readme_todos.py # Documentation sync
 ├── Dockerfile               # Container build configuration
 ├── Makefile                 # Build and development tasks
 └── TODO.md                  # Project planning and task tracking
