@@ -58,7 +58,7 @@ endef
         sync_todos \
         test test-error test-unit test-coverage test-verbose \
         deploy default-deploy \
-        require_gitflow_next patch_release minor_release major_release \
+        require_gitflow_next first_release patch_release minor_release major_release \
         hotfix release_finish hotfix_finish \
         release things_clean
 
@@ -245,8 +245,8 @@ test-verbose:
 
 # --- Project-specific Targets ---
 sync_todos:
-	$(call ensure-executable,tools/sync_readme_todos.sh)
-	@tools/sync_readme_todos.sh
+	$(call ensure-executable,tools/sync_readme_todos.py)
+	@tools/sync_readme_todos.py
 
 # --- Deployment Targets ---
 HAS_CAPROVER       := $(shell which caprover 2>/dev/null && echo 1)
@@ -274,11 +274,30 @@ default-deploy:
 	@$(MAKE) deploy DEPLOY_FLAGS="--default"
 
 # --- Release Targets ---
+
+# Auto-detect version from release/* or hotfix/* branch name
+RELEASE_VERSION := $(shell git rev-parse --abbrev-ref HEAD | sed -n -e 's/^release\///p' -e 's/^hotfix\///p')
+
+# Clear stale git-flow merge state left over from an interrupted finish
+define clear_stale_gitflow_state
+	if [ -f .git/gitflow/state/merge.json ] && [ ! -f .git/MERGE_HEAD ]; then \
+		echo "Clearing stale git-flow merge state..."; \
+		rm -f .git/gitflow/state/merge.json; \
+	fi
+endef
+
 require_gitflow_next:
 	@if ! git flow version 2>/dev/null | grep -q 'git-flow-next'; then \
 		echo "Error: git-flow-next required. Install: brew install git-flow-next"; \
 		exit 1; \
 	fi
+
+first_release: require_gitflow_next
+	git flow release start 0.0.1
+	@echo ""
+	@echo "=== First release branch created (release/0.0.1) ==="
+	@echo "Next steps:"
+	@echo "  1. make release_finish     # Merge, tag, and push to origin"
 
 patch_release: require_gitflow_next
 	git flow release start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2"."$$3+1}')
@@ -293,10 +312,37 @@ hotfix: require_gitflow_next
 	git flow hotfix start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2"."$$3"."$$4+1}')
 
 release_finish: require_gitflow_next
-	git flow release finish && git push origin develop && git push origin master && git push --tags && git checkout develop
+	@$(clear_stale_gitflow_state)
+	@git flow release finish --no-fetch || ( \
+		echo "git-flow finish failed — completing release/$(RELEASE_VERSION) manually..."; \
+		rm -f .git/gitflow/state/merge.json; \
+		git checkout master && \
+		git merge --no-ff --no-edit release/$(RELEASE_VERSION) && \
+		(git tag -a "$(RELEASE_VERSION)" -m "Release $(RELEASE_VERSION)" 2>/dev/null || echo "  Tag $(RELEASE_VERSION) already exists") && \
+		git checkout develop && \
+		git merge --no-ff --no-edit master && \
+		git branch -d release/$(RELEASE_VERSION) \
+	)
+	@git push origin develop && git push origin master && git push --tags
+	@git checkout develop
+	@echo ""
+	@echo "=== Release $(RELEASE_VERSION) complete ==="
 
 hotfix_finish: require_gitflow_next
-	git flow hotfix finish && git push origin develop && git push origin master && git push --tags && git checkout develop
+	@$(clear_stale_gitflow_state)
+	@git flow hotfix finish --no-fetch || ( \
+		echo "git-flow hotfix finish failed — completing manually..."; \
+		rm -f .git/gitflow/state/merge.json; \
+		HOTFIX_VER=$$(git rev-parse --abbrev-ref HEAD | sed 's/^hotfix\///'); \
+		git checkout master && \
+		git merge --no-ff --no-edit hotfix/$$HOTFIX_VER && \
+		(git tag -a "$$HOTFIX_VER" -m "Hotfix $$HOTFIX_VER" 2>/dev/null || echo "  Tag $$HOTFIX_VER already exists") && \
+		git checkout develop && \
+		git merge --no-ff --no-edit master && \
+		git branch -d hotfix/$$HOTFIX_VER \
+	)
+	@git push origin develop && git push origin master && git push --tags
+	@git checkout develop
 
 release:
 	@scripts/release.sh
