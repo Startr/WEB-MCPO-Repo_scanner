@@ -801,16 +801,17 @@ def stream_data(repo_url):
             if skipped:
                 yield f"data: {json.dumps({'type': 'excluded', 'items': skipped})}\n\n"
 
-            # Send completion event with repo_name for fingerprint polling
-            # Tell the client whether this is a local or cloned repo (for refresh behavior)
-            source = 'local' if repo_url in load_local_repos() else 'cloned'
-            yield f"data: {json.dumps({'type': 'complete', 'count': todo_count, 'repo_name': repo_name, 'source': source})}\n\n"
-
-            # Generate KANBAN.canvas — the board is a view of the code
+            # Generate KANBAN.canvas — the board is a view of the code.
+            # Emitted before 'complete' because the client closes the stream on complete.
             from .kanban import build_kanban, write_canvas
             canvas = build_kanban(todo_md_files, todos_collected)
             write_canvas(repo_path, canvas)
             yield f"data: {json.dumps({'type': 'kanban', 'canvas': canvas})}\n\n"
+
+            # Send completion event with repo_name for fingerprint polling
+            # Tell the client whether this is a local or cloned repo (for refresh behavior)
+            source = 'local' if repo_url in load_local_repos() else 'cloned'
+            yield f"data: {json.dumps({'type': 'complete', 'count': todo_count, 'repo_name': repo_name, 'source': source})}\n\n"
 
         except Exception as e:
             app.logger.error(f"Error streaming scan: {str(e)}")
@@ -1383,6 +1384,17 @@ def api_scan_repository_stream():
                     "items": skipped
                 }) + "\n"
 
+            # Generate KANBAN.canvas — the board is a view of the code.
+            # Emitted before 'complete' so clients that close on complete still receive it.
+            from .kanban import build_kanban, write_canvas
+            canvas = build_kanban(todo_md_files, todos_collected)
+            write_canvas(repo_path, canvas)
+            yield json.dumps({
+                "type": "kanban",
+                "status": "success",
+                "canvas": canvas
+            }) + "\n"
+
             # Send completion event
             yield json.dumps({
                 "type": "complete",
@@ -1393,16 +1405,6 @@ def api_scan_repository_stream():
                 "web_url": f"{web_base_url}/scan/{repo_url}"
             }) + "\n"
 
-            # Generate KANBAN.canvas — the board is a view of the code
-            from .kanban import build_kanban, write_canvas
-            canvas = build_kanban(todo_md_files, todos_collected)
-            write_canvas(repo_path, canvas)
-            yield json.dumps({
-                "type": "kanban",
-                "status": "success",
-                "canvas": canvas
-            }) + "\n"
-            
         except Exception as e:
             app.logger.error(f"Error in streaming API scan: {str(e)}")
             error_message = str(e)

@@ -46,6 +46,77 @@
         margin-bottom: 15px;
         color: #333;
     }
+
+    /* --- Kanban Board --- */
+    .kanban-board {
+        display: flex;
+        gap: 16px;
+        overflow-x: auto;
+        padding: 16px 0;
+        min-height: 200px;
+    }
+    .kanban-column {
+        flex: 0 0 260px;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: #f4f5f7;
+        border: 1px solid #ddd;
+    }
+    .kanban-column-header {
+        font-weight: bold;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        padding: 4px 8px;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .kanban-column-count {
+        font-weight: normal;
+        font-size: 0.85em;
+        opacity: 0.7;
+    }
+    .kanban-card {
+        background: #fff;
+        border-radius: 6px;
+        padding: 10px 12px;
+        border: 1px solid #e0e0e0;
+        font-size: 0.85em;
+        line-height: 1.4;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+        overflow: hidden;
+        word-break: break-word;
+    }
+    .kanban-card p { margin: 0 0 4px 0; }
+    .kanban-card ul { margin: 2px 0; padding-left: 18px; }
+    .kanban-card li { font-size: 0.92em; }
+    .kanban-card code {
+        font-size: 0.82em;
+        background: #f0f0f0;
+        padding: 1px 4px;
+        border-radius: 3px;
+        color: #555;
+    }
+    /* Color themes for column headers — mapped from JSON Canvas presets */
+    .kanban-col-1 .kanban-column-header { background: #ffcdd2; color: #b71c1c; }  /* red */
+    .kanban-col-2 .kanban-column-header { background: #ffe0b2; color: #e65100; }  /* orange */
+    .kanban-col-3 .kanban-column-header { background: #fff9c4; color: #f57f17; }  /* yellow */
+    .kanban-col-4 .kanban-column-header { background: #c8e6c9; color: #1b5e20; }  /* green */
+    .kanban-col-5 .kanban-column-header { background: #b2ebf2; color: #006064; }  /* cyan */
+    .kanban-col-6 .kanban-column-header { background: #e1bee7; color: #4a148c; }  /* purple */
+    .kanban-col-none .kanban-column-header { background: #e0e0e0; color: #333; }  /* default */
+
+    .kanban-col-1 { border-color: #ef9a9a; }
+    .kanban-col-2 { border-color: #ffcc80; }
+    .kanban-col-3 { border-color: #fff176; }
+    .kanban-col-4 { border-color: #a5d6a7; }
+    .kanban-col-5 { border-color: #80deea; }
+    .kanban-col-6 { border-color: #ce93d8; }
 </style>
 {% endblock %}
 
@@ -61,6 +132,11 @@
         <span>Scanning repository files...</span>
     </div>
     
+    <div id="kanban-container" style="display:none">
+        <h2 class="section-title">Kanban Board</h2>
+        <div id="kanban-board" class="kanban-board"></div>
+    </div>
+
     <div id="todo-md-files-container">
         <h2 class="section-title">TODO.md Files Found</h2>
         <div id="todo-md-files"></div>
@@ -206,6 +282,55 @@
                 return text.replace(/(#+\s*TODO|\/\/\s*TODO|TODO:)/gi, '<span class="highlight">$1</span>');
             }
             
+            // Render a JSON Canvas 1.0 object as a visual kanban board
+            function renderKanban(canvas) {
+                const board = document.getElementById('kanban-board');
+                const container = document.getElementById('kanban-container');
+                if (!canvas || !canvas.nodes) return;
+
+                // Separate groups (columns) from text (cards)
+                const groups = canvas.nodes.filter(n => n.type === 'group');
+                const cards  = canvas.nodes.filter(n => n.type === 'text');
+
+                // Sort columns left-to-right by x position
+                groups.sort((a, b) => a.x - b.x);
+
+                // Assign each card to the column whose x-range contains it
+                function cardsInGroup(g) {
+                    return cards
+                        .filter(c => c.x >= g.x && c.x < g.x + g.width)
+                        .sort((a, b) => a.y - b.y);
+                }
+
+                board.innerHTML = '';
+
+                groups.forEach(g => {
+                    const colCards = cardsInGroup(g);
+                    const colorClass = g.color ? `kanban-col-${g.color}` : 'kanban-col-none';
+
+                    const colEl = document.createElement('div');
+                    colEl.className = `kanban-column ${colorClass}`;
+
+                    // Column header with count badge
+                    const header = document.createElement('div');
+                    header.className = 'kanban-column-header';
+                    header.innerHTML = `${g.label || 'Untitled'} <span class="kanban-column-count">${colCards.length}</span>`;
+                    colEl.appendChild(header);
+
+                    // Render each card's markdown text
+                    colCards.forEach(c => {
+                        const cardEl = document.createElement('div');
+                        cardEl.className = 'kanban-card';
+                        cardEl.innerHTML = parseMd(c.text || '');
+                        colEl.appendChild(cardEl);
+                    });
+
+                    board.appendChild(colEl);
+                });
+
+                container.style.display = 'block';
+            }
+
             // Connect to the event stream
             const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url, shallow=shallow) }}");
             
@@ -296,6 +421,11 @@
                         if (data.repo_name) { watchForChanges(data.repo_name, data.source); }
                         break;
                         
+                    case 'kanban':
+                        // Render the JSON Canvas as a visual kanban board
+                        renderKanban(data.canvas);
+                        break;
+
                     case 'error':
                         // Display error message
                         loadingEl.style.display = 'none';
