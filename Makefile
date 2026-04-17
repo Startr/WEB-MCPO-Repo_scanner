@@ -248,6 +248,10 @@ sync_todos:
 	$(call ensure-executable,tools/sync_readme_todos.py)
 	@tools/sync_readme_todos.py
 
+kanban:
+	@echo "Generating KANBAN.canvas..."
+	@cd scanner && PYTHONPATH=$(PROJECTPATH) pipenv run python -m scanner.kanban $(PROJECTPATH)
+
 # --- Deployment Targets ---
 HAS_CAPROVER       := $(shell which caprover 2>/dev/null && echo 1)
 HAS_CAPROVER_LOGIN := $(shell caprover ls 2>/dev/null | grep -q "Logged in" && echo 1)

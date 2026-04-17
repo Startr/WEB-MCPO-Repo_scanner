@@ -15,9 +15,9 @@
               "state": {
                 "file": "KANBAN.canvas",
                 "viewState": {
-                  "x": 0,
-                  "y": 0,
-                  "zoom": 0
+                  "x": 780.3812369979265,
+                  "y": 1394.6093055882957,
+                  "zoom": -0.37380704809083215
                 }
               },
               "icon": "lucide-layout-dashboard",
@@ -186,9 +186,10 @@
       "bases:Create new base": false
     }
   },
-  "active": "59698cc8adb355f5",
+  "active": "5b8c3590fbe87067",
   "lastOpenFiles": [
     "TODO.md",
-    "KANBAN.canvas"
+    "KANBAN.canvas",
+    "scanner/kanban.py"
   ]
 }

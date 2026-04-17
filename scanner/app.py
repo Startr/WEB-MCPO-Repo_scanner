@@ -789,10 +789,12 @@ def stream_data(repo_url):
 
             yield f"data: {json.dumps({'type': 'status', 'message': 'Scanning code for inline TODOs...'})}\n\n"
 
-            # Stream each TODO as it's found
+            # Stream each TODO as it's found, collecting them for kanban generation
             todo_count = 0
+            todos_collected = []
             for todo in find_todos(repo_path, exclusions=exclusions, skipped=skipped):
                 todo_count += 1
+                todos_collected.append(todo)
                 yield f"data: {json.dumps({'type': 'todo', 'todo': todo.to_dict(), 'count': todo_count})}\n\n"
 
             # Report excluded paths before completion so the client can render them
@@ -803,6 +805,12 @@ def stream_data(repo_url):
             # Tell the client whether this is a local or cloned repo (for refresh behavior)
             source = 'local' if repo_url in load_local_repos() else 'cloned'
             yield f"data: {json.dumps({'type': 'complete', 'count': todo_count, 'repo_name': repo_name, 'source': source})}\n\n"
+
+            # Generate KANBAN.canvas — the board is a view of the code
+            from .kanban import build_kanban, write_canvas
+            canvas = build_kanban(todo_md_files, todos_collected)
+            write_canvas(repo_path, canvas)
+            yield f"data: {json.dumps({'type': 'kanban', 'canvas': canvas})}\n\n"
 
         except Exception as e:
             app.logger.error(f"Error streaming scan: {str(e)}")
@@ -1234,14 +1242,22 @@ def api_scan_repository():
         # Get full server origin URL for web links
         web_base_url = get_full_origin_url()
 
+        todo_md_files = find_todo_files(repo_path, exclusions=exclusions)
+
+        # Generate KANBAN.canvas — the board is a view of the code
+        from .kanban import build_kanban, write_canvas
+        canvas = build_kanban(todo_md_files, todos)
+        write_canvas(repo_path, canvas)
+
         return {
             "repo_url": origin_url,
             "repo_name": repo_name,
             "todo_count": len(todos),
             "todos": todo_dicts,
-            "todo_md_files": find_todo_files(repo_path, exclusions=exclusions),
+            "todo_md_files": todo_md_files,
             "excluded": skipped,
-            "web_url": f"{web_base_url}/scan/{repo_url}"
+            "web_url": f"{web_base_url}/scan/{repo_url}",
+            "kanban_canvas": canvas
         }
 
     except Exception as e:
@@ -1345,12 +1361,13 @@ def api_scan_repository_stream():
                     "files": todo_md_files
                 }) + "\n"
 
-            # Counter for todos
+            # Stream each TODO as it's found, collecting for kanban generation
             todo_count = 0
+            todos_collected = []
 
-            # Stream each TODO as it's found
             for todo in find_todos(repo_path, exclusions=exclusions, skipped=skipped):
                 todo_count += 1
+                todos_collected.append(todo)
                 yield json.dumps({
                     "type": "todo",
                     "status": "success",
@@ -1374,6 +1391,16 @@ def api_scan_repository_stream():
                 "repo_name": repo_name,
                 "repo_url": origin_url,
                 "web_url": f"{web_base_url}/scan/{repo_url}"
+            }) + "\n"
+
+            # Generate KANBAN.canvas — the board is a view of the code
+            from .kanban import build_kanban, write_canvas
+            canvas = build_kanban(todo_md_files, todos_collected)
+            write_canvas(repo_path, canvas)
+            yield json.dumps({
+                "type": "kanban",
+                "status": "success",
+                "canvas": canvas
             }) + "\n"
             
         except Exception as e:
