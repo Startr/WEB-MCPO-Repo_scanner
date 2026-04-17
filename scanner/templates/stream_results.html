@@ -127,6 +127,26 @@
         <p id="todo-count"><span id="todo-md-summary" style="display:none"></span><a href="#todos-container" id="inline-count-link" style="--c:#0066cc; --td:none">Scanning for TODOs...</a></p>
     </div>
     
+    <details id="kanban-guide" style="--bgc:#f9f9f9; --p:12px 16px; --radius:5px; --b:1px solid #ddd; --mb:20px; --size:0.88em; --c:#555">
+        <summary style="--cur:pointer; --weight:bold; --c:#333">How this Kanban board works</summary>
+        <div style="--mt:10px; --lh:1.6">
+            <p style="--mb:8px">The board is generated from your code. Edit your <code>TODO.md</code> or inline comments, rescan, and the board updates.</p>
+            <table style="--w:100%; --bc:collapse; --size:0.95em; --mb:8px">
+                <thead><tr style="--ta:left; --bb:2px solid #ddd">
+                    <th style="--p:4px 8px">Column</th><th style="--p:4px 8px">How items get there</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>Backlog</strong></td><td style="--p:4px 8px"><code>## Low Priority</code> or <code>## Backlog</code> section &middot; inline <code># NOTE:</code></td></tr>
+                    <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>TODO</strong></td><td style="--p:4px 8px"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>
+                    <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>In Progress</strong></td><td style="--p:4px 8px"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>
+                    <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>Bugs</strong></td><td style="--p:4px 8px"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>
+                    <tr><td style="--p:4px 8px"><strong>Done</strong></td><td style="--p:4px 8px">Any <code>- [x]</code> checked item, or the <code>## Completed</code> section</td></tr>
+                </tbody>
+            </table>
+            <p style="--mb:0">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>
+        </div>
+    </details>
+
     <div id="loading" class="loading">
         <div class="loading-spinner"></div>
         <span>Scanning repository files...</span>

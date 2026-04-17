@@ -3,7 +3,7 @@
   "nodes": [
     {
       "color": "4",
-      "height": 790,
+      "height": 880,
       "id": "col-backlog",
       "label": "Backlog",
       "type": "group",
@@ -84,7 +84,16 @@
       "y": 690
     },
     {
-      "height": 3310,
+      "height": 80,
+      "id": "a3b6807933ffb751",
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Backlog</strong></td><td style=\"--p:4px 8px\"><code>## Low Priority</code> or <code>## Backlog</code> section &middot; inline <code># NOTE:</code></td></tr>\n`scanner/templates/stream_results.html:139`",
+      "type": "text",
+      "width": 280,
+      "x": 10,
+      "y": 780
+    },
+    {
+      "height": 3490,
       "id": "col-todo",
       "label": "TODO",
       "type": "group",
@@ -417,8 +426,26 @@
       "y": 3210
     },
     {
+      "height": 80,
+      "id": "ce786959a47bd75a",
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>TODO</strong></td><td style=\"--p:4px 8px\"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>\n`scanner/templates/stream_results.html:140`",
+      "type": "text",
+      "width": 280,
+      "x": 360,
+      "y": 3300
+    },
+    {
+      "height": 80,
+      "id": "99e8b4f85c271942",
+      "text": "<p style=\"--mb:0\">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>\n`scanner/templates/stream_results.html:146`",
+      "type": "text",
+      "width": 280,
+      "x": 360,
+      "y": 3390
+    },
+    {
       "color": "5",
-      "height": 200,
+      "height": 250,
       "id": "col-in_progress",
       "label": "In Progress",
       "type": "group",
@@ -436,6 +463,15 @@
       "y": 60
     },
     {
+      "height": 80,
+      "id": "b80309d2647b42bb",
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>In Progress</strong></td><td style=\"--p:4px 8px\"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>\n`scanner/templates/stream_results.html:141`",
+      "type": "text",
+      "width": 280,
+      "x": 710,
+      "y": 150
+    },
+    {
       "color": "1",
       "height": 200,
       "id": "col-bugs",
@@ -444,6 +480,15 @@
       "width": 300,
       "x": 1050,
       "y": 0
+    },
+    {
+      "height": 80,
+      "id": "d9f4bcb99a5bbc47",
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Bugs</strong></td><td style=\"--p:4px 8px\"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>\n`scanner/templates/stream_results.html:142`",
+      "type": "text",
+      "width": 280,
+      "x": 1060,
+      "y": 60
     },
     {
       "color": "6",

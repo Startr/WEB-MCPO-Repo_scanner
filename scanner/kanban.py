@@ -29,12 +29,20 @@ KEYWORD_RE = re.compile(r'(?:TODO|FIXME|BUG|NOTE)', re.IGNORECASE)
 
 # Map TODO.md section headers to kanban columns.
 # Matching is case-insensitive substring — "## High Priority" hits "high priority".
+# Multiple aliases per column so authors can use whatever feels natural.
 SECTION_MAP = {
+    'in progress':      'in_progress',
+    'doing':            'in_progress',
+    'wip':              'in_progress',
     'high priority':    'in_progress',
     'medium priority':  'todo',
     'low priority':     'backlog',
+    'backlog':          'backlog',
     'completed':        'done',
+    'done':             'done',
     'tech debt':        'todo',
+    'bugs':             'bugs',
+    'bug':              'bugs',
 }
 
 # Map inline comment keywords to kanban columns.
