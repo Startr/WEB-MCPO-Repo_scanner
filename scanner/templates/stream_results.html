@@ -337,11 +337,26 @@
                     header.innerHTML = `${g.label || 'Untitled'} <span class="kanban-column-count">${colCards.length}</span>`;
                     colEl.appendChild(header);
 
-                    // Render each card's markdown text
+                    // Render each card's markdown text with code.dev link
                     colCards.forEach(c => {
                         const cardEl = document.createElement('div');
                         cardEl.className = 'kanban-card';
                         cardEl.innerHTML = parseMd(c.text || '');
+
+                        // Add code.dev link for the source file
+                        if (codeDevBase && c.file_path) {
+                            const link = document.createElement('a');
+                            const lineAnchor = c.line_num ? `#L${c.line_num}` : '';
+                            link.href = `${codeDevBase}/blob/${codeDevBranch}/${c.file_path}${lineAnchor}`;
+                            link.target = '_blank';
+                            link.rel = 'noopener noreferrer';
+                            link.textContent = c.source === 'inline'
+                                ? `${c.file_path}:${c.line_num}`
+                                : c.file_path;
+                            link.style = '--c:#0066cc; --fs:0.78em; --td:none; --d:block; --mt:4px; opacity:0.8';
+                            cardEl.appendChild(link);
+                        }
+
                         colEl.appendChild(cardEl);
                     });
 
@@ -398,7 +413,7 @@
                         // Add TODO.md files to the page and surface count in the summary
                         if (data.files && data.files.length > 0) {
                             const mdCount = data.files.length;
-                            todoMdSummaryEl.textContent = `${mdCount} TODO.md file${mdCount !== 1 ? 's' : ''} found · `;
+                            todoMdSummaryEl.innerHTML = `<a href="#todo-md-files-container" style="--c:#0066cc; --td:none">${mdCount} TODO.md file${mdCount !== 1 ? 's' : ''} found</a> · `;
                             todoMdSummaryEl.style.display = '';
                             const countText = document.createElement('p');
                             countText.textContent = `The repository contains ${mdCount} TODO.md file(s):`;

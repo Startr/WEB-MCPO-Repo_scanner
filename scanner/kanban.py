@@ -284,7 +284,12 @@ def generate_canvas(cards):
                 'y': card_y,
                 'width': CARD_WIDTH,
                 'height': CARD_HEIGHT,
+                # Extra metadata for web renderers (ignored by Obsidian)
+                'file_path': card.file_path,
+                'source': card.source,
             }
+            if card.line_num:
+                card_node['line_num'] = card.line_num
             nodes.append(card_node)
 
     return {'nodes': nodes, 'edges': []}

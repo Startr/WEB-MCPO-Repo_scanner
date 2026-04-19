@@ -1,684 +1,80 @@
 {
-  "edges": [],
-  "nodes": [
-    {
-      "color": "4",
-      "height": 880,
-      "id": "col-backlog",
-      "label": "Backlog",
-      "type": "group",
-      "width": 300,
-      "x": 0,
-      "y": 0
-    },
-    {
-      "height": 80,
-      "id": "479c83b5bb78b86c",
-      "text": "**Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover.**\n`#deployment` `#caprover`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 60
-    },
-    {
-      "height": 80,
-      "id": "8a505591218c2b62",
-      "text": "**Add TodoScope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service.**\n`#deployment` `#homebrew`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 150
-    },
-    {
-      "height": 80,
-      "id": "60af347c61889652",
-      "text": "**Introduce user authentication for secure access.**\n`#security` `#auth`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 240
-    },
-    {
-      "height": 80,
-      "id": "2f5810b68fce2d26",
-      "text": "**Implement priority inference from TODO comments.**\n`#core` `#parser`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 330
-    },
-    {
-      "height": 80,
-      "id": "fd2c513c2f199eeb",
-      "text": "**Design a plugin system to extend scanner functionality.**\n`#architecture` `#extensibility`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 420
-    },
-    {
-      "height": 80,
-      "id": "1cbe6c58baf852e6",
-      "text": "**Facilitate integration with task managers (Jira, Asana, Trello).**\n`#integration` `#external`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 510
-    },
-    {
-      "height": 80,
-      "id": "c9904f4762a88036",
-      "text": "**Create a command-line interface (CLI) for versatile use.**\n`#cli` `#accessibility`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 600
-    },
-    {
-      "height": 80,
-      "id": "00c1ab354a4f2ba7",
-      "text": "**Improve visibility of scrollable local repositories list on the main page.**\n`#ux` `#frontend`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 690
-    },
-    {
-      "height": 80,
-      "id": "a3b6807933ffb751",
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Backlog</strong></td><td style=\"--p:4px 8px\"><code>## Low Priority</code> or <code>## Backlog</code> section &middot; inline <code># NOTE:</code></td></tr>\n`scanner/templates/stream_results.html:139`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 780
-    },
-    {
-      "height": 3490,
-      "id": "col-todo",
-      "label": "TODO",
-      "type": "group",
-      "width": 300,
-      "x": 350,
-      "y": 0
-    },
-    {
-      "height": 80,
-      "id": "f204ba1901df42c5",
-      "text": "****Promote login.html into a real landing page**: hero, pitch, features, sign-in**\n  - Add brand hero: headline, subhead (use the one-line pitch verbatim), and a short \"what it is\" paragraph\n  - Add a 3-bullet \"what makes it different\" strip (the inversion, MCP-native, open-source)\n  - Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold\n  - Move the sign-in form into a right-hand card or section below the hero \u2014 secondary action, not primary\n  - Add \"New to TodoScope?\" copy with a link to the README / GitHub for evaluators who aren't signing in\n  - Add social proof / cross-links to [sage.is](https://sage.is) and [startr.style](https://startr.style)\n  - Add OG meta tags (`og:title`, `og:description`, `og:image`) so shared links render properly\n`#brand` `#landing` `#critical`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 60
-    },
-    {
-      "height": 80,
-      "id": "b10e880ff028a84b",
-      "text": "****Surface the MCP / AI agent story on the landing page****\n  - Add a \"Connect your AI agent\" section showing how to point Sage / Claude / any MCP client at the instance\n  - Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json` from the landing page\n  - Include a one-paragraph framing: \"AI agents are part of your team\"\n`#brand` `#ai` `#mcp`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 150
-    },
-    {
-      "height": 80,
-      "id": "6c10d18fac8a0268",
-      "text": "****Add a dashboard header**: restate the one-line pitch in short form, orient the user**\n`#ux` `#brand`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 240
-    },
-    {
-      "height": 80,
-      "id": "25207ec22122596d",
-      "text": "****Unify repo entry**: one input that accepts a git URL *or* a local path, with smart detection**\n`#ux` `#simplify`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 330
-    },
-    {
-      "height": 80,
-      "id": "788015369e1cbe90",
-      "text": "****Empty state for Repositories**: when no repos are registered, show a friendly onboarding card with 2-3 suggested quick-start actions (scan a demo repo, register a local path, copy MCP endpoint)**\n`#ux` `#onboarding`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 420
-    },
-    {
-      "height": 80,
-      "id": "8dd0dc1270b62681",
-      "text": "****Surface MCP endpoints on the dashboard**: a small \"Connect to an AI agent\" card with copy-to-clipboard buttons for the manifest URL and a sample cURL**\n`#ai` `#mcp` `#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 510
-    },
-    {
-      "height": 80,
-      "id": "bb0d8b66e4bad577",
-      "text": "****Add search/filter to the Repositories table** (relevant as soon as the list grows past ~10)**\n`#ux` `#search`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 600
-    },
-    {
-      "height": 80,
-      "id": "b2d4bfdfdd5a23c2",
-      "text": "****Add a visible \"last scanned\" timestamp + manual refresh control** per repo row**\n`#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 690
-    },
-    {
-      "height": 80,
-      "id": "dc041a7d9bd1a938",
-      "text": "****Move the GitHub contribute banner to the footer** \u2014 it's competing with the primary action**\n`#ux` `#hierarchy`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 780
-    },
-    {
-      "height": 80,
-      "id": "c0e51db4b3149e80",
-      "text": "****Clarify the \"shallow clone\" checkbox**: tooltip or inline help explaining when to use it**\n`#ux` `#copy`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 870
-    },
-    {
-      "height": 80,
-      "id": "009b77fd62dd8be1",
-      "text": "****Create a dedicated `/connect` or `/mcp` page** with step-by-step instructions to wire TodoScope into Sage, Claude Desktop, and generic MCP clients**\n`#mcp` `#docs`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 960
-    },
-    {
-      "height": 80,
-      "id": "9c75c2bbe97f036d",
-      "text": "****Add a \"Copy MCP manifest URL\" button** visible on the logged-in dashboard**\n`#mcp` `#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1050
-    },
-    {
-      "height": 80,
-      "id": "ae5fad570207d258",
-      "text": "****Write a short guide** \u2014 `docs/connect-sage.md` \u2014 with screenshots showing an end-to-end Sage \u2192 TodoScope query**\n`#docs` `#mcp`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1140
-    },
-    {
-      "height": 80,
-      "id": "f9ef7750b338de42",
-      "text": "****Add an MCP health indicator** to the dashboard: green dot when the manifest endpoint is responding, red when not**\n`#observability` `#mcp`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1230
-    },
-    {
-      "height": 80,
-      "id": "88852db32b68395c",
-      "text": "****Audit all user-facing copy** against the brand interview voice: honest founder tone, clarity-first, never buzzwordy**\n`#copy` `#brand`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1320
-    },
-    {
-      "height": 80,
-      "id": "1fd2ce1d80e52542",
-      "text": "****Error messages**: review for tone \u2014 should match the honest founder voice, not generic flask errors**\n`#copy` `#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1410
-    },
-    {
-      "height": 80,
-      "id": "d0dc700c6601a810",
-      "text": "****First-run wizard**: after setting the first access key, walk the user through registering a repo and connecting an AI agent**\n`#onboarding` `#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1500
-    },
-    {
-      "height": 80,
-      "id": "cbd301fe9aa4dff7",
-      "text": "****Include a demo/sample repo option** on first visit so the user can see streaming results before registering anything of their own**\n`#onboarding` `#demo`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1590
-    },
-    {
-      "height": 80,
-      "id": "93eb92f1d2e66ba7",
-      "text": "****Add a \"Try it live\" section** to the logged-out landing that runs a preview scan against a public demo repo**\n`#onboarding` `#landing`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1680
-    },
-    {
-      "height": 80,
-      "id": "8c02d8bed120314f",
-      "text": "****Create comprehensive API documentation**: Standalone API reference guide**\n  - Document all endpoints with request/response examples\n  - Add error code reference\n  - Include authentication plans\n  - Test API documentation completeness\n`#documentation` `#api`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1770
-    },
-    {
-      "height": 80,
-      "id": "0b48bf9a694ede06",
-      "text": "****Add architecture documentation**: System design and component overview**\n  - Create component diagram\n  - Document data flow\n  - Document deployment options\n  - Verify architecture docs match current implementation\n`#documentation` `#architecture`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1860
-    },
-    {
-      "height": 80,
-      "id": "594df020d0234f1e",
-      "text": "****Create contributor guide**: Detailed guide for new contributors**\n  - Define code style guide\n  - Document testing requirements\n  - Define pull request process\n  - Test contributor onboarding process\n`#documentation` `#community`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1950
-    },
-    {
-      "height": 80,
-      "id": "ba2e03e046a35a5c",
-      "text": "****Enhance code documentation**: Add comprehensive docstrings**\n  - Add docstrings to TodoItem class\n  - Document API endpoints with proper docstrings\n  - Add inline comments for complex logic\n  - Verify documentation generation works\n`#documentation` `#code`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2040
-    },
-    {
-      "height": 80,
-      "id": "e96295b1be28a149",
-      "text": "****Create development workflow documentation**: Detailed workflow guide**\n  - Document setup process\n  - Document feature development cycle\n  - Document testing procedures\n  - Test workflow documentation with new developer\n`#documentation` `#development`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2130
-    },
-    {
-      "height": 80,
-      "id": "81a3505e98fa3876",
-      "text": "**Add detection of TODO.md and TODO.txt files. #feature #core (no capitalization needed)**",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2220
-    },
-    {
-      "height": 80,
-      "id": "af0352ea19f464b4",
-      "text": "**Implement a user-friendly web interface for displaying TODO files.**\n`#ux` `#frontend`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2310
-    },
-    {
-      "height": 80,
-      "id": "b9f1b7fd0cfbb6ce",
-      "text": "**Include the option to look at the TODO files with our MCPo Api.**\n`#api` `#integration`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2400
-    },
-    {
-      "height": 80,
-      "id": "0a02ca550329e1f1",
-      "text": "**Add summary from repo readme files to the web interface. (optioanlly the top 20lines)**\n`#ux` `#frontend`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2490
-    },
-    {
-      "height": 80,
-      "id": "b235fa9b1d9af8e1",
-      "text": "**Implement a search feature for TODO comments.**\n`#search` `#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2580
-    },
-    {
-      "height": 80,
-      "id": "cc5e7fe409c641c3",
-      "text": "**Develop a dashboard to visualize TODO metrics across projects.**\n`#reporting` `#ux`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2670
-    },
-    {
-      "height": 80,
-      "id": "8317cbf6c9ac13b5",
-      "text": "**Offer report downloads in multiple formats (CSV, JSON, PDF).**\n`#reporting` `#feature`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2760
-    },
-    {
-      "height": 80,
-      "id": "53dd5c3c45401973",
-      "text": "**Integrate with GitHub webhooks for automated repository scanning.**\n`#integration` `#automation`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2850
-    },
-    {
-      "height": 80,
-      "id": "4bc4eb13c5005ea5",
-      "text": "**Enhance TODO file processing:**\n  - Recognize diverse TODO filenames (e.g., TODO.md, todo.txt).\n  - Scan TODO files located in the project root directory.\n  - Extend scanning to TODO files within subdirectories.\n  - Display content from identified TODO files.\n`#feature` `#core`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2940
-    },
-    {
-      "height": 80,
-      "id": "6c4237d90243a4d5",
-      "text": "****Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Replace with server-rendered Jinja2 partials + SSE that push HTML fragments, or at minimum extract shared styles into named constants.**\n`#frontend` `#dry`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 3030
-    },
-    {
-      "height": 80,
-      "id": "fa2c8ee3dc881975",
-      "text": "# TODO Scanner v0.0.1\n`README.md:1`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 3120
-    },
-    {
-      "height": 80,
-      "id": "14a1bce55f95fcaa",
-      "text": "\"todo_text\": \"# TODO: Fix this hack when we have time\",\n`README.md:127`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 3210
-    },
-    {
-      "height": 80,
-      "id": "ce786959a47bd75a",
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>TODO</strong></td><td style=\"--p:4px 8px\"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>\n`scanner/templates/stream_results.html:140`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 3300
-    },
-    {
-      "height": 80,
-      "id": "99e8b4f85c271942",
-      "text": "<p style=\"--mb:0\">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>\n`scanner/templates/stream_results.html:146`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 3390
-    },
-    {
-      "color": "5",
-      "height": 250,
-      "id": "col-in_progress",
-      "label": "In Progress",
-      "type": "group",
-      "width": 300,
-      "x": 700,
-      "y": 0
-    },
-    {
-      "height": 80,
-      "id": "2b5dcca21e5deff8",
-      "text": "**Migrate Python files and dependencies to subdirectory structure.**\n  - Create scanner subdirectory.\n  - Implement __init__.py for the subdirectory.\n  - Move error_handling.py to scanner subdirectory.\n  - Update imports in app.py.\n  - Move remaining Python files (test files) to scanner/tests.\n  - Move Pipfile and Pipfile.lock to scanner subdirectory.\n  - Test and update the Makefile accordingly.\n`#development` `#structure`",
-      "type": "text",
-      "width": 280,
-      "x": 710,
-      "y": 60
-    },
-    {
-      "height": 80,
-      "id": "b80309d2647b42bb",
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>In Progress</strong></td><td style=\"--p:4px 8px\"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>\n`scanner/templates/stream_results.html:141`",
-      "type": "text",
-      "width": 280,
-      "x": 710,
-      "y": 150
-    },
-    {
-      "color": "1",
-      "height": 200,
-      "id": "col-bugs",
-      "label": "Bugs",
-      "type": "group",
-      "width": 300,
-      "x": 1050,
-      "y": 0
-    },
-    {
-      "height": 80,
-      "id": "d9f4bcb99a5bbc47",
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Bugs</strong></td><td style=\"--p:4px 8px\"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>\n`scanner/templates/stream_results.html:142`",
-      "type": "text",
-      "width": 280,
-      "x": 1060,
-      "y": 60
-    },
-    {
-      "color": "6",
-      "height": 1870,
-      "id": "col-done",
-      "label": "Done",
-      "type": "group",
-      "width": 300,
-      "x": 1400,
-      "y": 0
-    },
-    {
-      "height": 80,
-      "id": "6a95b231865d68fd",
-      "text": "****Footer update**: added cross-links to sage.is and startr.style; \"Part of the Startr ecosystem\" framing**\n`#brand` `#footer`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 60
-    },
-    {
-      "height": 80,
-      "id": "3ac8093ddfb4d80d",
-      "text": "****Rename \"Todoscope\" \u2192 \"TodoScope\"** consistently across templates, README, caprover manifest, and page titles**\n`#brand` `#consistency`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 150
-    },
-    {
-      "height": 80,
-      "id": "5c22dd4a736af184",
-      "text": "****Favicon**: replaced the clipboard emoji with a telescope (\ud83d\udd2d) \u2014 consistent with the \"scope\" metaphor in the name**\n`#brand` `#visual`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 240
-    },
-    {
-      "height": 80,
-      "id": "a7a8d0b933d216d8",
-      "text": "****Page titles**: descriptive, brand-consistent `<title>` tags applied to base / index / login**\n`#brand` `#seo`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 330
-    },
-    {
-      "height": 80,
-      "id": "802e315105c882d9",
-      "text": "****Noindex on login page**: added `<meta name=\"robots\" content=\"noindex, nofollow\">` so self-hosted instances don't get indexed**\n`#seo` `#privacy`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 420
-    },
-    {
-      "height": 80,
-      "id": "3aacb7210671f385",
-      "text": "****Meta description**: added the one-line pitch as the default meta description in base.html**\n`#brand` `#seo`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 510
-    },
-    {
-      "height": 80,
-      "id": "95bf49513a48c702",
-      "text": "**Fix the MAJOR issue with existing repositories not working.**\n`#core` `#bug`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 600
-    },
-    {
-      "height": 80,
-      "id": "665b26b1e9ca1076",
-      "text": "**Implement a robust error handling mechanism for the scanner.**\n`#core` `#error-handling`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 690
-    },
-    {
-      "height": 80,
-      "id": "910d893958555133",
-      "text": "**Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE).**\n`#core` `#parser`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 780
-    },
-    {
-      "height": 80,
-      "id": "071ecb98db5a67e3",
-      "text": "**DRY Makefile targets. (Allow passing args to targets?)**\n`#development` `#testing`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 870
-    },
-    {
-      "height": 80,
-      "id": "155b4ae89e1c2121",
-      "text": "**Enable streaming of API results for improved responsiveness.**\n`#api` `#performance`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 960
-    },
-    {
-      "height": 80,
-      "id": "395a7411f0635a59",
-      "text": "**Implement comprehensive error handling with custom exceptions, retries, and recovery strategies.**\n`#core` `#error-handling`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1050
-    },
-    {
-      "height": 80,
-      "id": "48da841b93cf383e",
-      "text": "**Create testing infrastructure with unit and integration tests.**\n`#core` `#testing`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1140
-    },
-    {
-      "height": 80,
-      "id": "e9d8ec81cb79d1dc",
-      "text": "**Add Makefile targets and test runner for easy test execution.**\n`#development` `#testing`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1230
-    },
-    {
-      "height": 80,
-      "id": "d882378b0f7672e9",
-      "text": "**Honor .gitignore patterns during repository scans.**\n`#core`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1320
-    },
-    {
-      "height": 80,
-      "id": "dd24a6327de7613d",
-      "text": "**Stream scan results efficiently in the web UI.**\n`#ux` `#frontend`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1410
-    },
-    {
-      "height": 80,
-      "id": "dea7e4ee2fcb6053",
-      "text": "**Ensure proper HTML escaping for multi-line display.**\n`#security` `#rendering`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1500
-    },
-    {
-      "height": 80,
-      "id": "46c581e0aeb8c392",
-      "text": "**Broaden TODO pattern recognition to include FIXME, BUG, and NOTE in various comment formats.**\n`#core` `#parser`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1590
-    },
-    {
-      "height": 80,
-      "id": "57bb85cbd74be01e",
-      "text": "**Fix server hanging issue: server no longer becomes unresponsive after completing scans.**\n`#critical` `#backend`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1680
-    },
-    {
-      "height": 80,
-      "id": "6b6c471b0e6fca3b",
-      "text": "**Skip `scanner/repositories/` when scanning this project as a local repo \u2014 prevents recursing into managed cloned repos.**\n`#core` `#backend`",
-      "type": "text",
-      "width": 280,
-      "x": 1410,
-      "y": 1770
-    }
-  ]
+	"edges":[],
+	"nodes":[
+		{"color":"4","height":880,"id":"col-backlog","label":"Backlog","type":"group","width":300,"x":0,"y":0},
+		{"file_path":"TODO.md","height":80,"id":"479c83b5bb78b86c","source":"todo_md","text":"**Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover.**\n`#deployment` `#caprover`","type":"text","width":280,"x":10,"y":60},
+		{"file_path":"TODO.md","height":80,"id":"8a505591218c2b62","source":"todo_md","text":"**Add TodoScope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service.**\n`#deployment` `#homebrew`","type":"text","width":280,"x":10,"y":150},
+		{"file_path":"TODO.md","height":80,"id":"60af347c61889652","source":"todo_md","text":"**Introduce user authentication for secure access.**\n`#security` `#auth`","type":"text","width":280,"x":10,"y":240},
+		{"file_path":"TODO.md","height":80,"id":"2f5810b68fce2d26","source":"todo_md","text":"**Implement priority inference from TODO comments.**\n`#core` `#parser`","type":"text","width":280,"x":10,"y":330},
+		{"file_path":"TODO.md","height":80,"id":"fd2c513c2f199eeb","source":"todo_md","text":"**Design a plugin system to extend scanner functionality.**\n`#architecture` `#extensibility`","type":"text","width":280,"x":10,"y":420},
+		{"file_path":"TODO.md","height":80,"id":"1cbe6c58baf852e6","source":"todo_md","text":"**Facilitate integration with task managers (Jira, Asana, Trello).**\n`#integration` `#external`","type":"text","width":280,"x":10,"y":510},
+		{"file_path":"TODO.md","height":80,"id":"c9904f4762a88036","source":"todo_md","text":"**Create a command-line interface (CLI) for versatile use.**\n`#cli` `#accessibility`","type":"text","width":280,"x":10,"y":600},
+		{"file_path":"TODO.md","height":80,"id":"00c1ab354a4f2ba7","source":"todo_md","text":"**Improve visibility of scrollable local repositories list on the main page.**\n`#ux` `#frontend`","type":"text","width":280,"x":10,"y":690},
+		{"file_path":"scanner/templates/stream_results.html","height":80,"id":"a3b6807933ffb751","line_num":139,"source":"inline","text":"<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Backlog</strong></td><td style=\"--p:4px 8px\"><code>## Low Priority</code> or <code>## Backlog</code> section &middot; inline <code># NOTE:</code></td></tr>\n`scanner/templates/stream_results.html:139`","type":"text","width":280,"x":10,"y":780},
+		{"height":3490,"id":"col-todo","label":"TODO","type":"group","width":300,"x":350,"y":0},
+		{"file_path":"TODO.md","height":80,"id":"f204ba1901df42c5","source":"todo_md","text":"****Promote login.html into a real landing page**: hero, pitch, features, sign-in**\n  - Add brand hero: headline, subhead (use the one-line pitch verbatim), and a short \"what it is\" paragraph\n  - Add a 3-bullet \"what makes it different\" strip (the inversion, MCP-native, open-source)\n  - Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold\n  - Move the sign-in form into a right-hand card or section below the hero — secondary action, not primary\n  - Add \"New to TodoScope?\" copy with a link to the README / GitHub for evaluators who aren't signing in\n  - Add social proof / cross-links to [sage.is](https://sage.is) and [startr.style](https://startr.style)\n  - Add OG meta tags (`og:title`, `og:description`, `og:image`) so shared links render properly\n`#brand` `#landing` `#critical`","type":"text","width":280,"x":360,"y":60},
+		{"file_path":"TODO.md","height":80,"id":"b10e880ff028a84b","source":"todo_md","text":"****Surface the MCP / AI agent story on the landing page****\n  - Add a \"Connect your AI agent\" section showing how to point Sage / Claude / any MCP client at the instance\n  - Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json` from the landing page\n  - Include a one-paragraph framing: \"AI agents are part of your team\"\n`#brand` `#ai` `#mcp`","type":"text","width":280,"x":360,"y":150},
+		{"file_path":"TODO.md","height":80,"id":"6c10d18fac8a0268","source":"todo_md","text":"****Add a dashboard header**: restate the one-line pitch in short form, orient the user**\n`#ux` `#brand`","type":"text","width":280,"x":360,"y":240},
+		{"file_path":"TODO.md","height":80,"id":"25207ec22122596d","source":"todo_md","text":"****Unify repo entry**: one input that accepts a git URL *or* a local path, with smart detection**\n`#ux` `#simplify`","type":"text","width":280,"x":360,"y":330},
+		{"file_path":"TODO.md","height":80,"id":"788015369e1cbe90","source":"todo_md","text":"****Empty state for Repositories**: when no repos are registered, show a friendly onboarding card with 2-3 suggested quick-start actions (scan a demo repo, register a local path, copy MCP endpoint)**\n`#ux` `#onboarding`","type":"text","width":280,"x":360,"y":420},
+		{"file_path":"TODO.md","height":80,"id":"8dd0dc1270b62681","source":"todo_md","text":"****Surface MCP endpoints on the dashboard**: a small \"Connect to an AI agent\" card with copy-to-clipboard buttons for the manifest URL and a sample cURL**\n`#ai` `#mcp` `#ux`","type":"text","width":280,"x":360,"y":510},
+		{"file_path":"TODO.md","height":80,"id":"bb0d8b66e4bad577","source":"todo_md","text":"****Add search/filter to the Repositories table** (relevant as soon as the list grows past ~10)**\n`#ux` `#search`","type":"text","width":280,"x":360,"y":600},
+		{"file_path":"TODO.md","height":80,"id":"b2d4bfdfdd5a23c2","source":"todo_md","text":"****Add a visible \"last scanned\" timestamp + manual refresh control** per repo row**\n`#ux`","type":"text","width":280,"x":360,"y":690},
+		{"file_path":"TODO.md","height":80,"id":"dc041a7d9bd1a938","source":"todo_md","text":"****Move the GitHub contribute banner to the footer** — it's competing with the primary action**\n`#ux` `#hierarchy`","type":"text","width":280,"x":360,"y":780},
+		{"file_path":"TODO.md","height":80,"id":"c0e51db4b3149e80","source":"todo_md","text":"****Clarify the \"shallow clone\" checkbox**: tooltip or inline help explaining when to use it**\n`#ux` `#copy`","type":"text","width":280,"x":360,"y":870},
+		{"file_path":"TODO.md","height":80,"id":"009b77fd62dd8be1","source":"todo_md","text":"****Create a dedicated `/connect` or `/mcp` page** with step-by-step instructions to wire TodoScope into Sage, Claude Desktop, and generic MCP clients**\n`#mcp` `#docs`","type":"text","width":280,"x":360,"y":960},
+		{"file_path":"TODO.md","height":80,"id":"9c75c2bbe97f036d","source":"todo_md","text":"****Add a \"Copy MCP manifest URL\" button** visible on the logged-in dashboard**\n`#mcp` `#ux`","type":"text","width":280,"x":360,"y":1050},
+		{"file_path":"TODO.md","height":80,"id":"ae5fad570207d258","source":"todo_md","text":"****Write a short guide** — `docs/connect-sage.md` — with screenshots showing an end-to-end Sage → TodoScope query**\n`#docs` `#mcp`","type":"text","width":280,"x":360,"y":1140},
+		{"file_path":"TODO.md","height":80,"id":"f9ef7750b338de42","source":"todo_md","text":"****Add an MCP health indicator** to the dashboard: green dot when the manifest endpoint is responding, red when not**\n`#observability` `#mcp`","type":"text","width":280,"x":360,"y":1230},
+		{"file_path":"TODO.md","height":80,"id":"88852db32b68395c","source":"todo_md","text":"****Audit all user-facing copy** against the brand interview voice: honest founder tone, clarity-first, never buzzwordy**\n`#copy` `#brand`","type":"text","width":280,"x":360,"y":1320},
+		{"file_path":"TODO.md","height":80,"id":"1fd2ce1d80e52542","source":"todo_md","text":"****Error messages**: review for tone — should match the honest founder voice, not generic flask errors**\n`#copy` `#ux`","type":"text","width":280,"x":360,"y":1410},
+		{"file_path":"TODO.md","height":80,"id":"d0dc700c6601a810","source":"todo_md","text":"****First-run wizard**: after setting the first access key, walk the user through registering a repo and connecting an AI agent**\n`#onboarding` `#ux`","type":"text","width":280,"x":360,"y":1500},
+		{"file_path":"TODO.md","height":80,"id":"cbd301fe9aa4dff7","source":"todo_md","text":"****Include a demo/sample repo option** on first visit so the user can see streaming results before registering anything of their own**\n`#onboarding` `#demo`","type":"text","width":280,"x":360,"y":1590},
+		{"file_path":"TODO.md","height":80,"id":"93eb92f1d2e66ba7","source":"todo_md","text":"****Add a \"Try it live\" section** to the logged-out landing that runs a preview scan against a public demo repo**\n`#onboarding` `#landing`","type":"text","width":280,"x":360,"y":1680},
+		{"file_path":"TODO.md","height":80,"id":"8c02d8bed120314f","source":"todo_md","text":"****Create comprehensive API documentation**: Standalone API reference guide**\n  - Document all endpoints with request/response examples\n  - Add error code reference\n  - Include authentication plans\n  - Test API documentation completeness\n`#documentation` `#api`","type":"text","width":280,"x":360,"y":1770},
+		{"file_path":"TODO.md","height":80,"id":"0b48bf9a694ede06","source":"todo_md","text":"****Add architecture documentation**: System design and component overview**\n  - Create component diagram\n  - Document data flow\n  - Document deployment options\n  - Verify architecture docs match current implementation\n`#documentation` `#architecture`","type":"text","width":280,"x":360,"y":1860},
+		{"file_path":"TODO.md","height":80,"id":"594df020d0234f1e","source":"todo_md","text":"****Create contributor guide**: Detailed guide for new contributors**\n  - Define code style guide\n  - Document testing requirements\n  - Define pull request process\n  - Test contributor onboarding process\n`#documentation` `#community`","type":"text","width":280,"x":360,"y":1950},
+		{"file_path":"TODO.md","height":80,"id":"ba2e03e046a35a5c","source":"todo_md","text":"****Enhance code documentation**: Add comprehensive docstrings**\n  - Add docstrings to TodoItem class\n  - Document API endpoints with proper docstrings\n  - Add inline comments for complex logic\n  - Verify documentation generation works\n`#documentation` `#code`","type":"text","width":280,"x":360,"y":2040},
+		{"file_path":"TODO.md","height":80,"id":"e96295b1be28a149","source":"todo_md","text":"****Create development workflow documentation**: Detailed workflow guide**\n  - Document setup process\n  - Document feature development cycle\n  - Document testing procedures\n  - Test workflow documentation with new developer\n`#documentation` `#development`","type":"text","width":280,"x":360,"y":2130},
+		{"file_path":"TODO.md","height":80,"id":"81a3505e98fa3876","source":"todo_md","text":"**Add detection of TODO.md and TODO.txt files. #feature #core (no capitalization needed)**","type":"text","width":280,"x":360,"y":2220},
+		{"file_path":"TODO.md","height":80,"id":"af0352ea19f464b4","source":"todo_md","text":"**Implement a user-friendly web interface for displaying TODO files.**\n`#ux` `#frontend`","type":"text","width":280,"x":360,"y":2310},
+		{"file_path":"TODO.md","height":80,"id":"b9f1b7fd0cfbb6ce","source":"todo_md","text":"**Include the option to look at the TODO files with our MCPo Api.**\n`#api` `#integration`","type":"text","width":280,"x":360,"y":2400},
+		{"file_path":"TODO.md","height":80,"id":"0a02ca550329e1f1","source":"todo_md","text":"**Add summary from repo readme files to the web interface. (optioanlly the top 20lines)**\n`#ux` `#frontend`","type":"text","width":280,"x":360,"y":2490},
+		{"file_path":"TODO.md","height":80,"id":"b235fa9b1d9af8e1","source":"todo_md","text":"**Implement a search feature for TODO comments.**\n`#search` `#ux`","type":"text","width":280,"x":360,"y":2580},
+		{"file_path":"TODO.md","height":80,"id":"cc5e7fe409c641c3","source":"todo_md","text":"**Develop a dashboard to visualize TODO metrics across projects.**\n`#reporting` `#ux`","type":"text","width":280,"x":360,"y":2670},
+		{"file_path":"TODO.md","height":80,"id":"8317cbf6c9ac13b5","source":"todo_md","text":"**Offer report downloads in multiple formats (CSV, JSON, PDF).**\n`#reporting` `#feature`","type":"text","width":280,"x":360,"y":2760},
+		{"file_path":"TODO.md","height":80,"id":"53dd5c3c45401973","source":"todo_md","text":"**Integrate with GitHub webhooks for automated repository scanning.**\n`#integration` `#automation`","type":"text","width":280,"x":360,"y":2850},
+		{"file_path":"TODO.md","height":80,"id":"4bc4eb13c5005ea5","source":"todo_md","text":"**Enhance TODO file processing:**\n  - Recognize diverse TODO filenames (e.g., TODO.md, todo.txt).\n  - Scan TODO files located in the project root directory.\n  - Extend scanning to TODO files within subdirectories.\n  - Display content from identified TODO files.\n`#feature` `#core`","type":"text","width":280,"x":360,"y":2940},
+		{"file_path":"TODO.md","height":80,"id":"6c4237d90243a4d5","source":"todo_md","text":"****Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Replace with server-rendered Jinja2 partials + SSE that push HTML fragments, or at minimum extract shared styles into named constants.**\n`#frontend` `#dry`","type":"text","width":280,"x":360,"y":3030},
+		{"file_path":"README.md","height":80,"id":"fa2c8ee3dc881975","line_num":1,"source":"inline","text":"# TODO Scanner v0.0.1\n`README.md:1`","type":"text","width":280,"x":360,"y":3120},
+		{"file_path":"README.md","height":80,"id":"14a1bce55f95fcaa","line_num":127,"source":"inline","text":"\"todo_text\": \"# TODO: Fix this hack when we have time\",\n`README.md:127`","type":"text","width":280,"x":360,"y":3210},
+		{"file_path":"scanner/templates/stream_results.html","height":80,"id":"ce786959a47bd75a","line_num":140,"source":"inline","text":"<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>TODO</strong></td><td style=\"--p:4px 8px\"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>\n`scanner/templates/stream_results.html:140`","type":"text","width":280,"x":360,"y":3300},
+		{"file_path":"scanner/templates/stream_results.html","height":80,"id":"99e8b4f85c271942","line_num":146,"source":"inline","text":"<p style=\"--mb:0\">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>\n`scanner/templates/stream_results.html:146`","type":"text","width":280,"x":360,"y":3390},
+		{"color":"5","height":250,"id":"col-in_progress","label":"In Progress","type":"group","width":300,"x":700,"y":0},
+		{"file_path":"TODO.md","height":80,"id":"2b5dcca21e5deff8","source":"todo_md","text":"**Migrate Python files and dependencies to subdirectory structure.**\n  - Create scanner subdirectory.\n  - Implement __init__.py for the subdirectory.\n  - Move error_handling.py to scanner subdirectory.\n  - Update imports in app.py.\n  - Move remaining Python files (test files) to scanner/tests.\n  - Move Pipfile and Pipfile.lock to scanner subdirectory.\n  - Test and update the Makefile accordingly.\n`#development` `#structure`","type":"text","width":280,"x":710,"y":60},
+		{"file_path":"scanner/templates/stream_results.html","height":80,"id":"b80309d2647b42bb","line_num":141,"source":"inline","text":"<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>In Progress</strong></td><td style=\"--p:4px 8px\"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>\n`scanner/templates/stream_results.html:141`","type":"text","width":280,"x":710,"y":150},
+		{"color":"1","height":200,"id":"col-bugs","label":"Bugs","type":"group","width":300,"x":1050,"y":0},
+		{"file_path":"scanner/templates/stream_results.html","height":80,"id":"d9f4bcb99a5bbc47","line_num":142,"source":"inline","text":"<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Bugs</strong></td><td style=\"--p:4px 8px\"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>\n`scanner/templates/stream_results.html:142`","type":"text","width":280,"x":1060,"y":60},
+		{"color":"6","height":1870,"id":"col-done","label":"Done","type":"group","width":300,"x":1400,"y":0},
+		{"file_path":"TODO.md","height":80,"id":"6a95b231865d68fd","source":"todo_md","text":"****Footer update**: added cross-links to sage.is and startr.style; \"Part of the Startr ecosystem\" framing**\n`#brand` `#footer`","type":"text","width":280,"x":1410,"y":60},
+		{"file_path":"TODO.md","height":80,"id":"3ac8093ddfb4d80d","source":"todo_md","text":"****Rename \"Todoscope\" → \"TodoScope\"** consistently across templates, README, caprover manifest, and page titles**\n`#brand` `#consistency`","type":"text","width":280,"x":1410,"y":150},
+		{"file_path":"TODO.md","height":80,"id":"5c22dd4a736af184","source":"todo_md","text":"****Favicon**: replaced the clipboard emoji with a telescope (🔭) — consistent with the \"scope\" metaphor in the name**\n`#brand` `#visual`","type":"text","width":280,"x":1410,"y":240},
+		{"file_path":"TODO.md","height":80,"id":"a7a8d0b933d216d8","source":"todo_md","text":"****Page titles**: descriptive, brand-consistent `<title>` tags applied to base / index / login**\n`#brand` `#seo`","type":"text","width":280,"x":1410,"y":330},
+		{"file_path":"TODO.md","height":80,"id":"802e315105c882d9","source":"todo_md","text":"****Noindex on login page**: added `<meta name=\"robots\" content=\"noindex, nofollow\">` so self-hosted instances don't get indexed**\n`#seo` `#privacy`","type":"text","width":280,"x":1410,"y":420},
+		{"file_path":"TODO.md","height":80,"id":"3aacb7210671f385","source":"todo_md","text":"****Meta description**: added the one-line pitch as the default meta description in base.html**\n`#brand` `#seo`","type":"text","width":280,"x":1410,"y":510},
+		{"file_path":"TODO.md","height":80,"id":"95bf49513a48c702","source":"todo_md","text":"**Fix the MAJOR issue with existing repositories not working.**\n`#core` `#bug`","type":"text","width":280,"x":1410,"y":600},
+		{"file_path":"TODO.md","height":80,"id":"665b26b1e9ca1076","source":"todo_md","text":"**Implement a robust error handling mechanism for the scanner.**\n`#core` `#error-handling`","type":"text","width":280,"x":1410,"y":690},
+		{"file_path":"TODO.md","height":80,"id":"910d893958555133","source":"todo_md","text":"**Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE).**\n`#core` `#parser`","type":"text","width":280,"x":1410,"y":780},
+		{"file_path":"TODO.md","height":80,"id":"071ecb98db5a67e3","source":"todo_md","text":"**DRY Makefile targets. (Allow passing args to targets?)**\n`#development` `#testing`","type":"text","width":280,"x":1410,"y":870},
+		{"file_path":"TODO.md","height":80,"id":"155b4ae89e1c2121","source":"todo_md","text":"**Enable streaming of API results for improved responsiveness.**\n`#api` `#performance`","type":"text","width":280,"x":1410,"y":960},
+		{"file_path":"TODO.md","height":80,"id":"395a7411f0635a59","source":"todo_md","text":"**Implement comprehensive error handling with custom exceptions, retries, and recovery strategies.**\n`#core` `#error-handling`","type":"text","width":280,"x":1410,"y":1050},
+		{"file_path":"TODO.md","height":80,"id":"48da841b93cf383e","source":"todo_md","text":"**Create testing infrastructure with unit and integration tests.**\n`#core` `#testing`","type":"text","width":280,"x":1410,"y":1140},
+		{"file_path":"TODO.md","height":80,"id":"e9d8ec81cb79d1dc","source":"todo_md","text":"**Add Makefile targets and test runner for easy test execution.**\n`#development` `#testing`","type":"text","width":280,"x":1410,"y":1230},
+		{"file_path":"TODO.md","height":80,"id":"d882378b0f7672e9","source":"todo_md","text":"**Honor .gitignore patterns during repository scans.**\n`#core`","type":"text","width":280,"x":1410,"y":1320},
+		{"file_path":"TODO.md","height":80,"id":"dd24a6327de7613d","source":"todo_md","text":"**Stream scan results efficiently in the web UI.**\n`#ux` `#frontend`","type":"text","width":280,"x":1410,"y":1410},
+		{"file_path":"TODO.md","height":80,"id":"dea7e4ee2fcb6053","source":"todo_md","text":"**Ensure proper HTML escaping for multi-line display.**\n`#security` `#rendering`","type":"text","width":280,"x":1410,"y":1500},
+		{"file_path":"TODO.md","height":80,"id":"46c581e0aeb8c392","source":"todo_md","text":"**Broaden TODO pattern recognition to include FIXME, BUG, and NOTE in various comment formats.**\n`#core` `#parser`","type":"text","width":280,"x":1410,"y":1590},
+		{"file_path":"TODO.md","height":80,"id":"57bb85cbd74be01e","source":"todo_md","text":"**Fix server hanging issue: server no longer becomes unresponsive after completing scans.**\n`#critical` `#backend`","type":"text","width":280,"x":1410,"y":1680},
+		{"file_path":"TODO.md","height":80,"id":"6b6c471b0e6fca3b","source":"todo_md","text":"**Skip `scanner/repositories/` when scanning this project as a local repo — prevents recursing into managed cloned repos.**\n`#core` `#backend`","type":"text","width":280,"x":1410,"y":1770}
+	]
 }
