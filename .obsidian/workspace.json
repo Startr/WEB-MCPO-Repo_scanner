@@ -11,17 +11,14 @@
             "id": "5b8c3590fbe87067",
             "type": "leaf",
             "state": {
-              "type": "canvas",
+              "type": "markdown",
               "state": {
-                "file": "KANBAN.canvas",
-                "viewState": {
-                  "x": 1018.729262399784,
-                  "y": 254.05288916209548,
-                  "zoom": -0.37380704809083215
-                }
+                "file": "docs/present/01-keynote.md",
+                "mode": "source",
+                "source": false
               },
-              "icon": "lucide-layout-dashboard",
-              "title": "KANBAN"
+              "icon": "lucide-file",
+              "title": "01-keynote"
             }
           }
         ]
@@ -183,11 +180,29 @@
       "daily-notes:Open today's daily note": false,
       "templates:Insert template": false,
       "command-palette:Open command palette": false,
-      "bases:Create new base": false
+      "bases:Create new base": false,
+      "obsidian-advanced-slides:Show Slide Preview": false
     }
   },
   "active": "5b8c3590fbe87067",
   "lastOpenFiles": [
+    "docs/present/06-elevator-pitch.md",
+    "docs/present/05-visuals.md",
+    "docs/present/04-guided-tour.md",
+    "docs/present/01-keynote.md",
+    "docs/present/00-overview.md",
+    "KANBAN.canvas",
+    "scanner/repositories/sage.is/src/resources/attachments/painting-tower-babel-bruegel.jpg",
+    "scanner/repositories/sage.is/src/resources/attachments/painting-school-athens-raphael.jpg",
+    "scanner/repositories/sage.is/src/resources/attachments/painting-raft-medusa-gericault.jpg",
+    "scanner/repositories/sage.is/src/assets/images/heroes/painting-tower-babel-bruegel.jpg",
+    "scanner/repositories/sage.is/src/assets/images/heroes/painting-school-athens-raphael.jpg",
+    "scanner/repositories/sage.is/src/assets/images/heroes/painting-raft-medusa-gericault.jpg",
+    "scanner/repositories/sage.is/src/assets/images/opengraph/resources-the-licence-nobody-teaches.png",
+    "scanner/repositories/sage.is/src/assets/images/opengraph/resources-canadas-ai-moat-is-a-mirage.png",
+    "scanner/repositories/sage.is/src/assets/images/opengraph/resources-same-table-both-sides.png",
+    "scanner/repositories/sage.is/src/assets/images/opengraph/resources-the-waiver-nobody-read.png",
+    "scanner/repositories/sage.is/docs/PANEL_REVIEW_SESSION.md",
     "scanner/repositories/Style/KANBAN.canvas",
     "scanner/repositories/Style/src/style-core/src/utilities/_typography.css",
     "scanner/repositories/Style/src/style-core/src/utilities/_transition.css",
@@ -199,16 +214,6 @@
     "scanner/repositories/Style/src/style-core/src/utilities/_layout.css",
     "scanner/repositories/Style/src/style-core/src/utilities/_interact.css",
     "scanner/repositories/Style/src/style-core/src/utilities/_grid.css",
-    "scanner/repositories/Style/src/style-core/src/assets/select-arrow.svg",
-    "scanner/repositories/Style/src/style-core/icons/ms-icon-70x70.png",
-    "scanner/repositories/Style/src/style-core/icons/ms-icon-310x310.png",
-    "scanner/repositories/Style/src/style-core/icons/ms-icon-150x150.png",
-    "scanner/repositories/Style/src/style-core/icons/ms-icon-144x144.png",
-    "scanner/repositories/Style/src/style-core/icons/favicon.png",
-    "scanner/repositories/Style/src/style-core/icons/favicon-96x96.png",
-    "scanner/repositories/Style/src/style-core/icons/favicon-32x32.png",
-    "scanner/repositories/Style/src/style-core/icons/favicon-16x16.png",
-    "scanner/repositories/Style/src/style-core/icons/apple-icon.png",
     "scanner/repositories/Style/src/style-core/README.md",
     "scanner/repositories/Style/src/style-core/LICENSE.md",
     "scanner/repositories/Style/RELEASES.md",
@@ -216,7 +221,6 @@
     "scanner/repositories/WEB-Sites/KANBAN.canvas",
     "scanner/repositories/how-to-build-a-coding-agent/KANBAN.canvas",
     "scanner/repositories/sage.is/KANBAN.canvas",
-    "TODO.md",
-    "KANBAN.canvas"
+    "TODO.md"
   ]
 }
