@@ -783,6 +783,34 @@ def remove_local_repo(repo_name):
     app.logger.info(f"Unregistered local repo: {repo_name}")
     return redirect(url_for('index'))
 
+
+@app.route('/remove_repo/<path:repo_name>', methods=['POST'])
+def remove_repo(repo_name):
+    """Remove any repository — unregister local repos, delete cloned repos."""
+    import shutil
+
+    # Check if it's a registered local repo first
+    repos = load_local_repos()
+    if repo_name in repos:
+        repos.pop(repo_name)
+        save_local_repos(repos)
+        app.logger.info(f"Unregistered local repo: {repo_name}")
+        return redirect(url_for('index'))
+
+    # Otherwise it's a cloned repo — delete the directory
+    cloned_path = os.path.join(BASE_REPO_PATH, repo_name)
+    real_cloned = os.path.realpath(cloned_path)
+    real_base = os.path.realpath(BASE_REPO_PATH)
+    if not real_cloned.startswith(real_base + os.sep):
+        app.logger.warning(f"Refusing to remove repo outside base path: {repo_name}")
+        return redirect(url_for('index'))
+
+    if os.path.isdir(cloned_path):
+        shutil.rmtree(cloned_path)
+        app.logger.info(f"Deleted cloned repo: {cloned_path}")
+
+    return redirect(url_for('index'))
+
 @app.route('/scan/<path:repo_url>')
 def scan_repo(repo_url):
     """Redirect legacy /scan/ URLs to the streaming view."""

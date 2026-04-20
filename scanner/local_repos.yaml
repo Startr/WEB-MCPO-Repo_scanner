@@ -6,6 +6,10 @@ WEB-Sage.is-repo_scanner:
   path: /Users/somma/bin/repo_scanner
   public: false
   webhook_secret: null
+WEB-Startr.Style:
+  path: /Users/somma/Documents/Projects/GitHub/WEB-Startr.Style
+  public: false
+  webhook_secret: null
 WEB-ffpf.org:
   path: /Users/somma/Documents/Projects/GitHub/WEB-ffpf.org
   public: false

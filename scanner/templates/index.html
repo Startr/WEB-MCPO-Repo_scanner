@@ -55,12 +55,13 @@
                         <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
                             <a href="{{ url_for('scan_stream', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">View TODOs</a>
                         </td>
-                        <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
-                            {% if repo.source == 'local' %}
-                            <a href="{{ url_for('remove_local_repo', repo_name=repo.name) }}" style="--bgc:#dc3545; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block" onclick="return confirm('Remove this repo from the list?')">Remove</a>
-                            {% else %}
-                            <a href="{{ url_for('pull_repo', repo_name=repo.name) }}" style="--bgc:#007bff; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">Pull Latest</a>
+                        <td style="--p:8px; --bb:1px solid #ddd; --ta:center; white-space:nowrap">
+                            {% if repo.source != 'local' %}
+                            <a href="{{ url_for('pull_repo', repo_name=repo.name) }}" style="--bgc:#007bff; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:4px">Pull</a>
                             {% endif %}
+                            <form method="POST" action="{{ url_for('remove_repo', repo_name=repo.name) }}" style="--d:inline">
+                                <button type="submit" style="--bgc:#dc3545; --c:white; --p:5px 10px; --radius:3px; --b:none; --cur:pointer" onclick="return confirm('Remove {{ repo.name }} from the list?{{ ' The cloned files will be deleted.' if repo.source != 'local' else '' }}')">Remove</button>
+                            </form>
                         </td>
                     </tr>
                     {% endfor %}
