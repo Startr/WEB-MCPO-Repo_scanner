@@ -95,6 +95,7 @@ A new user's first 60 seconds decides whether they come back.
   - [ ] Test workflow documentation with new developer
 
 ## High Priority
+- [ ] Speed up scan: show the cached KANBAN board instantly on page load while the full scan runs in the background. #performance #ux #critical
 - [x] Fix the MAJOR issue with existing repositories not working. #core #bug
 - [x] Implement a robust error handling mechanism for the scanner. #core #error-handling
 - [x] Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE). #core #parser

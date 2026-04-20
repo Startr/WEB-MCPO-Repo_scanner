@@ -133,6 +133,21 @@
         top: 6px;
         font-size: 0.9em;
     }
+    /* File:line location reference at bottom of card */
+    .kanban-card .card-location {
+        display: block;
+        text-align: right;
+        font-size: 0.72em;
+        color: #999;
+        margin-top: 4px;
+        font-family: monospace;
+    }
+    .kanban-card .card-location code {
+        background: none;
+        padding: 0;
+        color: inherit;
+        font-size: inherit;
+    }
     /* GFM task list checkboxes inside kanban cards */
     .kanban-card ul { list-style: none; padding-left: 4px; }
     .kanban-card li { position: relative; }
@@ -389,18 +404,39 @@
                         cardEl.className = isInline ? 'kanban-card kanban-card-inline' : 'kanban-card';
                         cardEl.innerHTML = parseMd(c.text || '');
 
-                        // Add code.dev link for the source file
+                        // Style the file:line location reference as a right-aligned indicator
+                        // It's the last <p> containing a <code> with a file:L pattern
+                        const paras = cardEl.querySelectorAll('p');
+                        if (paras.length > 0) {
+                            const lastP = paras[paras.length - 1];
+                            const code = lastP.querySelector('code');
+                            if (code && /:\d+|:L\d+/.test(code.textContent)) {
+                                lastP.className = 'card-location';
+                            }
+                        }
+
+                        // Add clickable link wrapping the location reference
                         if (codeDevBase && c.file_path) {
+                            const locEl = cardEl.querySelector('.card-location') || null;
                             const link = document.createElement('a');
                             const lineAnchor = c.line_num ? `#L${c.line_num}` : '';
                             link.href = `${codeDevBase}/blob/${codeDevBranch}/${c.file_path}${lineAnchor}`;
                             link.target = '_blank';
                             link.rel = 'noopener noreferrer';
-                            link.textContent = isInline
-                                ? `${c.file_path}:${c.line_num}`
-                                : c.file_path;
-                            link.style = '--c:#0066cc; --fs:0.78em; --td:none; --d:block; --mt:4px; opacity:0.8';
-                            cardEl.appendChild(link);
+                            link.style = '--c:#0066cc; --td:none';
+                            if (locEl) {
+                                // Wrap existing location text in the link
+                                link.innerHTML = locEl.innerHTML;
+                                locEl.innerHTML = '';
+                                locEl.appendChild(link);
+                            } else {
+                                // Fallback: append a standalone link
+                                link.textContent = isInline
+                                    ? `${c.file_path}:${c.line_num}`
+                                    : `${c.file_path}:L${c.line_num}`;
+                                link.className = 'card-location';
+                                cardEl.appendChild(link);
+                            }
                         }
 
                         colEl.appendChild(cardEl);

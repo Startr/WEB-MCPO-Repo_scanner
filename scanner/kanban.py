@@ -148,8 +148,13 @@ def _apply_tag_rules(card):
                 card.elevated = True
 
 
-def parse_todo_md(content):
+def parse_todo_md(content, file_path='TODO.md'):
     """Parse TODO.md markdown content into a list of KanbanCards.
+
+    Args:
+      content:   raw markdown string
+      file_path: relative path to the TODO.md file (for repos with
+                 multiple TODO.md files in subdirectories)
 
     Rules:
       - ## headers set the current section (mapped to a column)
@@ -157,12 +162,13 @@ def parse_todo_md(content):
       - Top-level '- [x]' lines become cards in Done (checkbox overrides section)
       - Indented children become sub-bullets on the parent card
       - Hashtags are extracted and stored as metadata
+      - Line numbers are tracked for write-back and blame
     """
     cards = []
     current_section = 'todo'  # default if no section header seen yet
     current_parent = None
 
-    for line in content.splitlines():
+    for line_idx, line in enumerate(content.splitlines(), start=1):
         stripped = line.rstrip()
 
         # Section headers — update column mapping
@@ -187,6 +193,7 @@ def parse_todo_md(content):
                     'text': child_text,
                     'checked': checked,
                     'tags': child_tags,
+                    'line_num': line_idx,
                 })
             continue
 
@@ -203,7 +210,8 @@ def parse_todo_md(content):
                 text=text,
                 source='todo_md',
                 column=column,
-                file_path='TODO.md',
+                file_path=file_path,
+                line_num=line_idx,
                 tags=tags,
             )
             _apply_tag_rules(card)
@@ -261,15 +269,21 @@ def _card_text(card):
         lines.append(card.text)
         lines.append(f'`{card.file_path}:{card.line_num}`')
     else:
-        # TODO.md cards show cleaned-up title + GFM task list children + tags
+        # TODO.md cards show cleaned-up title + GFM task list children + tags + location
         title = re.sub(r'\*{2,}', '', card.text).strip()
         lines.append(f'**{title}**')
         for child in card.children:
             mark = 'x' if child['checked'] else ' '
             tag_suffix = ' ' + ' '.join(child['tags']) if child['tags'] else ''
             lines.append(f'- [{mark}] {child["text"]}{tag_suffix}')
+        # Blank line after the task list so Marked closes the <ul> before
+        # rendering tags and location as their own <p> elements.
+        if card.children and (card.tags or card.line_num):
+            lines.append('')
         if card.tags:
             lines.append(' '.join(f'`{t}`' for t in card.tags))
+        if card.line_num:
+            lines.append(f'`{card.file_path}:L{card.line_num}`')
 
     return '\n'.join(lines)
 
@@ -335,6 +349,8 @@ def generate_canvas(cards):
             }
             if card.line_num:
                 card_node['line_num'] = card.line_num
+            if card.children:
+                card_node['children'] = card.children
             nodes.append(card_node)
 
     return {'nodes': nodes, 'edges': []}
@@ -360,7 +376,7 @@ def build_kanban(todo_md_files, todo_items):
     # 1. Parse TODO.md files into cards
     for todo_file in (todo_md_files or []):
         if todo_file.get('content'):
-            cards.extend(parse_todo_md(todo_file['content']))
+            cards.extend(parse_todo_md(todo_file['content'], file_path=todo_file.get('file_path', 'TODO.md')))
 
     # 2. Convert inline TODO/FIXME/BUG comments into cards (NOTEs skipped)
     for item in (todo_items or []):

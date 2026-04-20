@@ -11,6 +11,7 @@ from functools import wraps
 import hashlib
 import csv
 import fnmatch
+import yaml
 
 # Import our robust error handling system - now import directly since we're in the scanner package
 from .error_handling import (
@@ -78,20 +79,67 @@ app.error_handler = ErrorHandler(app.logger)
 # Configure base repository path
 BASE_REPO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repositories")
 
-# Local repos config — maps safe display names to filesystem paths (never exposed to web)
-LOCAL_REPOS_CONFIG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "local_repos.json")
+# Local repos config — maps safe display names to metadata dicts (never exposed to web)
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+LOCAL_REPOS_YAML = os.path.join(_APP_DIR, "local_repos.yaml")
+LOCAL_REPOS_JSON = os.path.join(_APP_DIR, "local_repos.json")  # legacy, auto-migrated
+
+
+def _normalize_repo_meta(value):
+    """Ensure a repo entry is a full metadata dict, not a bare path string."""
+    if isinstance(value, str):
+        return {'path': value, 'public': False, 'webhook_secret': None}
+    # Fill in missing keys for older dicts
+    value.setdefault('public', False)
+    value.setdefault('webhook_secret', None)
+    return value
+
 
 def load_local_repos():
-    """Load the name->path mapping for registered local repositories."""
-    if os.path.exists(LOCAL_REPOS_CONFIG):
-        with open(LOCAL_REPOS_CONFIG, 'r') as f:
-            return json.load(f)
-    return {}
+    """Load registered repos as {name: {path, public, webhook_secret}}.
+
+    Reads local_repos.yaml.  If it doesn't exist but local_repos.json does,
+    auto-migrates (reads JSON, writes YAML, preserves the old file).
+    Bare-string values are normalised to full metadata dicts on read.
+    """
+    if os.path.exists(LOCAL_REPOS_YAML):
+        with open(LOCAL_REPOS_YAML, 'r', encoding='utf-8') as f:
+            raw = yaml.safe_load(f) or {}
+    elif os.path.exists(LOCAL_REPOS_JSON):
+        with open(LOCAL_REPOS_JSON, 'r', encoding='utf-8') as f:
+            raw = json.load(f)
+        # Auto-migrate: write YAML so we never read JSON again
+        normalised = {k: _normalize_repo_meta(v) for k, v in raw.items()}
+        save_local_repos(normalised)
+        return normalised
+    else:
+        return {}
+    return {k: _normalize_repo_meta(v) for k, v in raw.items()}
+
 
 def save_local_repos(repos):
-    """Persist the name->path mapping."""
-    with open(LOCAL_REPOS_CONFIG, 'w') as f:
-        json.dump(repos, f, indent=2)
+    """Persist repos to local_repos.yaml (human-readable)."""
+    tmp = LOCAL_REPOS_YAML + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        yaml.dump(repos, f, default_flow_style=False, allow_unicode=True, sort_keys=True)
+    os.replace(tmp, LOCAL_REPOS_YAML)
+
+
+def get_repo_meta(repo_name):
+    """Return the metadata dict for a registered repo, or None."""
+    return load_local_repos().get(repo_name)
+
+
+def is_repo_public(repo_name):
+    """Return True if repo_name is flagged as public."""
+    meta = get_repo_meta(repo_name)
+    return bool(meta and meta.get('public', False))
+
+
+def get_webhook_secret(repo_name):
+    """Return the webhook secret for a repo, or None."""
+    meta = get_repo_meta(repo_name)
+    return meta.get('webhook_secret') if meta else None
 
 def load_exclusions(repo_path):
     """Read .todoscope-exclude.csv from the repo root.
@@ -141,7 +189,7 @@ def resolve_repo_path(name):
     # Check registered local repos
     local_repos = load_local_repos()
     if name in local_repos:
-        path = local_repos[name]
+        path = local_repos[name]['path']
         if os.path.isdir(path):
             return path
     # Check cloned repos in BASE_REPO_PATH
@@ -473,8 +521,9 @@ def list_local_repositories():
         m = re.match(r'.*github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?$', origin_url or "")
         return f"https://vscode.dev/github/{m.group(1)}/{m.group(2)}" if m else None
 
-    # 1. Registered local repos (name->path mapping, paths stay server-side)
-    for name, path in load_local_repos().items():
+    # 1. Registered local repos (name->meta mapping, paths stay server-side)
+    for name, meta in load_local_repos().items():
+        path = meta['path']
         try:
             if os.path.isdir(path) and is_valid_git_repo(path):
                 last_modified = os.path.getmtime(path)
@@ -719,7 +768,7 @@ def add_local_repo():
         display_name = os.path.basename(os.path.normpath(local_path))
 
     repos = load_local_repos()
-    repos[display_name] = os.path.abspath(local_path)
+    repos[display_name] = {'path': os.path.abspath(local_path), 'public': False, 'webhook_secret': None}
     save_local_repos(repos)
     app.logger.info(f"Registered local repo: {display_name}")
 
