@@ -117,6 +117,39 @@
     .kanban-col-4 { border-color: #a5d6a7; }
     .kanban-col-5 { border-color: #80deea; }
     .kanban-col-6 { border-color: #ce93d8; }
+
+    /* Inline (discovered) cards — compact with source icon */
+    .kanban-card.kanban-card-inline {
+        font-size: 0.78em;
+        padding: 6px 10px 6px 28px;
+        position: relative;
+        opacity: 0.88;
+        border-left: 2px solid #b0bec5;
+    }
+    .kanban-card.kanban-card-inline::before {
+        content: '\1F4C4';  /* page icon */
+        position: absolute;
+        left: 7px;
+        top: 6px;
+        font-size: 0.9em;
+    }
+    /* GFM task list checkboxes inside kanban cards */
+    .kanban-card ul { list-style: none; padding-left: 4px; }
+    .kanban-card li { position: relative; }
+    .kanban-card li input[type="checkbox"] { margin-right: 4px; pointer-events: none; }
+    /* Stale board indicator — shown while scan is in progress */
+    .kanban-stale-banner {
+        text-align: center;
+        font-size: 0.8em;
+        color: #888;
+        padding: 4px 0;
+        animation: pulse-stale 2s ease-in-out infinite;
+    }
+    @keyframes pulse-stale {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 1; }
+    }
+    .kanban-board.kanban-stale { opacity: 0.55; }
 </style>
 {% endblock %}
 
@@ -136,14 +169,15 @@
                     <th style="--p:4px 8px">Column</th><th style="--p:4px 8px">How items get there</th>
                 </tr></thead>
                 <tbody>
-                    <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>Backlog</strong></td><td style="--p:4px 8px"><code>## Low Priority</code> or <code>## Backlog</code> section &middot; inline <code># NOTE:</code></td></tr>
+                    <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>Backlog</strong></td><td style="--p:4px 8px"><code>## Low Priority</code> or <code>## Backlog</code> section</td></tr>
                     <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>TODO</strong></td><td style="--p:4px 8px"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>
                     <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>In Progress</strong></td><td style="--p:4px 8px"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>
                     <tr style="--bb:1px solid #eee"><td style="--p:4px 8px"><strong>Bugs</strong></td><td style="--p:4px 8px"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>
                     <tr><td style="--p:4px 8px"><strong>Done</strong></td><td style="--p:4px 8px">Any <code>- [x]</code> checked item, or the <code>## Completed</code> section</td></tr>
                 </tbody>
             </table>
-            <p style="--mb:0">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>
+            <p style="--mb:8px">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>
+            <p style="--mb:0"><strong>Tags:</strong> Tags describe the kind of work. Section headers and inline keywords determine which column a card lands in. The tag <code>#critical</code> elevates a card to the top of its column. The tag <code>#bug</code> moves a card to the Bugs column. No other tag affects placement.</p>
         </div>
     </details>
 
@@ -303,7 +337,7 @@
             }
             
             // Render a JSON Canvas 1.0 object as a visual kanban board
-            function renderKanban(canvas) {
+            function renderKanban(canvas, stale) {
                 const board = document.getElementById('kanban-board');
                 const container = document.getElementById('kanban-container');
                 if (!canvas || !canvas.nodes) return;
@@ -323,6 +357,17 @@
                 }
 
                 board.innerHTML = '';
+                board.className = stale ? 'kanban-board kanban-stale' : 'kanban-board';
+
+                // Stale banner — shown when displaying previous board during scan
+                const oldBanner = container.querySelector('.kanban-stale-banner');
+                if (oldBanner) oldBanner.remove();
+                if (stale) {
+                    const banner = document.createElement('div');
+                    banner.className = 'kanban-stale-banner';
+                    banner.textContent = 'Showing last known board — scan in progress\u2026';
+                    container.insertBefore(banner, board);
+                }
 
                 groups.forEach(g => {
                     const colCards = cardsInGroup(g);
@@ -340,7 +385,8 @@
                     // Render each card's markdown text with code.dev link
                     colCards.forEach(c => {
                         const cardEl = document.createElement('div');
-                        cardEl.className = 'kanban-card';
+                        const isInline = c.source === 'inline';
+                        cardEl.className = isInline ? 'kanban-card kanban-card-inline' : 'kanban-card';
                         cardEl.innerHTML = parseMd(c.text || '');
 
                         // Add code.dev link for the source file
@@ -350,7 +396,7 @@
                             link.href = `${codeDevBase}/blob/${codeDevBranch}/${c.file_path}${lineAnchor}`;
                             link.target = '_blank';
                             link.rel = 'noopener noreferrer';
-                            link.textContent = c.source === 'inline'
+                            link.textContent = isInline
                                 ? `${c.file_path}:${c.line_num}`
                                 : c.file_path;
                             link.style = '--c:#0066cc; --fs:0.78em; --td:none; --d:block; --mt:4px; opacity:0.8';
@@ -395,6 +441,10 @@
                         guidance.innerHTML = 'This is a read-only scan. To file issues, add TODOs, or contribute fixes, work directly on the repository:<br>'
                             + '<a href="' + data.repo_url + '" target="_blank" style="--c:#0066cc">' + data.repo_url + '</a>';
                         document.querySelector('.summary').appendChild(guidance);
+                        // Instant-load previous kanban board if available
+                        if (data.cached_canvas) {
+                            renderKanban(data.cached_canvas, true);
+                        }
                         break;
                         
                     case 'todo':
@@ -457,8 +507,8 @@
                         break;
                         
                     case 'kanban':
-                        // Render the JSON Canvas as a visual kanban board
-                        renderKanban(data.canvas);
+                        // Render the fresh board — replaces stale cached version
+                        renderKanban(data.canvas, false);
                         break;
 
                     case 'error':

@@ -46,11 +46,22 @@ SECTION_MAP = {
 }
 
 # Map inline comment keywords to kanban columns.
+# NOTE is intentionally absent — notes are observations, not work items.
 KEYWORD_MAP = {
     'TODO':  'todo',
     'FIXME': 'in_progress',
     'BUG':   'bugs',
-    'NOTE':  'backlog',
+}
+
+# Functional tag rules — tags that affect board behavior.
+# Tags describe the kind of work.  Section headers and inline keywords
+# determine which column a card lands in.  These two tags are exceptions:
+#   #bug      → moves card to the Bugs column
+#   #critical → elevates card to the top of its column
+# No other tag affects placement.
+TAG_RULES = {
+    '#bug':      {'column': 'bugs'},
+    '#critical': {'elevate': True},
 }
 
 # Column definitions — fixed order, left to right.
@@ -89,7 +100,8 @@ class KanbanCard:
         self.file_path = file_path  # relative path (inline) or 'TODO.md'
         self.line_num = line_num    # line number in source file
         self.tags = tags or []      # hashtags like ['#brand', '#api']
-        self.children = children or []  # child text strings (for nested items)
+        self.children = children or []  # child dicts: {text, checked, tags}
+        self.elevated = False       # True if #critical tag → sort to top
 
 
 # ---------------------------------------------------------------------------
@@ -119,6 +131,21 @@ def _section_to_column(section_name):
     # Anything not explicitly mapped goes to TODO — if someone wrote
     # a detailed section with sub-tasks, they intend to do the work.
     return 'todo'
+
+
+def _apply_tag_rules(card):
+    """Apply functional tag rules to a card.  Mutates card in place.
+
+    #bug overrides column placement to Bugs.
+    #critical elevates the card to the top of its column.
+    """
+    for tag in card.tags:
+        rule = TAG_RULES.get(tag.lower())
+        if rule:
+            if 'column' in rule:
+                card.column = rule['column']
+            if rule.get('elevate'):
+                card.elevated = True
 
 
 def parse_todo_md(content):
@@ -152,9 +179,15 @@ def parse_todo_md(content):
         # Indented child item — append to parent card
         if NEST_RE.match(line):
             if current_parent is not None:
-                child_text = _strip_checkbox(stripped.strip())
-                child_text, _ = _strip_tags(child_text)
-                current_parent.children.append(child_text)
+                raw = stripped.strip()
+                checked = bool(CHECKED_RE.match(raw))
+                child_text = _strip_checkbox(raw)
+                child_text, child_tags = _strip_tags(child_text)
+                current_parent.children.append({
+                    'text': child_text,
+                    'checked': checked,
+                    'tags': child_tags,
+                })
             continue
 
         # Top-level checkbox item — new card
@@ -173,6 +206,7 @@ def parse_todo_md(content):
                 file_path='TODO.md',
                 tags=tags,
             )
+            _apply_tag_rules(card)
             cards.append(card)
             current_parent = card
             continue
@@ -190,10 +224,13 @@ def inline_todo_to_card(todo_item):
     """Convert a TodoItem (from find_todos) to a KanbanCard.
 
     The keyword in the comment text determines the column:
-      TODO → todo, FIXME → in_progress, BUG → bugs, NOTE → backlog
+      TODO → todo, FIXME → in_progress, BUG → bugs
+    Returns None for NOTE comments — observations, not work items.
     """
     match = KEYWORD_RE.search(todo_item.todo_text)
     keyword = match.group().upper() if match else 'TODO'
+    if keyword == 'NOTE':
+        return None
     column = KEYWORD_MAP.get(keyword, 'todo')
 
     return KanbanCard(
@@ -224,10 +261,13 @@ def _card_text(card):
         lines.append(card.text)
         lines.append(f'`{card.file_path}:{card.line_num}`')
     else:
-        # TODO.md cards show cleaned-up title + child bullets + tags
-        lines.append(f'**{card.text}**')
+        # TODO.md cards show cleaned-up title + GFM task list children + tags
+        title = re.sub(r'\*{2,}', '', card.text).strip()
+        lines.append(f'**{title}**')
         for child in card.children:
-            lines.append(f'  - {child}')
+            mark = 'x' if child['checked'] else ' '
+            tag_suffix = ' ' + ' '.join(child['tags']) if child['tags'] else ''
+            lines.append(f'- [{mark}] {child["text"]}{tag_suffix}')
         if card.tags:
             lines.append(' '.join(f'`{t}`' for t in card.tags))
 
@@ -246,6 +286,10 @@ def generate_canvas(cards):
         bucket = buckets.get(card.column)
         if bucket is not None:
             bucket.append(card)
+
+    # Sort each bucket: elevated (#critical) cards float to top
+    for bucket in buckets.values():
+        bucket.sort(key=lambda c: (not c.elevated,))
 
     nodes = []
 
@@ -287,6 +331,7 @@ def generate_canvas(cards):
                 # Extra metadata for web renderers (ignored by Obsidian)
                 'file_path': card.file_path,
                 'source': card.source,
+                'tags': card.tags,
             }
             if card.line_num:
                 card_node['line_num'] = card.line_num
@@ -317,9 +362,11 @@ def build_kanban(todo_md_files, todo_items):
         if todo_file.get('content'):
             cards.extend(parse_todo_md(todo_file['content']))
 
-    # 2. Convert inline TODO/FIXME/BUG/NOTE comments into cards
+    # 2. Convert inline TODO/FIXME/BUG comments into cards (NOTEs skipped)
     for item in (todo_items or []):
-        cards.append(inline_todo_to_card(item))
+        card = inline_todo_to_card(item)
+        if card is not None:
+            cards.append(card)
 
     # 3. Generate the canvas layout
     return generate_canvas(cards)

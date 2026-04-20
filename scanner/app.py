@@ -763,7 +763,20 @@ def stream_data(repo_url):
 
                 # Send repo metadata and TODO.md immediately — no waiting
                 branch = get_repo_branch(existing_path)
-                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch})}\n\n"
+                # Instant-load: include the previous KANBAN.canvas so the board
+                # appears immediately (marked stale) while the scan runs.
+                cached_canvas = None
+                canvas_path = os.path.join(existing_path, 'KANBAN.canvas')
+                if os.path.isfile(canvas_path):
+                    try:
+                        with open(canvas_path, 'r', encoding='utf-8') as _cf:
+                            cached_canvas = json.load(_cf)
+                    except (json.JSONDecodeError, OSError):
+                        pass
+                init_payload = {'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch}
+                if cached_canvas:
+                    init_payload['cached_canvas'] = cached_canvas
+                yield f"data: {json.dumps(init_payload)}\n\n"
                 todo_md_files = find_todo_files(existing_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
                     yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
