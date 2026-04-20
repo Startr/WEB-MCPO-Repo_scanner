@@ -56,7 +56,8 @@
         min-height: 200px;
     }
     .kanban-column {
-        flex: 0 0 260px;
+        flex: 0 0 60ch;
+        overflow-x: scroll;
         border-radius: 8px;
         padding: 12px;
         display: flex;
@@ -82,6 +83,7 @@
         opacity: 0.7;
     }
     .kanban-card {
+        overflow: scroll;
         background: #fff;
         border-radius: 6px;
         padding: 10px 12px;
@@ -89,7 +91,6 @@
         font-size: 0.85em;
         line-height: 1.4;
         box-shadow: 0 1px 2px rgba(0,0,0,0.06);
-        overflow: hidden;
         word-break: break-word;
     }
     .kanban-card p { margin: 0 0 4px 0; }
@@ -192,7 +193,14 @@
                 </tbody>
             </table>
             <p style="--mb:8px">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>
-            <p style="--mb:0"><strong>Tags:</strong> Tags describe the kind of work. Section headers and inline keywords determine which column a card lands in. The tag <code>#critical</code> elevates a card to the top of its column. The tag <code>#bug</code> moves a card to the Bugs column. No other tag affects placement.</p>
+            <p style="--mb:8px"><strong>Tags:</strong> Tags describe the kind of work. Section headers and inline keywords determine which column a card lands in. The tag <code>#critical</code> elevates a card to the top of its column. The tag <code>#bug</code> moves a card to the Bugs column. No other tag affects placement.</p>
+            <p style="--mb:0"><strong>Learn more about Kanban:</strong>
+                <a href="https://www.youtube.com/watch?v=IYt_IjLFGCY" target="_blank" rel="noopener" style="--c:#0066cc">Toyota's original Kanban system</a> —
+                how the method started on factory floors.
+                <a href="https://www.youtube.com/watch?v=DRKwskZzZII&list=PLxO4vxvvorbvdmTUi0c1YNCZ3X6qCvCD9" target="_blank" rel="noopener" style="--c:#0066cc">Kanban deep-dive playlist</a> —
+                from principles to practice.
+                See the full <a href="/resources" style="--c:#0066cc">Kanban Resources</a> page for books and more.
+            </p>
         </div>
     </details>
 

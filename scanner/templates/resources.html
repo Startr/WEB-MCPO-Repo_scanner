@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %}Kanban Resources — TodoScope{% endblock %}
+
+{% block content %}
+    <h2 style="--c:#333; --bb:1px solid #ddd; --pb:10px">Kanban Resources</h2>
+    <p style="--c:#555; --mb:20px">
+        Curated resources for understanding Kanban — from Toyota's factory floors
+        to modern software delivery.
+    </p>
+
+    <h3 style="--c:#333; --mt:24px; --mb:12px">Videos</h3>
+
+    <div style="--bgc:#f9f9f9; --p:15px; --radius:5px; --b:1px solid #ddd; --mb:12px">
+        <a href="https://www.youtube.com/watch?v=IYt_IjLFGCY" target="_blank" rel="noopener"
+           style="--c:#0066cc; --weight:bold; --size:1.05em">Toyota's Kanban System</a>
+        <p style="--c:#555; --mt:6px; --mb:0; --size:0.9em">
+            Where it all started. See how Toyota used physical cards to signal
+            demand and control work-in-progress on the production line. The
+            principles here — pull, limit WIP, make work visible — are exactly
+            what software kanban boards inherit.
+        </p>
+    </div>
+
+    <div style="--bgc:#f9f9f9; --p:15px; --radius:5px; --b:1px solid #ddd; --mb:12px">
+        <a href="https://www.youtube.com/watch?v=DRKwskZzZII&list=PLxO4vxvvorbvdmTUi0c1YNCZ3X6qCvCD9"
+           target="_blank" rel="noopener"
+           style="--c:#0066cc; --weight:bold; --size:1.05em">Kanban Deep-Dive Playlist</a>
+        <p style="--c:#555; --mt:6px; --mb:0; --size:0.9em">
+            A comprehensive playlist covering Kanban from principles to practice.
+            Covers flow metrics, WIP limits, pull policies, and how to evolve
+            your process incrementally.
+        </p>
+    </div>
+
+    <h3 style="--c:#333; --mt:24px; --mb:12px">Books</h3>
+
+    <div style="--bgc:#f9f9f9; --p:15px; --radius:5px; --b:1px solid #ddd; --mb:12px">
+        <strong style="--size:1.05em">Kanban: Successful Evolutionary Change for Your Technology Business</strong>
+        <span style="--c:#888; --size:0.9em"> — David J. Anderson</span>
+        <p style="--c:#555; --mt:6px; --mb:0; --size:0.9em">
+            The foundational text for applying Kanban to knowledge work. Anderson
+            adapted Toyota's principles for software teams: visualize work, limit
+            WIP, manage flow, make policies explicit, and improve collaboratively.
+        </p>
+    </div>
+
+    <div style="--bgc:#f9f9f9; --p:15px; --radius:5px; --b:1px solid #ddd; --mb:12px">
+        <strong style="--size:1.05em">Kanban from the Inside</strong>
+        <span style="--c:#888; --size:0.9em"> — Mike Burrows</span>
+        <p style="--c:#555; --mt:6px; --mb:0; --size:0.9em">
+            Goes deeper into the values and principles behind Kanban.
+            Burrows explains the "why" that Anderson's book assumes — transparency,
+            balance, collaboration, customer focus, flow, leadership, understanding,
+            agreement, and respect.
+        </p>
+    </div>
+
+    <div style="--bgc:#f9f9f9; --p:15px; --radius:5px; --b:1px solid #ddd; --mb:12px">
+        <strong style="--size:1.05em">Rethinking Agile: Why Agile Teams Have Nothing to Do with Business Agility</strong>
+        <span style="--c:#888; --size:0.9em"> — Klaus Leopold</span>
+        <p style="--c:#555; --mt:6px; --mb:0; --size:0.9em">
+            Challenges common agile assumptions from a flow perspective.
+            Leopold argues that optimizing individual teams misses the point —
+            business agility comes from optimizing the end-to-end flow of work
+            across the organization.
+        </p>
+    </div>
+
+    <div style="--mt:24px">
+        <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">&larr; Back to dashboard</a>
+    </div>
+{% endblock %}

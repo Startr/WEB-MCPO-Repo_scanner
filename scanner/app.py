@@ -28,7 +28,7 @@ app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 # --- Access key auth ---
 ACCESS_KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_keys.csv")
 # Routes that must stay public for MCP discovery and auth itself
-_PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login'}
+_PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login', '/resources'}
 
 def load_access_keys():
     """Return set of valid keys from access_keys.csv. Empty set = auth disabled."""
@@ -993,6 +993,12 @@ def highlight_todo(text):
         text, 
         flags=re.IGNORECASE
     )
+
+@app.route('/resources')
+def resources():
+    """Curated Kanban resources — public, no auth required."""
+    return render_template('resources.html')
+
 
 # ----- MPCO API Endpoints -----
 
