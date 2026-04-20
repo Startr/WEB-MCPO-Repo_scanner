@@ -26,6 +26,58 @@
             }
         })();
     </script>
+    <script>
+        /* MPA page-transition shim — fade for browsers without
+           @view-transition { navigation: auto }.
+           Covers: link clicks, back/forward (bfcache + full reload).
+           Native-capable browsers (Chrome 126+, Safari 18.2+) skip this. */
+        (function () {
+            if ('onpagereveal' in window) return;
+
+            var D = 150; // ms — match existing CSS fade durations
+            var root = document.documentElement;
+
+            function fadeIn() {
+                root.style.opacity = '0';
+                root.style.transition = 'opacity ' + D + 'ms ease-in';
+                requestAnimationFrame(function () {
+                    requestAnimationFrame(function () { root.style.opacity = '1'; });
+                });
+                setTimeout(function () { root.style.transition = ''; }, D + 50);
+            }
+
+            // Fade in on first load
+            fadeIn();
+
+            // Fade in on back/forward (bfcache restore)
+            window.addEventListener('pageshow', function (e) {
+                if (e.persisted) fadeIn();
+            });
+
+            // Prep bfcache snapshot as invisible so back/forward
+            // arrivals always start from opacity 0
+            window.addEventListener('pagehide', function (e) {
+                if (e.persisted) {
+                    root.style.transition = '';
+                    root.style.opacity = '0';
+                }
+            });
+
+            // Intercept same-origin link clicks → fade out → navigate
+            document.addEventListener('click', function (e) {
+                var a = e.target.closest('a[href]');
+                if (!a) return;
+                var url = new URL(a.href, location.href);
+                if (url.origin !== location.origin) return;
+                if (a.target && a.target !== '_self') return;
+                if (e.ctrlKey || e.metaKey || e.shiftKey) return;
+                e.preventDefault();
+                root.style.transition = 'opacity ' + D + 'ms ease-out';
+                root.style.opacity = '0';
+                setTimeout(function () { location.href = url.href; }, D);
+            });
+        })();
+    </script>
     {% block head_extra %}{% endblock %}
 </head>
 <body style="--ff:Arial, sans-serif; --maxw:var(--ts-maxw, 80rem); --m:0 auto; --p:20px; --lh:1.6">
