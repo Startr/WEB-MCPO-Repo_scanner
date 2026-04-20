@@ -166,6 +166,35 @@
         50% { opacity: 1; }
     }
     .kanban-board.kanban-stale { opacity: 0.55; }
+
+    /* Editor selector */
+    .editor-selector {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.82em;
+        color: #666;
+    }
+    .editor-selector select {
+        padding: 3px 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+        background: #fff;
+        cursor: pointer;
+    }
+    .editor-selector .editor-label {
+        color: #999;
+        font-size: 0.9em;
+    }
+    .editor-custom-input {
+        padding: 3px 6px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 1em;
+        width: 320px;
+        font-family: monospace;
+    }
 </style>
 {% endblock %}
 
@@ -210,7 +239,23 @@
     </div>
     
     <div id="kanban-container" style="display:none">
-        <h2 class="section-title">Kanban Board</h2>
+        <div style="--d:flex; --jc:space-between; --ai:baseline; --fw:wrap; gap:8px">
+            <h2 class="section-title" style="--mb:0">Kanban Board</h2>
+            <div class="editor-selector" id="editor-selector">
+                <span class="editor-label">Open in:</span>
+                <select id="editor-mode" title="Choose where file links open">
+                    <option value="web">vscode.dev</option>
+                    <option value="vscode">VS Code</option>
+                    <option value="cursor">Cursor</option>
+                    <option value="jetbrains">JetBrains</option>
+                    <option value="custom">Custom</option>
+                </select>
+                <input type="text" id="editor-custom-template" class="editor-custom-input"
+                       placeholder="e.g. myeditor://open?file={file}&line={line}"
+                       title="URI template — use {file}, {line}, {local_path}, {owner}, {repo}, {branch}"
+                       style="display:none">
+            </div>
+        </div>
         <div id="kanban-board" class="kanban-board"></div>
     </div>
 
@@ -264,9 +309,97 @@
             // Initially hide the TODO.md files section
             todoMdFilesContainer.style.display = 'none';
 
-            // Base URL for vscode.dev — set once from the 'init' event (GitHub repos only)
-            let codeDevBase = null;
-            let codeDevBranch = 'HEAD';
+            // --- Editor link system ---
+            // Repo context — populated from the 'init' SSE event
+            let ghOwner = null, ghRepo = null, ghBranch = 'HEAD';
+            let localPath = null;  // set for local repos only
+
+            // Editor mode — persisted in localStorage
+            const editorModeEl = document.getElementById('editor-mode');
+            const editorCustomEl = document.getElementById('editor-custom-template');
+            const savedMode = localStorage.getItem('todoScope-editorMode') || 'web';
+            const savedTemplate = localStorage.getItem('todoScope-editorTemplate') || '';
+            editorModeEl.value = savedMode;
+            editorCustomEl.value = savedTemplate;
+            if (savedMode === 'custom') editorCustomEl.style.display = '';
+
+            editorModeEl.addEventListener('change', function() {
+                localStorage.setItem('todoScope-editorMode', this.value);
+                editorCustomEl.style.display = this.value === 'custom' ? '' : 'none';
+                reRenderLinks();
+            });
+            editorCustomEl.addEventListener('input', function() {
+                localStorage.setItem('todoScope-editorTemplate', this.value);
+                reRenderLinks();
+            });
+
+            function buildEditorLink(filePath, lineNum) {
+                const mode = editorModeEl.value;
+                const line = lineNum || 1;
+                const vars = {
+                    file: filePath || '',
+                    line: String(line),
+                    local_path: localPath || '',
+                    owner: ghOwner || '',
+                    repo: ghRepo || '',
+                    branch: ghBranch || 'HEAD',
+                };
+                switch (mode) {
+                    case 'web':
+                        if (!ghOwner) return null;
+                        return `https://vscode.dev/github/${vars.owner}/${vars.repo}/blob/${vars.branch}/${vars.file}#L${vars.line}`;
+                    case 'vscode':
+                        if (!localPath) return null;
+                        return `vscode://file/${vars.local_path}/${vars.file}:${vars.line}`;
+                    case 'cursor':
+                        if (!localPath) return null;
+                        return `cursor://file/${vars.local_path}/${vars.file}:${vars.line}`;
+                    case 'jetbrains':
+                        if (!localPath) return null;
+                        return `jetbrains://open?file=${vars.local_path}/${vars.file}&line=${vars.line}`;
+                    case 'custom': {
+                        const tmpl = editorCustomEl.value;
+                        if (!tmpl) return null;
+                        return tmpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] || '');
+                    }
+                    default:
+                        return null;
+                }
+            }
+
+            // Re-render all editor links on the page when the mode changes
+            function reRenderLinks() {
+                document.querySelectorAll('[data-editor-link]').forEach(a => {
+                    const fp = a.dataset.filePath;
+                    const ln = parseInt(a.dataset.lineNum, 10) || null;
+                    const href = buildEditorLink(fp, ln);
+                    if (href) {
+                        a.href = href;
+                        a.style.display = '';
+                    } else {
+                        a.style.display = 'none';
+                    }
+                });
+            }
+
+            // Helper: create a data-attributed editor link element
+            function makeEditorLink(filePath, lineNum, text) {
+                const href = buildEditorLink(filePath, lineNum);
+                const a = document.createElement('a');
+                a.dataset.editorLink = '1';
+                a.dataset.filePath = filePath || '';
+                a.dataset.lineNum = String(lineNum || '');
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                a.textContent = text || 'Open';
+                a.style.cssText = '--c:#0066cc; --td:none';
+                if (href) {
+                    a.href = href;
+                } else {
+                    a.style.display = 'none';
+                }
+                return a;
+            }
 
             // Function to create a TODO item element
             function createTodoElement(todo) {
@@ -279,15 +412,9 @@
                 filePath.style = '--weight:bold; --c:#333; --mb:5px';
                 filePath.textContent = todo.file_path;
 
-                if (codeDevBase) {
-                    const openLink = document.createElement('a');
-                    openLink.href = `${codeDevBase}/blob/${codeDevBranch}/${todo.file_path}#L${todo.line_num}`;
-                    openLink.target = '_blank';
-                    openLink.rel = 'noopener noreferrer';
-                    openLink.textContent = 'Open in code.dev';
-                    openLink.style = '--c:#0066cc; --fs:0.8em; --ml:10px; --weight:normal';
-                    filePath.appendChild(openLink);
-                }
+                const openLink = makeEditorLink(todo.file_path, todo.line_num, 'Open in editor');
+                openLink.style.cssText += '; --fs:0.8em; --ml:10px; --weight:normal';
+                filePath.appendChild(openLink);
 
                 const lineNum = document.createElement('div');
                 lineNum.className = 'line-num';
@@ -326,15 +453,9 @@
                 filePath.style = '--weight:bold; --c:#333; --mb:10px';
                 filePath.textContent = mdFile.file_path;
 
-                if (codeDevBase) {
-                    const openLink = document.createElement('a');
-                    openLink.href = `${codeDevBase}/blob/${codeDevBranch}/${mdFile.file_path}`;
-                    openLink.target = '_blank';
-                    openLink.rel = 'noopener noreferrer';
-                    openLink.textContent = 'Open in code.dev';
-                    openLink.style = '--c:#0066cc; --fs:0.8em; --ml:10px; --weight:normal';
-                    filePath.appendChild(openLink);
-                }
+                const mdOpenLink = makeEditorLink(mdFile.file_path, null, 'Open in editor');
+                mdOpenLink.style.cssText += '; --fs:0.8em; --ml:10px; --weight:normal';
+                filePath.appendChild(mdOpenLink);
 
                 mdFileEl.appendChild(filePath);
                 
@@ -424,26 +545,29 @@
                         }
 
                         // Add clickable link wrapping the location reference
-                        if (codeDevBase && c.file_path) {
+                        if (c.file_path) {
                             const locEl = cardEl.querySelector('.card-location') || null;
-                            const link = document.createElement('a');
-                            const lineAnchor = c.line_num ? `#L${c.line_num}` : '';
-                            link.href = `${codeDevBase}/blob/${codeDevBranch}/${c.file_path}${lineAnchor}`;
-                            link.target = '_blank';
-                            link.rel = 'noopener noreferrer';
-                            link.style = '--c:#0066cc; --td:none';
-                            if (locEl) {
-                                // Wrap existing location text in the link
-                                link.innerHTML = locEl.innerHTML;
-                                locEl.innerHTML = '';
-                                locEl.appendChild(link);
-                            } else {
-                                // Fallback: append a standalone link
-                                link.textContent = isInline
-                                    ? `${c.file_path}:${c.line_num}`
-                                    : `${c.file_path}:L${c.line_num}`;
-                                link.className = 'card-location';
-                                cardEl.appendChild(link);
+                            const editorHref = buildEditorLink(c.file_path, c.line_num);
+                            if (editorHref) {
+                                const link = document.createElement('a');
+                                link.href = editorHref;
+                                link.target = '_blank';
+                                link.rel = 'noopener noreferrer';
+                                link.style = '--c:#0066cc; --td:none';
+                                link.dataset.editorLink = '1';
+                                link.dataset.filePath = c.file_path;
+                                link.dataset.lineNum = String(c.line_num || '');
+                                if (locEl) {
+                                    link.innerHTML = locEl.innerHTML;
+                                    locEl.innerHTML = '';
+                                    locEl.appendChild(link);
+                                } else {
+                                    link.textContent = isInline
+                                        ? `${c.file_path}:${c.line_num}`
+                                        : `${c.file_path}:L${c.line_num}`;
+                                    link.className = 'card-location';
+                                    cardEl.appendChild(link);
+                                }
                             }
                         }
 
@@ -473,11 +597,26 @@
                         // Initialize the page with repository information
                         repoNameEl.textContent = `Repository: ${data.repo_name}`;
                         repoUrlEl.textContent = `URL: ${data.repo_url}`;
-                        // Extract owner/repo and branch for code.dev links (GitHub only)
+                        // Extract owner/repo for editor links (GitHub repos)
                         const ghMatch = data.repo_url.match(/github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?$/);
                         if (ghMatch) {
-                            codeDevBase = `https://vscode.dev/github/${ghMatch[1]}/${ghMatch[2]}`;
-                            codeDevBranch = data.branch || 'HEAD';
+                            ghOwner = ghMatch[1];
+                            ghRepo = ghMatch[2];
+                            ghBranch = data.branch || 'HEAD';
+                        }
+                        // Local repos expose their filesystem path for local editor URIs
+                        if (data.local_path) {
+                            localPath = data.local_path;
+                        }
+                        // Hide local-only editor options when no local path is available
+                        const localOnlyModes = ['vscode', 'cursor', 'jetbrains'];
+                        localOnlyModes.forEach(m => {
+                            const opt = editorModeEl.querySelector(`option[value="${m}"]`);
+                            if (opt) opt.disabled = !localPath;
+                        });
+                        // If saved mode requires local path but none available, fall back to web
+                        if (localOnlyModes.includes(editorModeEl.value) && !localPath) {
+                            editorModeEl.value = ghOwner ? 'web' : 'custom';
                         }
                         // Single source of truth: guide users to the repo for contributions
                         const guidance = document.createElement('p');

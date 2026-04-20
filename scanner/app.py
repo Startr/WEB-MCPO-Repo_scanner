@@ -853,6 +853,9 @@ def stream_data(repo_url):
                 init_payload = {'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch}
                 if cached_canvas:
                     init_payload['cached_canvas'] = cached_canvas
+                # Local repos expose their path for local editor URIs (vscode://, cursor://)
+                if repo_url in load_local_repos():
+                    init_payload['local_path'] = existing_path
                 yield f"data: {json.dumps(init_payload)}\n\n"
                 todo_md_files = find_todo_files(existing_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
