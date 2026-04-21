@@ -385,7 +385,7 @@ def build_kanban(todo_md_files, todo_items):
             cards.append(card)
 
     # 3. Generate the canvas layout
-    return generate_canvas(cards)
+    return generate_canvas(cards), cards
 
 
 def write_canvas(repo_path, canvas):
@@ -419,7 +419,7 @@ if __name__ == '__main__':
     todo_md_files = find_todo_files(repo_path, exclusions=exclusions)
     todo_items = list(find_todos(repo_path, exclusions=exclusions))
 
-    canvas = build_kanban(todo_md_files, todo_items)
+    canvas, _cards = build_kanban(todo_md_files, todo_items)
     path = write_canvas(repo_path, canvas)
 
     card_count = sum(1 for n in canvas['nodes'] if n['type'] == 'text')

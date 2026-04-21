@@ -349,6 +349,107 @@ def get_repo_branch(repo_path):
     except Exception:
         return 'HEAD'
 
+# ---------------------------------------------------------------------------
+# Git blame — author attribution for TODO items
+# ---------------------------------------------------------------------------
+
+def _parse_blame_porcelain(output, wanted_lines):
+    """Parse git blame --porcelain output, return {line_num: {author, date}} for wanted lines."""
+    from datetime import datetime, timezone
+    result = {}
+    commit_cache = {}  # sha -> {author, date}
+    current_sha = None
+    current_line = None
+    current_author = None
+    current_time = None
+
+    for raw_line in output.split('\n'):
+        # New blame block: 40-char SHA followed by line numbers
+        parts = raw_line.split()
+        if (len(parts) >= 3 and len(parts[0]) == 40
+                and all(c in '0123456789abcdef' for c in parts[0])):
+            current_sha = parts[0]
+            current_line = int(parts[2])  # final line number in current file
+            current_author = None
+            current_time = None
+        elif raw_line.startswith('author '):
+            current_author = raw_line[7:]
+        elif raw_line.startswith('author-time '):
+            try:
+                current_time = int(raw_line[12:])
+            except ValueError:
+                current_time = None
+        elif raw_line.startswith('\t'):
+            # End of block — cache commit info, store result if wanted
+            if current_sha and current_author:
+                date_str = ''
+                if current_time:
+                    date_str = datetime.fromtimestamp(current_time, tz=timezone.utc).strftime('%Y-%m-%d')
+                commit_cache[current_sha] = {'author': current_author, 'date': date_str}
+            if current_line in wanted_lines and current_sha in commit_cache:
+                info = commit_cache[current_sha]
+                if info['author'] != 'Not Committed Yet':
+                    result[current_line] = info
+
+    return result
+
+
+def git_blame_file(repo_path, rel_path, line_numbers):
+    """Run git blame --porcelain on a file, return {line_num: {author, date}} for requested lines.
+
+    Returns empty dict on any failure — blame is best-effort enrichment.
+    """
+    if not line_numbers:
+        return {}
+    try:
+        result = subprocess.run(
+            ['git', '-C', repo_path, 'blame', '--porcelain', '--', rel_path],
+            capture_output=True, text=True, timeout=15
+        )
+        if result.returncode != 0:
+            return {}
+        return _parse_blame_porcelain(result.stdout, set(line_numbers))
+    except subprocess.TimeoutExpired:
+        app.logger.warning(f"Blame timeout for {rel_path}")
+        return {}
+    except Exception as e:
+        app.logger.warning(f"Blame failed for {rel_path}: {e}")
+        return {}
+
+
+def collect_blame_data(repo_path, cards):
+    """Group cards by file, run blame once per file, return flat blame dict.
+
+    Returns dict keyed as "file_path:line_num" -> {"author": str, "date": str}.
+    Stops early if total blame time exceeds 30 seconds.
+    """
+    import time
+
+    # Group cards by file_path -> set of line_nums
+    file_lines = {}
+    for card in cards:
+        if card.file_path and card.line_num:
+            file_lines.setdefault(card.file_path, set()).add(card.line_num)
+            # Also include child line numbers (for TODO.md subtasks)
+            for child in getattr(card, 'children', []):
+                ln = child.get('line_num')
+                if ln:
+                    file_lines[card.file_path].add(ln)
+
+    blame_result = {}
+    start = time.monotonic()
+
+    for file_path, line_nums in file_lines.items():
+        if time.monotonic() - start > 30:
+            app.logger.info("Blame time budget exceeded, stopping early")
+            break
+        file_blame = git_blame_file(repo_path, file_path, line_nums)
+        for line_num, info in file_blame.items():
+            blame_result[f"{file_path}:{line_num}"] = info
+
+    return blame_result
+
+
 @with_error_handling("pull_repository", "repository_manager", RetryConfig(max_attempts=2))
 def pull_repository(repo_path):
     """Pull the latest changes from the remote repository."""
@@ -921,7 +1022,7 @@ def webhook_trigger(repo_name):
     exclusions = load_exclusions(repo_path)
     todo_md_files = find_todo_files(repo_path, exclusions=exclusions)
     todos = list(find_todos(repo_path, exclusions=exclusions))
-    canvas = build_kanban(todo_md_files, todos)
+    canvas, _cards = build_kanban(todo_md_files, todos)
     write_canvas(repo_path, canvas)
 
     card_count = sum(1 for n in canvas['nodes'] if n['type'] == 'text')
@@ -1018,9 +1119,15 @@ def stream_data(repo_url):
             # Generate KANBAN.canvas — the board is a view of the code.
             # Emitted before 'complete' because the client closes the stream on complete.
             from .kanban import build_kanban, write_canvas
-            canvas = build_kanban(todo_md_files, todos_collected)
+            canvas, cards = build_kanban(todo_md_files, todos_collected)
             write_canvas(repo_path, canvas)
             yield f"data: {json.dumps({'type': 'kanban', 'canvas': canvas})}\n\n"
+
+            # Git blame attribution — runs after kanban so the board appears immediately.
+            # Best-effort: blame failure never blocks the scan.
+            blame_data = collect_blame_data(repo_path, cards)
+            if blame_data:
+                yield f"data: {json.dumps({'type': 'blame', 'blame': blame_data})}\n\n"
 
             # Send completion event with repo_name for fingerprint polling
             # Tell the client whether this is a local or cloned repo (for refresh behavior)
@@ -1467,7 +1574,7 @@ def api_scan_repository():
 
         # Generate KANBAN.canvas — the board is a view of the code
         from .kanban import build_kanban, write_canvas
-        canvas = build_kanban(todo_md_files, todos)
+        canvas, _cards = build_kanban(todo_md_files, todos)
         write_canvas(repo_path, canvas)
 
         return {
@@ -1607,7 +1714,7 @@ def api_scan_repository_stream():
             # Generate KANBAN.canvas — the board is a view of the code.
             # Emitted before 'complete' so clients that close on complete still receive it.
             from .kanban import build_kanban, write_canvas
-            canvas = build_kanban(todo_md_files, todos_collected)
+            canvas, _cards = build_kanban(todo_md_files, todos_collected)
             write_canvas(repo_path, canvas)
             yield json.dumps({
                 "type": "kanban",

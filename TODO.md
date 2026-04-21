@@ -1,77 +1,86 @@
-# TODO List for Repo Scanner
+# TODO — TodoScope
 
-<!-- All content below this line has been revised for clarity, conciseness, vigorous language, tagging, and DRY principles. Uncompleted items from the original '''Completed''' section have been moved to '''Medium Priority'''. -->
+> **Convention** — Sections below map to kanban columns. Inline source-code
+> tags use the same vocabulary so items stay cross-referenced between this
+> file and the codebase. `KANBAN.canvas` auto-generates from this file and
+> inline tags — do not hand-edit it.
+>
+> | Column      | Markdown section  | Inline tag  |
+> |-------------|-------------------|-------------|
+> | Backlog     | `## Backlog`      |             |
+> | TODO        | `## TODO`         | `# TODO:`   |
+> | In Progress | `## In Progress`  | `# FIXME:`  |
+> | Bugs        | `## Bugs`         | `# BUG:`    |
+> | Done        | `- [x]` items / `## Done` | —   |
 
-## Brand & Landing Page (CEO Review — scoped by surface)
+## In Progress
 
-These items align the product surface with the voice we locked in via [docs/brand-interview.md](docs/brand-interview.md).
-The one-line pitch is: *"See every TODO across all your repos. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished."*
-
-### Scope A — Logged-Out Landing (login page) #brand #landing
+### Brand & Landing Page — Scope A (Logged-Out Landing) #brand #landing
 
 The current login page is a cold password prompt with zero context. Turn it into a proper landing page.
+The one-line pitch is: *"See every TODO across all your repos. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished."*
 
 - [ ] **Promote login.html into a real landing page**: hero, pitch, features, sign-in #brand #landing #critical
-  - [x] Add brand hero: headline, subhead (use the one-line pitch verbatim), and a short "what it is" paragraph
+  - [x] Add brand hero: headline, subhead, and a short "what it is" paragraph
   - [x] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
-  - [x] Embed the existing `Sage_repo-TODOs.gif` or a fresh screenshot above the fold
-  - [x] Move the sign-in form into a right-hand card or section below the hero — secondary action, not primary
-  - [ ] Add "New to TodoScope?" copy with a link to the README / GitHub for evaluators who aren't signing in
-  - [ ] Add social proof / cross-links to [sage.is](https://sage.is) and [startr.style](https://startr.style)
-  - [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`) so shared links render properly
+  - [x] Embed screenshot above the fold
+  - [x] Move the sign-in form into a secondary section below the hero
+  - [ ] Add "New to TodoScope?" copy with link to README / GitHub
+  - [ ] Add social proof / cross-links to sage.is and startr.style
+  - [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`)
 - [ ] **Surface the MCP / AI agent story on the landing page** #brand #ai #mcp
-  - [ ] Add a "Connect your AI agent" section showing how to point Sage / Claude / any MCP client at the instance
-  - [ ] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json` from the landing page
+  - [ ] Add a "Connect your AI agent" section
+  - [ ] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`
   - [ ] Include a one-paragraph framing: "AI agents are part of your team"
 
-### Scope B — Logged-In Dashboard (index page) #ux #dashboard
+### Subdirectory Migration #development #structure
 
-The dashboard is functional but has no brand presence and no empty state.
+- [ ] **Migrate Python files and dependencies to subdirectory structure**
+  - [x] Create scanner subdirectory
+  - [x] Implement `__init__.py`
+  - [x] Move `error_handling.py` to scanner subdirectory
+  - [x] Update imports in `app.py`
+  - [x] Move remaining Python files (test files) to `scanner/tests`
+  - [x] Move Pipfile and Pipfile.lock to scanner subdirectory
+  - [ ] Test and update the Makefile accordingly
 
-- [ ] **Add a dashboard header**: restate the one-line pitch in short form, orient the user #ux #brand
+## TODO
+
+### Brand & Landing Page — Scope B (Dashboard) #ux #dashboard
+
+- [ ] **Add a dashboard header**: restate the one-line pitch, orient the user #ux #brand
 - [ ] **Unify repo entry**: one input that accepts a git URL *or* a local path, with smart detection #ux #simplify
-- [ ] **Empty state for Repositories**: when no repos are registered, show a friendly onboarding card with 2-3 suggested quick-start actions (scan a demo repo, register a local path, copy MCP endpoint) #ux #onboarding
-- [ ] **Surface MCP endpoints on the dashboard**: a small "Connect to an AI agent" card with copy-to-clipboard buttons for the manifest URL and a sample cURL #ai #mcp #ux
-- [ ] **Add search/filter to the Repositories table** (relevant as soon as the list grows past ~10) #ux #search
+- [ ] **Empty state for Repositories**: onboarding card with quick-start actions #ux #onboarding
+- [ ] **Surface MCP endpoints on the dashboard**: copy-to-clipboard for manifest URL and sample cURL #ai #mcp #ux
+- [ ] **Add search/filter to the Repositories table** #ux #search
 - [ ] **Add a visible "last scanned" timestamp + manual refresh control** per repo row #ux
-- [ ] **Move the GitHub contribute banner to the footer** — it's competing with the primary action #ux #hierarchy
-- [ ] **Clarify the "shallow clone" checkbox**: tooltip or inline help explaining when to use it #ux #copy
+- [ ] **Move the GitHub contribute banner to the footer** #ux #hierarchy
+- [ ] **Clarify the "shallow clone" checkbox**: tooltip or inline help #ux #copy
 
-### Scope C — MCP / Sage.is Integration Surface #ai #mcp #integration
+### Brand & Landing Page — Scope C (MCP / Sage.is Integration) #ai #mcp #integration
 
-This is our killer differentiator and it's currently invisible in the UI.
+- [ ] **Create a dedicated `/connect` or `/mcp` page** with step-by-step instructions #mcp #docs
+- [ ] **Add a "Copy MCP manifest URL" button** on the dashboard #mcp #ux
+- [ ] **Write a short guide** — `docs/connect-sage.md` — with screenshots #docs #mcp
+- [ ] **Add an MCP health indicator** to the dashboard #observability #mcp
 
-- [ ] **Create a dedicated `/connect` or `/mcp` page** with step-by-step instructions to wire TodoScope into Sage, Claude Desktop, and generic MCP clients #mcp #docs
-- [ ] **Add a "Copy MCP manifest URL" button** visible on the logged-in dashboard #mcp #ux
-- [ ] **Write a short guide** — `docs/connect-sage.md` — with screenshots showing an end-to-end Sage → TodoScope query #docs #mcp
-- [ ] **Add an MCP health indicator** to the dashboard: green dot when the manifest endpoint is responding, red when not #observability #mcp
+### Brand & Landing Page — Scope D (Brand Consistency) #brand #copy
 
-### Scope D — Brand Consistency & Copy #brand #copy
+- [ ] **Audit all user-facing copy** against the brand interview voice #copy #brand
+- [ ] **Error messages**: review for tone — honest founder voice, not generic Flask errors #copy #ux
 
-Small touches that make the product feel like it belongs to the Startr / Sage family.
+### Brand & Landing Page — Scope E (First-Run & Onboarding) #onboarding
 
-- [ ] **Audit all user-facing copy** against the brand interview voice: honest founder tone, clarity-first, never buzzwordy #copy #brand
-- [x] **Footer update**: added cross-links to sage.is and startr.style; "Part of the Startr ecosystem" framing #brand #footer
-- [x] **Rename "Todoscope" → "TodoScope"** consistently across templates, README, caprover manifest, and page titles #brand #consistency
-- [x] **Favicon**: replaced the clipboard emoji with a telescope (🔭) — consistent with the "scope" metaphor in the name #brand #visual
-- [x] **Page titles**: descriptive, brand-consistent `<title>` tags applied to base / index / login #brand #seo
-- [x] **Noindex on login page**: added `<meta name="robots" content="noindex, nofollow">` so self-hosted instances don't get indexed #seo #privacy
-- [x] **Meta description**: added the one-line pitch as the default meta description in base.html #brand #seo
-- [ ] **Error messages**: review for tone — should match the honest founder voice, not generic flask errors #copy #ux
+- [ ] **First-run wizard**: after setting the first access key, walk through registering a repo and connecting an AI agent #onboarding #ux
+- [ ] **Include a demo/sample repo option** on first visit #onboarding #demo
+- [ ] **Add a "Try it live" section** to the logged-out landing #onboarding #landing
 
-### Scope E — First-Run & Onboarding Experience #onboarding
+### Documentation #documentation
 
-A new user's first 60 seconds decides whether they come back.
-
-- [ ] **First-run wizard**: after setting the first access key, walk the user through registering a repo and connecting an AI agent #onboarding #ux
-- [ ] **Include a demo/sample repo option** on first visit so the user can see streaming results before registering anything of their own #onboarding #demo
-- [ ] **Add a "Try it live" section** to the logged-out landing that runs a preview scan against a public demo repo #onboarding #landing
-
-## Documentation & Planning TODOs
 - [ ] **Create comprehensive API documentation**: Standalone API reference guide #documentation #api
   - [ ] Document all endpoints with request/response examples
   - [ ] Add error code reference
-  - [ ] Include authentication plans
+  - [ ] Include authentication documentation
   - [ ] Test API documentation completeness
 - [ ] **Add architecture documentation**: System design and component overview #documentation #architecture
   - [ ] Create component diagram
@@ -83,70 +92,67 @@ A new user's first 60 seconds decides whether they come back.
   - [ ] Document testing requirements
   - [ ] Define pull request process
   - [ ] Test contributor onboarding process
-- [ ] **Enhance code documentation**: Add comprehensive docstrings #documentation #code
-  - [ ] Add docstrings to TodoItem class
-  - [ ] Document API endpoints with proper docstrings
-  - [ ] Add inline comments for complex logic
-  - [ ] Verify documentation generation works
-- [ ] **Create development workflow documentation**: Detailed workflow guide #documentation #development
+- [ ] **Create development workflow documentation** #documentation #development
   - [ ] Document setup process
   - [ ] Document feature development cycle
   - [ ] Document testing procedures
-  - [ ] Test workflow documentation with new developer
 
-## High Priority
-- [ ] Speed up scan: show the cached KANBAN board instantly on page load while the full scan runs in the background. #performance #ux #critical
-- [x] Fix the MAJOR issue with existing repositories not working. #core #bug
-- [x] Implement a robust error handling mechanism for the scanner. #core #error-handling
-- [x] Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE). #core #parser
-- [x] DRY Makefile targets. (Allow passing args to targets?) #development #testing
-- [x] Enable streaming of API results for improved responsiveness. #api #performance
-- [ ] Migrate Python files and dependencies to subdirectory structure. #development #structure
-    - [x] Create scanner subdirectory. #development #structure
-    - [x] Implement __init__.py for the subdirectory. #development #structure
-    - [x] Move error_handling.py to scanner subdirectory. #development #structure
-    - [x] Update imports in app.py. #development #structure
-    - [x] Move remaining Python files (test files) to scanner/tests. #development #structure
-    - [x] Move Pipfile and Pipfile.lock to scanner subdirectory. #development #structure
-    - [ ] Test and update the Makefile accordingly. #development #testing
+### Features #feature
 
+- [ ] **Add README summary to scan results**: Show the top of each repo's README in the web interface #ux #frontend
+- [ ] **Search**: Implement a search feature for TODO comments #search #ux
+- [ ] **Metrics dashboard**: Visualize TODO metrics across projects #reporting #ux
+- [ ] **Report downloads**: Offer CSV, JSON, PDF export of scan results #reporting #feature
 
+### Tech Debt #tech-debt
 
-## Medium Priority
-- [ ] Add detection of TODO.md and TODO.txt files. #feature #core (no capitalization needed)
-- [ ] Implement a user-friendly web interface for displaying TODO files. #ux #frontend
-- [ ] Include the option to look at the TODO files with our MCPo Api. #api #integration
-- [ ] Add summary from repo readme files to the web interface. (optioanlly the top 20lines) #ux #frontend
-- [ ] Implement a search feature for TODO comments. #search #ux
-- [ ] Develop a dashboard to visualize TODO metrics across projects. #reporting #ux
-- [ ] Offer report downloads in multiple formats (CSV, JSON, PDF). #reporting #feature
-- [ ] Integrate with GitHub webhooks for automated repository scanning. #integration #automation
-- [ ] Enhance TODO file processing: #feature #core
-    - [ ] Recognize diverse TODO filenames (e.g., TODO.md, todo.txt). #detection
-    - [ ] Scan TODO files located in the project root directory. #discovery
-    - [ ] Extend scanning to TODO files within subdirectories. #discovery
-    - [ ] Display content from identified TODO files. #rendering #ux
+- [ ] **Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Extract shared styles into named constants or use server-rendered partials. #frontend #dry
 
-## Tech Debt
-- [ ] **Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Replace with server-rendered Jinja2 partials + SSE that push HTML fragments, or at minimum extract shared styles into named constants. #frontend #dry
+## Backlog
 
-## Low Priority
-- [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover. #deployment #caprover
-- [ ] Add TodoScope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service. #deployment #homebrew
-- [ ] Introduce user authentication for secure access. #security #auth
-- [ ] Implement priority inference from TODO comments. #core #parser
-- [ ] Design a plugin system to extend scanner functionality. #architecture #extensibility
-- [ ] Facilitate integration with task managers (Jira, Asana, Trello). #integration #external
-- [ ] Create a command-line interface (CLI) for versatile use. #cli #accessibility
-- [ ] Improve visibility of scrollable local repositories list on the main page. #ux #frontend
+- [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones. #feature #kanban
+- [ ] **TODO editor + checkbox write-back**: Interactive checkboxes on kanban cards that write back to TODO.md. Includes atomic mutations, optimistic concurrency, advisory file locking, add-TODO form, and merge conflict detection. #feature #editor #kanban
+- [ ] **Publish CapRover one-click app source**: Add `caprover-one-click.yml` to the Sage-is one-click repo #deployment #caprover
+- [ ] **Add TodoScope to `Sage-is/homebrew-apps` tap**: Write a Formula that pulls the Docker image and wires up a launchd service #deployment #homebrew
+- [ ] **Priority inference from TODO comments** #core #parser
+- [ ] **Plugin system** to extend scanner functionality #architecture #extensibility
+- [ ] **Task manager integration** (Jira, Asana, Trello) #integration #external
+
+## Bugs
+
+*No known bugs. Use `# BUG:` inline tags to flag defects in source.*
 
 ## Completed
-- [x] Implement comprehensive error handling with custom exceptions, retries, and recovery strategies. #core #error-handling
-- [x] Create testing infrastructure with unit and integration tests. #core #testing
-- [x] Add Makefile targets and test runner for easy test execution. #development #testing
-- [x] Honor .gitignore patterns during repository scans. #core
-- [x] Stream scan results efficiently in the web UI. #ux #frontend
-- [x] Ensure proper HTML escaping for multi-line display. #security #rendering
-- [x] Broaden TODO pattern recognition to include FIXME, BUG, and NOTE in various comment formats. #core #parser
-- [x] Fix server hanging issue: server no longer becomes unresponsive after completing scans. #critical #backend
-- [x] Skip `scanner/repositories/` when scanning this project as a local repo — prevents recursing into managed cloned repos. #core #backend
+
+- [x] **Speed up scan**: cached KANBAN board loads instantly on page load while full scan runs in background #performance #ux
+- [x] **Fix existing repositories not working** 
+- [x] **Robust error handling**: custom exceptions, retries, and recovery strategies #core #error-handling
+- [x] **Broaden TODO pattern recognition**: FIXME, BUG, NOTE in various comment formats #core #parser
+- [x] **DRY Makefile targets** #development #testing
+- [x] **Enable streaming of API results** #api #performance
+- [x] **TODO.md and TODO.txt file detection** #feature #core
+- [x] **Web interface for displaying TODO files** #ux #frontend
+- [x] **MCPo API for TODO files** #api #integration
+- [x] **GitHub webhook integration** for automated repository scanning #integration #automation
+- [x] **TODO file processing**: diverse filenames, root and subdirectory scanning, content display #feature #core
+- [x] **Testing infrastructure**: unit and integration tests #core #testing
+- [x] **Makefile targets and test runner** #development #testing
+- [x] **Honor .gitignore patterns** during repository scans #core
+- [x] **Stream scan results** in the web UI #ux #frontend
+- [x] **HTML escaping** for multi-line display #security #rendering
+- [x] **Fix server hanging** after completing scans #critical #backend
+- [x] **Skip `scanner/repositories/`** when scanning this project as a local repo #core #backend
+- [x] **User authentication**: access_keys.csv with session and Bearer token auth #security #auth
+- [x] **Footer update**: cross-links to sage.is and startr.style #brand #footer
+- [x] **Rename "Todoscope" to "TodoScope"** consistently #brand #consistency
+- [x] **Favicon**: telescope emoji #brand #visual
+- [x] **Page titles**: descriptive, brand-consistent `<title>` tags #brand #seo
+- [x] **Noindex on login page** #seo #privacy
+- [x] **Meta description**: one-line pitch as default meta description #brand #seo
+- [x] **YAML config migration**: `local_repos.yaml` with public/webhook metadata #core #config
+- [x] **Line-number tracking** in `parse_todo_md()` for all cards and children #core #kanban
+- [x] **Kanban resource links**: board guide, `/resources` page, footer link #feature #kanban
+- [x] **Configurable editor link targets**: vscode.dev, VS Code, Cursor, JetBrains, custom URI templates #feature #editor
+- [x] **Public repo views**: per-repo public flag, auth bypass for read-only routes #feature #sharing
+- [x] **Webhook refresh**: HMAC-SHA256 verification, rate limiting, pull + kanban rebuild #feature #automation
+- [x] **Git author visualization**: blame enrichment, author badges on kanban cards #feature #kanban

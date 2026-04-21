@@ -167,6 +167,14 @@
     }
     .kanban-board.kanban-stale { opacity: 0.55; }
 
+    /* Author badge — appended by blame SSE event */
+    .kanban-card .card-author {
+        font-size: 0.72em;
+        color: #888;
+        font-style: italic;
+        margin-left: 6px;
+    }
+
     /* Editor selector */
     .editor-selector {
         display: inline-flex;
@@ -699,6 +707,51 @@
                     case 'kanban':
                         // Render the fresh board — replaces stale cached version
                         renderKanban(data.canvas, false);
+                        break;
+
+                    case 'blame':
+                        // Patch kanban cards and inline TODO items with author badges
+                        if (data.blame) {
+                            // Patch kanban cards via data-editor-link elements
+                            document.querySelectorAll('[data-editor-link]').forEach(a => {
+                                const key = a.dataset.filePath + ':' + a.dataset.lineNum;
+                                const info = data.blame[key];
+                                if (!info) return;
+                                const card = a.closest('.kanban-card');
+                                if (card && !card.querySelector('.card-author')) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'card-author';
+                                    badge.textContent = info.author;
+                                    badge.title = info.date;
+                                    const loc = card.querySelector('.card-location');
+                                    if (loc) {
+                                        loc.appendChild(document.createTextNode(' '));
+                                        loc.appendChild(badge);
+                                    } else {
+                                        card.appendChild(badge);
+                                    }
+                                }
+                            });
+                            // Patch inline TODO items in the list view
+                            document.querySelectorAll('#todos-container .todo-item').forEach(item => {
+                                const fpEl = item.querySelector('.file-path');
+                                const lnEl = item.querySelector('.line-num');
+                                if (!fpEl || !lnEl) return;
+                                const fp = fpEl.childNodes[0]?.textContent?.trim();
+                                const lnMatch = lnEl.textContent.match(/\d+/);
+                                if (!fp || !lnMatch) return;
+                                const key = fp + ':' + lnMatch[0];
+                                const info = data.blame[key];
+                                if (info && !lnEl.querySelector('.card-author')) {
+                                    const badge = document.createElement('span');
+                                    badge.className = 'card-author';
+                                    badge.textContent = ` — ${info.author}`;
+                                    badge.title = info.date;
+                                    badge.style.cssText = 'font-size:0.85em; color:#888; font-style:italic';
+                                    lnEl.appendChild(badge);
+                                }
+                            });
+                        }
                         break;
 
                     case 'error':

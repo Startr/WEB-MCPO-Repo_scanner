@@ -2,6 +2,10 @@ WEB-AI--Sage-is-AI-UI:
   path: /Users/somma/Documents/Projects/GitHub/WEB-AI--Sage-is-AI-UI
   public: false
   webhook_secret: null
+WEB-Sage.Education:
+  path: /Users/somma/Documents/Projects/GitHub/WEB-Sage.Education
+  public: false
+  webhook_secret: null
 WEB-Sage.is-repo_scanner:
   path: /Users/somma/bin/repo_scanner
   public: false
