@@ -60,7 +60,8 @@ endef
         deploy default-deploy \
         require_gitflow_next first_release patch_release minor_release major_release \
         hotfix release_finish hotfix_finish \
-        release things_clean
+        release things_clean \
+        binary binary_dir app dmg pypi_build pypi_publish clean_dist
 
 # --- Info Targets ---
 help:
@@ -285,12 +286,8 @@ app:
 	@echo "App at: dist/TodoScope.app"
 
 dmg: app
-	@echo "Creating DMG..."
-	hdiutil create -volname "TodoScope" \
-		-srcfolder dist/TodoScope.app \
-		-ov -format UDZO \
-		"dist/TodoScope-$$(git describe --always --tag).dmg"
-	@echo "DMG created."
+	$(call ensure-executable,scripts/build_dmg.sh)
+	@scripts/build_dmg.sh dist/TodoScope.app
 
 pypi_build:
 	@cd scanner && pipenv run python -m build --outdir ../dist
