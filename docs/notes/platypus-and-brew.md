@@ -193,6 +193,23 @@ Users choose:
 
 ---
 
+## UPDATE: pywebview + pystray (replaces Platypus for .app)
+
+Platypus cannot combine Status Menu + Web View in a single app — they are mutually
+exclusive. The solution is **pure Python**:
+
+- **pywebview** — native WKWebView window on macOS (<10MB, <500ms startup)
+- **pystray** — native NSStatusItem (menu bar icon) on macOS
+- pywebview has an **official pystray example** at:
+  https://pywebview.flowrl.com/examples/pystray_icon
+- Both bundle with PyInstaller
+- macOS requires `multiprocessing.set_start_method("spawn")` for compatibility
+- `icon.run_detached()` lets pywebview own the main thread (required on macOS)
+
+This gives us: 🔭 status bar icon + WKWebView window + SSE streaming — all pure Python.
+
+---
+
 ## Recommended Approach for repo_scanner
 
 ### Tier 1: Docker CLI via Brew (fastest to ship)
