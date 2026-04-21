@@ -113,10 +113,127 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 - [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones. #feature #kanban
 - [ ] **TODO editor + checkbox write-back**: Interactive checkboxes on kanban cards that write back to TODO.md. Includes atomic mutations, optimistic concurrency, advisory file locking, add-TODO form, and merge conflict detection. #feature #editor #kanban
 - [ ] **Publish CapRover one-click app source**: Add `caprover-one-click.yml` to the Sage-is one-click repo #deployment #caprover
-- [ ] **Add TodoScope to `Sage-is/homebrew-apps` tap**: Write a Formula that pulls the Docker image and wires up a launchd service #deployment #homebrew
 - [ ] **Priority inference from TODO comments** #core #parser
 - [ ] **Plugin system** to extend scanner functionality #architecture #extensibility
 - [ ] **Task manager integration** (Jira, Asana, Trello) #integration #external
+
+### Release Pipeline — Repo Rename #release #brand
+
+- [ ] **Rename GitHub repo**: repo_scanner → todoscope #brand
+- [ ] **Update Docker image**: ghcr.io/sage-is/todoscope #docker #brand
+- [ ] **Update all internal references**: Makefile, Dockerfile, scripts, docs #brand
+- [ ] **Verify**: all links, image tags, and imports still work after rename
+
+### Release Pipeline — Package Foundation #release #packaging
+
+- [ ] **Create `pyproject.toml`**: package metadata, entry point, setuptools build #packaging
+  - [ ] name: `todoscope`, deps: flask + pyyaml
+  - [ ] entry point: `todoscope = "scanner.cli:main"`
+  - [ ] build-system: setuptools>=68
+  - [ ] version: dynamic from `scanner/__init__.py`
+- [ ] **Create `scanner/cli.py`**: CLI entry point #cli #packaging
+  - [ ] Parse args: `--port`, `--host`, `--no-browser`
+  - [ ] Flask dev server with `threaded=True` (SSE-compatible)
+  - [ ] Auto-open default browser via `webbrowser.open()` (macOS/Linux/Windows)
+  - [ ] `--no-browser` headless mode for tmux/SSH/phone users — print URL prominently
+  - [ ] `--tunnel` / `--tailscale` / `--share` flags
+  - [ ] Clean Ctrl+C shutdown
+  - [ ] Print startup banner with URL
+- [ ] **Update `scanner/app.py`**: frozen app + data dir support #packaging #core
+  - [ ] `sys._MEIPASS` detection for PyInstaller bundles
+  - [ ] Data dir: `~/.todoscope/` for repositories + access_keys.csv
+  - [ ] Auto-migrate from `scanner/repositories/` on first run
+  - [ ] Update all hardcoded `scanner/repositories` paths
+- [ ] **Add `__version__` to `scanner/__init__.py`** #packaging
+- [ ] **Verify**: `pip install -e .` → `todoscope` command starts server + opens browser
+
+### Release Pipeline — Docker CLI Wrapper + Dev Mode #release #docker #homebrew
+
+- [ ] **Create `scripts/todoscope`**: bash CLI wrapper (based on ai-ui pattern) #cli #docker
+  - [ ] Commands: start, stop, update, dev, logs, open, status, version, tunnel, tailscale, nuke
+  - [ ] Auto-find free port if default (5000) is taken
+  - [ ] Reuse: ensure_docker, sage_project_dir, find_repo_nearby, is_ephemeral_path
+  - [ ] Image: `ghcr.io/sage-is/todoscope:latest`, container: `todoscope`
+  - [ ] Config dir: `~/.sage-is/` (Sage project registry)
+- [ ] **Dev mode**: smart local development workflow #developer-experience
+  - [ ] Resolution: --dir → $TODOSCOPE_DEV_DIR → find_repo_nearby → saved path → clone fresh
+  - [ ] Mount source into container: scanner/ + app.py
+  - [ ] FLASK_ENV=development, FLASK_DEBUG=1
+  - [ ] --where flag: print saved source location
+  - [ ] Ephemeral path warning
+- [ ] **Tunnel commands**: `todoscope tunnel` + `todoscope tailscale` #networking
+- [ ] **Verify**: `scripts/todoscope start` → `scripts/todoscope open` → works; `scripts/todoscope dev` → hot reload works
+
+### Release Pipeline — PyInstaller Binary Build (macOS + Linux + Windows) #release #binary #packaging
+
+- [ ] **Create `todoscope.spec`**: PyInstaller spec file #packaging
+  - [ ] --onefile target for CLI binary (all platforms)
+  - [ ] --windowed --onedir target for Mac .app bundle
+  - [ ] --add-data for templates + static
+  - [ ] --hidden-import=yaml
+  - [ ] --icon + --osx-bundle-identifier for Mac .app
+- [ ] **Add dev deps to Pipfile**: pyinstaller, build, twine #packaging
+- [ ] **Linux binary**: PyInstaller on ubuntu (x86_64) — works in tmux/SSH #linux
+- [ ] **Windows binary**: PyInstaller on windows (.exe) #windows
+- [ ] **Verify macOS**: `make binary` → `./dist/todoscope --port 5001` → browser opens, SSE works
+- [ ] **Verify Linux (headless)**: `./todoscope --no-browser --port 5001` → access via tunnel or LAN
+- [ ] **Verify Windows**: `todoscope.exe` → browser opens, SSE works
+
+### Release Pipeline — Mac .app + DMG (v1.0 browser launcher) #release #macos #app
+
+- [ ] **Build .app**: PyInstaller `--windowed` → TodoScope.app in Dock, opens Safari #macos
+- [ ] **Create DMG**: `hdiutil` packaging for distribution #macos
+- [ ] **Create `assets/todoscope.icns`**: telescope emoji rendered at icon sizes #design
+- [ ] **Verify**: mount DMG → open TodoScope.app → Dock icon, Safari opens, SSE scan works
+
+### Release Pipeline — Makefile Targets (local dev, fast, free) #release #build
+
+- [ ] **Add targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist #build
+- [ ] **Verify**: `make binary` and `make dmg` produce correct artifacts locally
+
+### Release Pipeline — GitHub Actions CI/CD (tags only, hybrid) #release #ci
+
+- [ ] **Create `.github/workflows/release.yml`**: triggered ONLY on v* tag push #ci
+  - [ ] Job: docker (ubuntu, multi-arch GHCR push) ~5 billed min
+  - [ ] Job: macos (single runner: CLI binary + .app + DMG) ~50 billed min (10x)
+  - [ ] Job: linux (ubuntu, CLI binary x86_64, works in tmux/SSH) ~3 billed min
+  - [ ] Job: windows (CLI .exe x86_64) ~6 billed min (2x)
+  - [ ] Job: pypi (build + publish) ~2 billed min
+  - [ ] Job: release (download all → GitHub Release)
+  - [ ] Job: update-brew (SHA256 → homebrew-apps auto-commit)
+  - [ ] Budget: ~65 billed min/release (~3% of free tier)
+- [ ] **Code signing placeholder**: gated on APPLE_DEVELOPER_ID secret #macos #security
+- [ ] **Verify**: `make release_finish` → tag push → all CI jobs green
+
+### Release Pipeline — Homebrew Tap #release #homebrew #deployment
+
+- [ ] **Add `Formula/todoscope.rb` to homebrew-apps**: Docker CLI formula #homebrew
+  - [ ] depends_on: docker, git, cloudflared (optional), tailscale (optional)
+  - [ ] Installs scripts/todoscope to bin
+- [ ] **Add `Casks/todoscope.rb` to homebrew-apps**: .app via DMG #homebrew
+- [ ] **Update `nuke-sage`**: add todoscope to KNOWN_PROJECTS #homebrew
+- [ ] **Verify**: `brew install --build-from-source Formula/todoscope.rb` works
+
+### Release Pipeline — Automated Release Flow #release #automation
+
+- [ ] **One-command release**: `make patch_release` + `make release_finish` triggers everything #automation #ci
+  - [ ] Auto-bump version in `scanner/__init__.py` to match tag
+  - [ ] Run tests before finishing
+  - [ ] Tag push → CI builds all artifacts automatically
+  - [ ] Post-release summary: GitHub Release link, PyPI link, brew install command
+- [ ] **Version single-source-of-truth**: `scanner/__init__.py` drives everything #packaging
+  - [ ] `pyproject.toml` reads version dynamically
+  - [ ] PyInstaller embeds it in the binary
+  - [ ] `scripts/todoscope` VERSION synced by release script
+  - [ ] Homebrew formula URL/SHA256 updated by CI
+- [ ] **Verify**: `make patch_release` → `make release_finish` → all CI green, all channels updated
+
+### Release Pipeline — Future: Native Mac UI (v1.1+) #release #macos #future
+
+- [ ] **v1.1 — pystray menu bar icon**: Open Browser / Quit; deps: pystray, Pillow #macos
+- [ ] **v1.2 — pywebview embedded WKWebView**: native window + status bar; deps: pywebview #macos
+  - [ ] Validate SSE streaming through WKWebView before committing
+  - [ ] Validate threading model: Flask thread + pystray detached + pywebview main thread
 
 ## Bugs
 
