@@ -20,6 +20,8 @@ Every development task follows the **Plan-Document-Execute-Verify** cycle:
 
 **ALWAYS add to TODO.md first:**
 
+Always group related tasks under a clear category and main task in `TODO.md` using this template:
+
 ```markdown
 ## [Category] TODOs
 - [ ] **[Task Name]**: Brief description
@@ -28,6 +30,8 @@ Every development task follows the **Plan-Document-Execute-Verify** cycle:
   - [ ] Test/verify step
   - [ ] Documentation update
 ```
+
+Using this structure ensures that all work is tracked, dependencies are clear, and the scope is well-defined before any code changes begin. Additionally, it renders the task visible to the whole team for feedback and approval.
 
 **NEVER start work without:**
 - Adding the task to TODO.md

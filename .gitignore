@@ -31,6 +31,7 @@ MANIFEST
 # PyInstaller
 *.manifest
 *.spec
+!todoscope.spec
 
 # Installer logs
 pip-log.txt

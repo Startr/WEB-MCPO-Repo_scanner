@@ -252,6 +252,55 @@ kanban:
 	@echo "Generating KANBAN.canvas..."
 	@cd scanner && PYTHONPATH=$(PROJECTPATH) pipenv run python -m scanner.kanban $(PROJECTPATH)
 
+# --- Binary Build Targets ---
+binary:
+	@echo "Building standalone binary with PyInstaller..."
+	@cd scanner && pipenv run pyinstaller --onefile \
+		--name todoscope \
+		--add-data "../scanner/templates:scanner/templates" \
+		--add-data "../scanner/static:scanner/static" \
+		--hidden-import=yaml \
+		cli.py --distpath ../dist --workpath ../build
+	@echo "Binary at: dist/todoscope"
+
+binary_dir:
+	@echo "Building standalone directory with PyInstaller..."
+	@cd scanner && pipenv run pyinstaller --onedir \
+		--name todoscope \
+		--add-data "../scanner/templates:scanner/templates" \
+		--add-data "../scanner/static:scanner/static" \
+		--hidden-import=yaml \
+		cli.py --distpath ../dist --workpath ../build
+	@echo "App directory at: dist/todoscope/"
+
+app:
+	@echo "Building macOS .app bundle..."
+	@cd scanner && pipenv run pyinstaller --windowed --onedir \
+		--name TodoScope \
+		--add-data "../scanner/templates:scanner/templates" \
+		--add-data "../scanner/static:scanner/static" \
+		--hidden-import=yaml \
+		--osx-bundle-identifier com.sage-is.todoscope \
+		cli.py --distpath ../dist --workpath ../build
+	@echo "App at: dist/TodoScope.app"
+
+dmg: app
+	@echo "Creating DMG..."
+	hdiutil create -volname "TodoScope" \
+		-srcfolder dist/TodoScope.app \
+		-ov -format UDZO \
+		"dist/TodoScope-$$(git describe --always --tag).dmg"
+	@echo "DMG created."
+
+pypi_build:
+	@cd scanner && pipenv run python -m build --outdir ../dist
+
+pypi_publish: pypi_build
+	@cd scanner && pipenv run twine upload ../dist/*.whl ../dist/*.tar.gz
+
+clean_dist:
+	rm -rf dist/ build/
+
 # --- Deployment Targets ---
 HAS_CAPROVER       := $(shell which caprover 2>/dev/null && echo 1)
 HAS_CAPROVER_LOGIN := $(shell caprover ls 2>/dev/null | grep -q "Logged in" && echo 1)

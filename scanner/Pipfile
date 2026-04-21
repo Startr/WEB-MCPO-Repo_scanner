@@ -10,6 +10,9 @@ pyyaml = "*"
 [dev-packages]
 pytest = "*"
 pytest-mock = "*"
+pyinstaller = "*"
+build = "*"
+twine = "*"
 
 [requires]
 python_full_version = ">=3.12"

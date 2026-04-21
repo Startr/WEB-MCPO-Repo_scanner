@@ -134,7 +134,7 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 
 ### Release Pipeline — Docker CLI Wrapper + Dev Mode #release #docker #homebrew
 
-- [ ] **Create `scripts/todoscope`**: bash CLI wrapper (based on ai-ui pattern) #cli #docker
+- [x] **Create `scripts/todoscope`**: bash CLI wrapper (based on ai-ui pattern) #cli #docker
   - [ ] Commands: start, stop, update, dev, logs, open, status, version, tunnel, tailscale, nuke
   - [ ] Auto-find free port if default (5000) is taken
   - [ ] Reuse: ensure_docker, sage_project_dir, find_repo_nearby, is_ephemeral_path
@@ -151,13 +151,10 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 
 ### Release Pipeline — PyInstaller Binary Build (macOS + Linux + Windows) #release #binary #packaging
 
-- [ ] **Create `todoscope.spec`**: PyInstaller spec file #packaging
-  - [ ] --onefile target for CLI binary (all platforms)
-  - [ ] --windowed --onedir target for Mac .app bundle
-  - [ ] --add-data for templates + static
-  - [ ] --hidden-import=yaml
-  - [ ] --icon + --osx-bundle-identifier for Mac .app
-- [ ] **Add dev deps to Pipfile**: pyinstaller, build, twine #packaging
+- [x] **Create `todoscope.spec`**: PyInstaller spec file (two targets: CLI onefile + .app windowed) #packaging
+- [x] **Add dev deps to Pipfile**: pyinstaller, build, twine #packaging
+- [x] **Makefile targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist #build
+- [x] **Verified**: `make binary` → `dist/todoscope` (11MB ARM64) → `./dist/todoscope --version` → `1.0.0`
 - [ ] **Linux binary**: PyInstaller on ubuntu (x86_64) — works in tmux/SSH #linux
 - [ ] **Windows binary**: PyInstaller on windows (.exe) #windows
 - [ ] **Verify macOS**: `make binary` → `./dist/todoscope --port 5001` → browser opens, SSE works
