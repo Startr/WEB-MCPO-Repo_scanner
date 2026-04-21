@@ -21,12 +21,28 @@ from .error_handling import (
     with_error_handling, error_context, safe_operation
 )
 
-app = Flask(__name__)
+# --- Frozen app detection (PyInstaller bundles) ---
+import sys
+if getattr(sys, 'frozen', False):
+    _base = sys._MEIPASS
+    _template_folder = os.path.join(_base, 'scanner', 'templates')
+    _static_folder = os.path.join(_base, 'scanner', 'static')
+    app = Flask(__name__, template_folder=_template_folder, static_folder=_static_folder)
+else:
+    app = Flask(__name__)
+
 app.logger.setLevel(logging.INFO)  # Ensure INFO level is set for our logs
 app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 
+# --- Data directory ---
+# CLI sets TODOSCOPE_DATA_DIR; Docker/dev uses scanner/ relative paths as fallback.
+_DATA_DIR = os.environ.get('TODOSCOPE_DATA_DIR', '')
+
 # --- Access key auth ---
-ACCESS_KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_keys.csv")
+if _DATA_DIR:
+    ACCESS_KEYS_FILE = os.path.join(_DATA_DIR, "access_keys.csv")
+else:
+    ACCESS_KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_keys.csv")
 # Routes that must stay public for MCP discovery and auth itself
 _PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login', '/resources'}
 
@@ -96,10 +112,25 @@ def require_auth():
 app.error_handler = ErrorHandler(app.logger)
 
 # Configure base repository path
-BASE_REPO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "repositories")
+_APP_DIR = os.path.dirname(os.path.abspath(__file__))
+_OLD_REPO_PATH = os.path.join(_APP_DIR, "repositories")
+
+if _DATA_DIR:
+    BASE_REPO_PATH = os.path.join(_DATA_DIR, "repositories")
+    # Auto-migrate: if old scanner/repositories/ exists and new dir is empty, move contents
+    if os.path.isdir(_OLD_REPO_PATH) and os.listdir(_OLD_REPO_PATH):
+        os.makedirs(BASE_REPO_PATH, exist_ok=True)
+        if not os.listdir(BASE_REPO_PATH):
+            import shutil
+            for item in os.listdir(_OLD_REPO_PATH):
+                src = os.path.join(_OLD_REPO_PATH, item)
+                dst = os.path.join(BASE_REPO_PATH, item)
+                shutil.move(src, dst)
+            app.logger.info(f"Migrated repositories from {_OLD_REPO_PATH} → {BASE_REPO_PATH}")
+else:
+    BASE_REPO_PATH = _OLD_REPO_PATH
 
 # Local repos config — maps safe display names to metadata dicts (never exposed to web)
-_APP_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCAL_REPOS_YAML = os.path.join(_APP_DIR, "local_repos.yaml")
 LOCAL_REPOS_JSON = os.path.join(_APP_DIR, "local_repos.json")  # legacy, auto-migrated
 

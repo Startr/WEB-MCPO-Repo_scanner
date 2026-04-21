@@ -35,11 +35,11 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 
 ### Release Pipeline — Package Foundation #release #packaging
 
-- [ ] **Create `pyproject.toml`**: package metadata, entry point, setuptools build #packaging
-- [ ] **Create `scanner/cli.py`**: CLI entry point #cli #packaging
-- [ ] **Update `scanner/app.py`**: frozen app + data dir support #packaging #core
-- [ ] **Add `__version__` to `scanner/__init__.py`** #packaging
-- [ ] **Verify**: `pip install -e .` → `todoscope` command starts server + opens browser
+- [x] **Create `pyproject.toml`**: package metadata, entry point, setuptools build #packaging
+- [x] **Create `scanner/cli.py`**: CLI entry point #cli #packaging
+- [x] **Update `scanner/app.py`**: frozen app + data dir + auto-migrate support #packaging #core
+- [x] **`__version__` already in `scanner/__init__.py`** at 1.0.0 #packaging
+- [x] **Verified**: `pip install -e .` → `todoscope` command starts server, auto-migrates repos to `~/.todoscope/`
 
 ### Subdirectory Migration #development #structure
 
