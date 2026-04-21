@@ -33,6 +33,14 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
   - [ ] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`
   - [ ] Include a one-paragraph framing: "AI agents are part of your team"
 
+### Release Pipeline — Package Foundation #release #packaging
+
+- [ ] **Create `pyproject.toml`**: package metadata, entry point, setuptools build #packaging
+- [ ] **Create `scanner/cli.py`**: CLI entry point #cli #packaging
+- [ ] **Update `scanner/app.py`**: frozen app + data dir support #packaging #core
+- [ ] **Add `__version__` to `scanner/__init__.py`** #packaging
+- [ ] **Verify**: `pip install -e .` → `todoscope` command starts server + opens browser
+
 ### Subdirectory Migration #development #structure
 
 - [ ] **Migrate Python files and dependencies to subdirectory structure**
@@ -123,29 +131,6 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 - [ ] **Update Docker image**: ghcr.io/sage-is/todoscope #docker #brand
 - [ ] **Update all internal references**: Makefile, Dockerfile, scripts, docs #brand
 - [ ] **Verify**: all links, image tags, and imports still work after rename
-
-### Release Pipeline — Package Foundation #release #packaging
-
-- [ ] **Create `pyproject.toml`**: package metadata, entry point, setuptools build #packaging
-  - [ ] name: `todoscope`, deps: flask + pyyaml
-  - [ ] entry point: `todoscope = "scanner.cli:main"`
-  - [ ] build-system: setuptools>=68
-  - [ ] version: dynamic from `scanner/__init__.py`
-- [ ] **Create `scanner/cli.py`**: CLI entry point #cli #packaging
-  - [ ] Parse args: `--port`, `--host`, `--no-browser`
-  - [ ] Flask dev server with `threaded=True` (SSE-compatible)
-  - [ ] Auto-open default browser via `webbrowser.open()` (macOS/Linux/Windows)
-  - [ ] `--no-browser` headless mode for tmux/SSH/phone users — print URL prominently
-  - [ ] `--tunnel` / `--tailscale` / `--share` flags
-  - [ ] Clean Ctrl+C shutdown
-  - [ ] Print startup banner with URL
-- [ ] **Update `scanner/app.py`**: frozen app + data dir support #packaging #core
-  - [ ] `sys._MEIPASS` detection for PyInstaller bundles
-  - [ ] Data dir: `~/.todoscope/` for repositories + access_keys.csv
-  - [ ] Auto-migrate from `scanner/repositories/` on first run
-  - [ ] Update all hardcoded `scanner/repositories` paths
-- [ ] **Add `__version__` to `scanner/__init__.py`** #packaging
-- [ ] **Verify**: `pip install -e .` → `todoscope` command starts server + opens browser
 
 ### Release Pipeline — Docker CLI Wrapper + Dev Mode #release #docker #homebrew
 

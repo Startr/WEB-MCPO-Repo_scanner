@@ -1,0 +1,28 @@
+[project]
+name = "todoscope"
+dynamic = ["version"]
+description = "See every TODO across all your projects. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished."
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.11"
+dependencies = [
+    "flask>=3.1.0",
+    "pyyaml",
+]
+
+[project.scripts]
+todoscope = "scanner.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/Sage-is/repo_scanner"
+Repository = "https://github.com/Sage-is/repo_scanner"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "scanner.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["scanner*"]
