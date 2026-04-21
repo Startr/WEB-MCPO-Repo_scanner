@@ -1,4 +1,5 @@
 # TodoScope: See What's Actually Unfinished
+
 ## Five-Minute Duo Presentation, Izzy & Alex
 
 ---
@@ -49,7 +50,7 @@ TodoScope scans your codebase and finds every TODO, FIXME, BUG, and NOTE your te
 
 And it turns them into this. A Kanban board, generated from your code. Priorities visible. Context intact. Click any item and you're in your editor, on that line.
 
-Izzy can see what I'm working on without sitting beside me for two to twenty hours. Our teammates can pull up the board and pick a task without waiting for me to package it up. And when I mark something as done in the code, it's done on the board.
+Izzy can see what I'm working on without sitting beside me for two to twenty hours. Our teammates can pull up the board and pick a task without waiting for me to package it up. And when we mark something as done in the code, it's done on the board.
 
 No syncing. No stale tickets. No context switching.
 
@@ -65,21 +66,21 @@ Izzy, you use this?
 
 **[Izzy]**
 
-I use this. I can see priorities without asking. I can see what's in progress without interrupting anyone. And I stopped accidentally pushing the team toward the wrong things, because now I can see what actually matters.
+I use this. I can see priorities without asking. I can see what's in progress without interrupting anyone. And I stopped accidentally pushing the team toward the wrong things, because now I can see what actually matters, I can push where we need to go.
 
 **[Alex]**
 
-Our Startr/TodoScope is open source. It runs locally, it runs in Docker, it takes about two minutes to set up. It also speaks MCP, so if you're building with AI agents, they can read the same board your team reads.
+Our Startr/TodoScope is open source. It runs locally, it runs in Docker, it takes about two minutes to set up. It also speaks MCP, so if you're building with AI agents, they can read the same board as your team.
 
 **[Izzy]**
 
-We built this because we needed it. We're sharing it because you probably need it too.
+We built this because we needed it & we're sharing it because you probably need it too.
 
 **[Alex]**
 
 **[Shows URL on screen]**
 
-Go to our GitHub and scan your first repo tonight. If you write TODOs, you already have a board. You just can't see it yet.
+Go to our GitHub, get Startr'd, and scan your first repo tonight. If you write TODOs, you already have a board. You just can't see it yet.
 
 **TodoScope makes it visible.**
 
@@ -88,25 +89,32 @@ Go to our GitHub and scan your first repo tonight. If you write TODOs, you alrea
 ## Speaker Notes
 
 ### Izzy, Act 1
+
 - Tone: Conversational, a little frustrated, honest. Not performing, sharing.
 - The three problems should land as an escalating sequence: personal inconvenience → team blindness → losing a contributor. Each one is bigger than the last.
-- The volunteer/teammate story is the emotional anchor. Don't rush it.
+- The teammate story is the emotional anchor. Don't rush it.
 - "Alex noticed.", This is a handoff line. Pause after it. Let it land.
 
 ### Alex, Act 2
-- Tone: Calm, confident, showing not selling. Let the tool speak.
+
+- Tone: Calm, confident, showing not selling.
+  - Let the tool speak.
 - The demo should be prepped and tested. Have Startr.Style repo as a backup if Sage.is AI-UI takes too long to scan.
 - Keep narration during the demo minimal. Let the audience watch the board build itself.
-- "No syncing. No stale tickets. No context switching.", This is the thesis. Deliver it clearly.
-- The turn to Izzy ("You use this?") should feel natural, not staged. It's a genuine check-in that doubles as a transition.
+- "No syncing. No stale tickets. No context switching."
+  - This is the thesis. Deliver it clearly.
+- The turn to Izzy ("You use this?") should feel natural, not staged.
+  - It's a genuine check-in that doubles as a transition.
 
 ### Together, Act 3
+
 - Izzy's endorsement should be brief and specific. Three concrete things that changed.
 - The MCP mention is one sentence, plant the seed, don't explain it. The developers who care will find it.
 - The CTA is: scan your first repo tonight. Specific. Actionable. Tonight, not "someday."
 - Final line is the tagline: "TodoScope makes it visible." End clean.
 
 ### Timing Guide
+
 | Section | Speaker | Target | Max |
 |---------|---------|--------|-----|
 | Act 1, Problem | Izzy | 75s | 90s |
@@ -117,6 +125,7 @@ Go to our GitHub and scan your first repo tonight. If you write TODOs, you alrea
 Buffer of 30 seconds built in for demo loading, laughter, and transitions.
 
 ### Demo Checklist
+
 - [ ] Sage.is AI-UI repo cloned and accessible
 - [ ] Startr.Style repo ready as backup (smaller, faster scan)
 - [ ] TodoScope running locally, tested within the hour
@@ -125,6 +134,7 @@ Buffer of 30 seconds built in for demo loading, laughter, and transitions.
 - [ ] Screen share or projector tested with Kanban view
 
 ### Stage Setup
+
 - Izzy starts alone. Alex joins naturally, not a dramatic entrance, just stepping up.
 - One laptop, one screen. Keep it simple.
 - URL displayed on final slide or screen at the end. Large. Readable.
