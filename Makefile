@@ -255,7 +255,7 @@ kanban:
 # --- Binary Build Targets ---
 binary:
 	@echo "Building standalone binary with PyInstaller..."
-	@cd scanner && pipenv run pyinstaller --onefile \
+	@cd scanner && pipenv run pyinstaller -y --onefile \
 		--name todoscope \
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
@@ -265,7 +265,7 @@ binary:
 
 binary_dir:
 	@echo "Building standalone directory with PyInstaller..."
-	@cd scanner && pipenv run pyinstaller --onedir \
+	@cd scanner && pipenv run pyinstaller -y --onedir \
 		--name todoscope \
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
@@ -275,12 +275,12 @@ binary_dir:
 
 app:
 	@echo "Building macOS .app bundle..."
-	@cd scanner && pipenv run pyinstaller --windowed --onedir \
+	@cd scanner && pipenv run pyinstaller -y --windowed --onedir \
 		--name TodoScope \
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
 		--hidden-import=yaml \
-		--osx-bundle-identifier com.sage-is.todoscope \
+		--osx-bundle-identifier com.startr.todoscope \
 		cli.py --distpath ../dist --workpath ../build
 	@echo "App at: dist/TodoScope.app"
 

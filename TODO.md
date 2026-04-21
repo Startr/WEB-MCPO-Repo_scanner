@@ -164,9 +164,11 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 
 ### Release Pipeline — Mac .app + DMG (v1.0 browser launcher) #release #macos #app
 
-- [ ] **Build .app**: PyInstaller `--windowed` → TodoScope.app in Dock, opens Safari #macos
-- [ ] **Create DMG**: `hdiutil` packaging for distribution #macos
+- [x] **Build .app**: `make app` → TodoScope.app (25MB, arm64, code-signed) #macos
+- [x] **Create DMG**: `make dmg` → TodoScope-VERSION.dmg (11MB) #macos
+- [x] **Makefile fixes**: added `-y` flag, fixed bundle ID to `com.startr.todoscope` #build
 - [ ] **Create `assets/todoscope.icns`**: telescope emoji rendered at icon sizes #design
+- [ ] **DMG art**: custom background showing drag-to-Applications install #design
 - [ ] **Verify**: mount DMG → open TodoScope.app → Dock icon, Safari opens, SSE scan works
 
 ### Release Pipeline — Makefile Targets (local dev, fast, free) #release #build
