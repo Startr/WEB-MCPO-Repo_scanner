@@ -199,12 +199,17 @@
 {% endblock %}
 
 {% block content %}
+    {% if not is_authenticated %}
+    <div style="--bgc:#e3f2fd; --p:10px 16px; --radius:5px; --b:1px solid #90caf9; --mb:16px; --size:0.9em; --c:#1565c0; --ta:center">
+        You are viewing a public read-only scan. To rescan or edit, <a href="{{ url_for('login', next=request.url) }}" style="--c:#0d47a1; --weight:bold">sign in</a>.
+    </div>
+    {% endif %}
     <div class="summary" style="--bgc:#f0f8ff; --p:15px; --radius:5px; --mb:20px; --shadow:6">
         <h2 style="--c:#333" id="repo-name">Repository: Loading...</h2>
         <p id="repo-url">URL: {{ repo_url }}</p>
         <p id="todo-count"><span id="todo-md-summary" style="display:none"></span><a href="#todos-container" id="inline-count-link" style="--c:#0066cc; --td:none">Scanning for TODOs...</a></p>
     </div>
-    
+
     <details id="kanban-guide" style="--bgc:#f9f9f9; --p:12px 16px; --radius:5px; --b:1px solid #ddd; --mb:20px; --size:0.88em; --c:#555">
         <summary style="--cur:pointer; --weight:bold; --c:#333">How this Kanban board works</summary>
         <div style="--mt:10px; --lh:1.6">
@@ -280,10 +285,12 @@
         <p>No TODO comments found in this repository.</p>
     </div>
     
+    {% if is_authenticated %}
     <div id="rescan-bar" style="display:none; --mt:20px; --p:12px; --radius:5px; --bgc:#f0f8ff; --b:1px solid #007bff; --ai:center; --jc:space-between">
         <span id="rescan-msg">Scan complete.</span>
         <button id="rescan-btn" onclick="location.reload()" style="--bgc:#4CAF50; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">Rescan</button>
     </div>
+    {% endif %}
 
     <div class="back-link" style="--mt:20px">
         <a href="{{ url_for('index') }}" style="--c:#0066cc; --td:none">← Scan another repository</a>

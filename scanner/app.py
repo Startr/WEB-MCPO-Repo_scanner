@@ -60,11 +60,30 @@ def _is_authenticated():
 
 @app.context_processor
 def inject_auth_status():
-    return {'auth_enabled': _auth_enabled()}
+    return {'auth_enabled': _auth_enabled(), 'is_authenticated': _is_authenticated()}
+
+# Read-only route prefixes that public repos expose without auth
+_PUBLIC_REPO_PREFIXES = ('/scan_stream/', '/stream_data/', '/api/repo_fingerprint/', '/api/todo_files/')
+
+
+def _is_public_repo_route():
+    """Check if this request targets a public repo's read-only route."""
+    path = request.path
+    for prefix in _PUBLIC_REPO_PREFIXES:
+        if path.startswith(prefix):
+            repo_name = path[len(prefix):]
+            if is_repo_public(repo_name):
+                return True
+    return False
+
 
 @app.before_request
 def require_auth():
     if request.path in _PUBLIC_ROUTES or request.path.startswith('/static') or request.path.startswith('/api/badge/'):
+        return
+    if request.path.startswith('/api/webhook/'):
+        return  # Webhook routes use their own HMAC verification
+    if _is_public_repo_route():
         return
     if _is_authenticated():
         return
@@ -534,7 +553,9 @@ def list_local_repositories():
                     'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                     'origin_url': origin_url or "",
                     'code_dev_url': _code_dev_url(origin_url),
-                    'source': 'local'
+                    'source': 'local',
+                    'public': meta.get('public', False),
+                    'webhook_secret': bool(meta.get('webhook_secret')),
                 })
                 seen_names.add(name)
         except Exception as e:
@@ -810,6 +831,106 @@ def remove_repo(repo_name):
         app.logger.info(f"Deleted cloned repo: {cloned_path}")
 
     return redirect(url_for('index'))
+
+
+@app.route('/toggle_public/<path:repo_name>', methods=['POST'])
+def toggle_public(repo_name):
+    """Toggle a repo's public visibility flag."""
+    repos = load_local_repos()
+    if repo_name not in repos:
+        return redirect(url_for('index'))
+    repos[repo_name]['public'] = not repos[repo_name].get('public', False)
+    save_local_repos(repos)
+    app.logger.info(f"Toggled public flag for {repo_name}: {repos[repo_name]['public']}")
+    return redirect(url_for('index'))
+
+
+@app.route('/webhook_secret/<path:repo_name>', methods=['POST'])
+def manage_webhook_secret(repo_name):
+    """Generate, set, or remove a webhook secret for a repo."""
+    repos = load_local_repos()
+    if repo_name not in repos:
+        return jsonify({'error': 'Repo not found'}), 404
+    action = request.form.get('action', 'generate')
+    if action == 'remove':
+        repos[repo_name]['webhook_secret'] = None
+    else:
+        # Generate a secure random secret
+        repos[repo_name]['webhook_secret'] = hashlib.sha256(os.urandom(32)).hexdigest()
+    save_local_repos(repos)
+    return redirect(url_for('index'))
+
+
+# Webhook rate limiter — in-memory timestamp per repo (30s minimum between triggers)
+_webhook_last_triggered = {}
+
+
+@app.route('/api/webhook/<path:repo_name>', methods=['POST'])
+def webhook_trigger(repo_name):
+    """Webhook endpoint for GitHub/GitLab push events.
+
+    Verifies HMAC-SHA256 (GitHub X-Hub-Signature-256), GitLab token
+    (X-Gitlab-Token), or Bearer header. Rate-limited to 30s between triggers.
+    Runs pull + kanban rebuild and returns a JSON acknowledgment.
+    """
+    import hmac as _hmac
+    import time
+
+    secret = get_webhook_secret(repo_name)
+    if not secret:
+        return jsonify({'error': 'No webhook configured for this repo'}), 404
+
+    # --- Verify signature ---
+    verified = False
+
+    # GitHub: X-Hub-Signature-256
+    gh_sig = request.headers.get('X-Hub-Signature-256', '')
+    if gh_sig.startswith('sha256='):
+        expected = _hmac.new(secret.encode(), request.get_data(), 'sha256').hexdigest()
+        if _hmac.compare_digest(gh_sig[7:], expected):
+            verified = True
+
+    # GitLab: X-Gitlab-Token
+    gl_token = request.headers.get('X-Gitlab-Token', '')
+    if gl_token and _hmac.compare_digest(gl_token, secret):
+        verified = True
+
+    # Bearer token fallback
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer ') and _hmac.compare_digest(auth_header[7:], secret):
+        verified = True
+
+    if not verified:
+        return jsonify({'error': 'Invalid signature'}), 403
+
+    # --- Rate limit ---
+    now = time.time()
+    last = _webhook_last_triggered.get(repo_name, 0)
+    if now - last < 30:
+        return jsonify({'error': 'Rate limited', 'retry_after': int(30 - (now - last))}), 429
+    _webhook_last_triggered[repo_name] = now
+
+    # --- Pull + rebuild ---
+    repo_path = resolve_repo_path(repo_name)
+    if not repo_path:
+        return jsonify({'error': 'Repo not found'}), 404
+
+    pull_result = pull_repository(repo_path)
+
+    from .kanban import build_kanban, write_canvas
+    exclusions = load_exclusions(repo_path)
+    todo_md_files = find_todo_files(repo_path, exclusions=exclusions)
+    todos = list(find_todos(repo_path, exclusions=exclusions))
+    canvas = build_kanban(todo_md_files, todos)
+    write_canvas(repo_path, canvas)
+
+    card_count = sum(1 for n in canvas['nodes'] if n['type'] == 'text')
+    return jsonify({
+        'ok': True,
+        'pull': pull_result.get('message', ''),
+        'cards': card_count,
+    })
+
 
 @app.route('/scan/<path:repo_url>')
 def scan_repo(repo_url):

@@ -47,6 +47,9 @@
                             {% if repo.source == 'local' %}
                             <span style="--bgc:#e8f5e9; --c:#2e7d32; --p:2px 6px; --radius:3px; --size:0.75em; --ml:6px">local</span>
                             {% endif %}
+                            {% if repo.public %}
+                            <span style="--bgc:#e3f2fd; --c:#1565c0; --p:2px 6px; --radius:3px; --size:0.75em; --ml:4px">public</span>
+                            {% endif %}
                             {% if repo.code_dev_url %}
                             <a href="{{ repo.code_dev_url }}" target="_blank" rel="noopener noreferrer" style="--c:#0066cc; --size:0.8em; --ml:8px; --td:none">code.dev ↗</a>
                             {% endif %}
@@ -59,11 +62,44 @@
                             {% if repo.source != 'local' %}
                             <a href="{{ url_for('pull_repo', repo_name=repo.name) }}" style="--bgc:#007bff; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block; --mr:4px">Pull</a>
                             {% endif %}
+                            {% if repo.source == 'local' %}
+                            <form method="POST" action="{{ url_for('toggle_public', repo_name=repo.name) }}" style="--d:inline; --mr:4px">
+                                <button type="submit" style="--bgc:{{ '#90caf9' if repo.public else '#e0e0e0' }}; --c:{{ '#0d47a1' if repo.public else '#555' }}; --p:5px 10px; --radius:3px; --b:none; --cur:pointer; --size:0.85em" title="{{ 'Make private' if repo.public else 'Make public — allows viewing without sign-in' }}">{{ 'Public' if repo.public else 'Private' }}</button>
+                            </form>
+                            {% endif %}
                             <form method="POST" action="{{ url_for('remove_repo', repo_name=repo.name) }}" style="--d:inline">
                                 <button type="submit" style="--bgc:#dc3545; --c:white; --p:5px 10px; --radius:3px; --b:none; --cur:pointer" onclick="return confirm('Remove {{ repo.name }} from the list?{{ ' The cloned files will be deleted.' if repo.source != 'local' else '' }}')">Remove</button>
                             </form>
                         </td>
                     </tr>
+                    {% if repo.source == 'local' %}
+                    <tr>
+                        <td colspan="4" style="--p:0 8px 8px 8px; --bb:1px solid #ddd">
+                            <details style="--size:0.82em; --c:#666">
+                                <summary style="--cur:pointer">Webhook</summary>
+                                <div style="--mt:6px; --p:8px; --bgc:#fafafa; --radius:4px; --b:1px solid #eee">
+                                    {% if repo.webhook_secret %}
+                                    <p style="--mb:6px">
+                                        Webhook URL: <code id="wh-url-{{ loop.index }}" style="--size:0.95em">{{ request.host_url }}api/webhook/{{ repo.name }}</code>
+                                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('wh-url-{{ loop.index }}').textContent)" style="--bgc:transparent; --b:1px solid #ccc; --radius:3px; --p:2px 6px; --cur:pointer; --size:0.9em; --ml:4px">Copy</button>
+                                    </p>
+                                    <p style="--mb:6px; --c:#888">Add this URL to your GitHub/GitLab webhook settings. Use the secret below for HMAC verification.</p>
+                                    <form method="POST" action="{{ url_for('manage_webhook_secret', repo_name=repo.name) }}" style="--d:inline">
+                                        <input type="hidden" name="action" value="remove">
+                                        <button type="submit" style="--bgc:#ff9800; --c:white; --p:4px 10px; --radius:3px; --b:none; --cur:pointer; --size:0.9em">Disable Webhook</button>
+                                    </form>
+                                    {% else %}
+                                    <p style="--mb:6px">No webhook configured. Enable to allow GitHub/GitLab push events to trigger a rescan.</p>
+                                    <form method="POST" action="{{ url_for('manage_webhook_secret', repo_name=repo.name) }}" style="--d:inline">
+                                        <input type="hidden" name="action" value="generate">
+                                        <button type="submit" style="--bgc:#4CAF50; --c:white; --p:4px 10px; --radius:3px; --b:none; --cur:pointer; --size:0.9em">Enable Webhook</button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {% endif %}
                     {% endfor %}
                 </tbody>
             </table>
