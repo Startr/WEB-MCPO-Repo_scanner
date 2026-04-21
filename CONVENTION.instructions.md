@@ -44,6 +44,20 @@ For each task, define:
 
 
 
+## Python Environment
+
+**Always use `pipenv` for development** — it keeps dependencies isolated and reproducible.
+
+- `pipenv run <command>` for one-off commands (e.g., `pipenv run pytest`)
+- `pipenv shell` to activate the venv for a session
+- `pipenv install <pkg>` for production deps; `pipenv install --dev <pkg>` for dev-only
+- Tests: `pipenv run pytest tests/` or `make test` (which wraps pipenv)
+- Never install project deps into the global Python — use pipenv or uv
+
+**Exception**: once code is packaged as a standalone binary (PyInstaller) or installed
+via `pip install todoscope`, pipenv is no longer needed — the binary/package manages
+its own dependencies.
+
 ## Makefile Standards
 
 ### Canonical Template Location
