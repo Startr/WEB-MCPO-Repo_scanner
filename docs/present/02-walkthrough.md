@@ -40,8 +40,8 @@ docker run -p 5000:5000 todoscope
 **Option three — clone the repo:**
 
 ```bash
-git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
-cd WEB-MCPO-Repo_scanner
+git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
+cd GIT-TodoScope
 make run
 ```
 

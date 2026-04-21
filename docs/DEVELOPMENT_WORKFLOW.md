@@ -4,8 +4,8 @@
 
 ### 1. Clone and Setup
 ```bash
-git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
-cd repo_scanner
+git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
+cd GIT-TodoScope
 cd scanner
 pipenv install --dev
 pipenv shell

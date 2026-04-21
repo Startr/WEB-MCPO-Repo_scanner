@@ -7,7 +7,7 @@ argument-hint: (no arguments)
 # TodoScope — TODO.md Bootstrap & Alignment
 
 Bootstrap and align a repo's `TODO.md` to
-[TodoScope](https://github.com/Startr/WEB-TodoScope) conventions. This is housekeeping, not deep scanning. TodoScope (the application at `/Users/somma/bin/repo_scanner`) handles scanning. This gets a repo's `TODO.md` into shape so the scanner can read it.
+[TodoScope](https://github.com/Startr/TodoScope) conventions. This is housekeeping, not deep scanning. TodoScope (the application at `/Users/somma/bin/repo_scanner`) handles scanning. This gets a repo's `TODO.md` into shape so the scanner can read it.
 
 ## What This Does
 

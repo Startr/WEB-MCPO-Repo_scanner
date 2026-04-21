@@ -1,7 +1,7 @@
 captainVersion: 4
 services:
   $$cap_appname:
-    image: ghcr.io/startr/web-mcpo-repo_scanner:$$cap_app_version
+    image: ghcr.io/startr/todoscope:$$cap_app_version
     environment:
       SECRET_KEY: $$cap_secret_key
       FLASK_DEBUG: "0"
@@ -48,4 +48,4 @@ caproverOneClickApp:
     See every TODO across all your repos. MCP-native so Sage.is, Claude, and
     other AI agents can query your codebase state directly. Part of the Startr
     ecosystem.
-  documentation: https://github.com/Startr/WEB-MCPO-Repo_scanner
+  documentation: https://github.com/Startr/TodoScope

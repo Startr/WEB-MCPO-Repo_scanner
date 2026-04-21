@@ -127,7 +127,7 @@ No extra work.
 Below, smaller:
 
 ```
-github.com/Startr/WEB-MCPO-Repo_scanner
+github.com/Startr/TodoScope
 sage.is/community
 ```
 

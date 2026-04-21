@@ -14,8 +14,8 @@ dependencies = [
 todoscope = "scanner.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/Sage-is/repo_scanner"
-Repository = "https://github.com/Sage-is/repo_scanner"
+Homepage = "https://github.com/Startr/TodoScope"
+Repository = "https://github.com/Startr/TodoScope"
 
 [build-system]
 requires = ["setuptools>=68"]

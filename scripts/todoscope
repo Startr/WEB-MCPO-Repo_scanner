@@ -3,7 +3,7 @@ set -euo pipefail
 
 VERSION="1.0.0"
 
-IMAGE="ghcr.io/sage-is/repo_scanner:latest"
+IMAGE="ghcr.io/startr/todoscope:latest"
 CONTAINER="todoscope"
 VOLUME="todoscope-data"
 DATA_MOUNT="/app/scanner/repositories"
@@ -17,7 +17,7 @@ SAGE_CONFIG_DIR="${HOME}/.sage-is"
 SAGE_PROJECTS="${SAGE_CONFIG_DIR}/projects"
 
 # The upstream remote URL pattern (matches any protocol/suffix).
-TODOSCOPE_REMOTE="Sage-is/repo_scanner"
+TODOSCOPE_REMOTE="Startr/TodoScope"
 
 # Read saved clone path for a project. Prints nothing if unset.
 sage_project_dir() {

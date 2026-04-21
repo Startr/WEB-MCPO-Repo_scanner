@@ -127,10 +127,11 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 
 ### Release Pipeline — Repo Rename #release #brand
 
-- [ ] **Rename GitHub repo**: repo_scanner → todoscope #brand
-- [ ] **Update Docker image**: ghcr.io/sage-is/todoscope #docker #brand
-- [ ] **Update all internal references**: Makefile, Dockerfile, scripts, docs #brand
-- [ ] **Verify**: all links, image tags, and imports still work after rename
+- [x] **Rename GitHub repo**: `Startr/WEB-MCPO-Repo_scanner` → `Startr/TodoScope` #brand
+- [x] **Update Docker image**: `ghcr.io/startr/todoscope` #docker #brand
+- [x] **Update all internal references**: pyproject.toml, scripts, templates, docs, README, CapRover #brand
+- [x] **Convention**: clone to `GIT-TodoScope/` locally for dev clarity #brand
+- [x] **Verified**: 45 tests passing, all links updated
 
 ### Release Pipeline — Docker CLI Wrapper + Dev Mode #release #docker #homebrew
 

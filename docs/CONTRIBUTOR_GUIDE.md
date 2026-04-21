@@ -13,8 +13,8 @@ Welcome to the TODO Scanner project! This guide will help you get started contri
 
 1. **Fork and Clone**
    ```bash
-   git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
-   cd repo_scanner
+   git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
+   cd GIT-TodoScope
    ```
 
 2. **Set up Development Environment**

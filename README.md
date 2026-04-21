@@ -1,14 +1,14 @@
 # TODO Scanner v0.0.1
 
-[![GitHub](https://img.shields.io/badge/View%20on-GitHub-brightgreen)](https://github.com/Startr/WEB-MCPO-Repo_scanner)
+[![GitHub](https://img.shields.io/badge/View%20on-GitHub-brightgreen)](https://github.com/Startr/TodoScope)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-black?logo=flask)](https://flask.palletsprojects.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![MCP](https://img.shields.io/badge/MCP-compatible-7C3AED)](https://modelcontextprotocol.io)
-[![GitHub stars](https://img.shields.io/github/stars/Startr/WEB-MCPO-Repo_scanner?style=social)](https://github.com/Startr/WEB-MCPO-Repo_scanner/stargazers)
+[![GitHub stars](https://img.shields.io/github/stars/Startr/TodoScope?style=social)](https://github.com/Startr/TodoScope/stargazers)
 [![TODOs](https://img.shields.io/endpoint?url=https://todoscope.sage.is/api/badge/todos/WEB-Sage.is-repo_scanner)](http://localhost:5000/scan_stream/WEB-Sage.is-repo_scanner)
-[![GitHub last commit](https://img.shields.io/github/last-commit/Startr/WEB-MCPO-Repo_scanner)](https://github.com/Startr/WEB-MCPO-Repo_scanner/commits)
+[![GitHub last commit](https://img.shields.io/github/last-commit/Startr/TodoScope)](https://github.com/Startr/TodoScope/commits)
 
 Every codebase has a to-do list. Most of them are a mess. TodoScope is about the gap between what teams say they'll fix and what actually gets done — and what that gap reveals about how software really gets built.
 
@@ -59,8 +59,8 @@ TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten ac
 Requires Python 3.11+ and Git.
 
 ```bash
-git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
-cd WEB-MCPO-Repo_scanner
+git clone https://github.com/Startr/TodoScope.git
+cd GIT-TodoScope
 pip install pipenv
 cd scanner && pipenv install
 cd ..
@@ -72,8 +72,8 @@ Open `http://localhost:5000`. The security warning on the page walks you through
 ### Docker
 
 ```bash
-git clone https://github.com/Startr/WEB-MCPO-Repo_scanner.git
-cd WEB-MCPO-Repo_scanner
+git clone https://github.com/Startr/TodoScope.git
+cd GIT-TodoScope
 make it_build
 make it_run SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
 ```
@@ -211,8 +211,8 @@ This project, while dedicated to finding TODOs, has its own list of desired enha
 - [ ] **Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Replace with server-rendered Jinja2 partials + SSE that push HTML fragments, or at minimum extract shared styles into named constants.
 
 ## Low Priority
-- [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Sage-is one-click repo and register it as a custom source in CapRover.
-- [ ] Add TodoScope to the `Sage-is/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service.
+- [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Startr one-click repo and register it as a custom source in CapRover.
+- [ ] Add TodoScope to the `Startr/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service.
 - [ ] Introduce user authentication for secure access.
 - [ ] Implement priority inference from TODO comments.
 - [ ] Design a plugin system to extend scanner functionality.
