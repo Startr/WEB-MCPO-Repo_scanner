@@ -61,7 +61,9 @@ endef
         require_gitflow_next first_release patch_release minor_release major_release \
         hotfix release_finish hotfix_finish \
         release things_clean \
-        binary binary_dir app dmg pypi_build pypi_publish clean_dist
+        binary binary_dir binary_linux binary_windows \
+        app dmg pypi_build pypi_publish clean_dist \
+        release_all docker_push
 
 # --- Info Targets ---
 help:
@@ -274,10 +276,41 @@ binary_dir:
 		cli.py --distpath ../dist --workpath ../build
 	@echo "App directory at: dist/todoscope/"
 
+# --- Cross-Platform Binary Builds (Docker — run on your Mac) ---
+# Uses cdrx/docker-pyinstaller images to build Linux/Windows binaries locally.
+# No cloud CI needed — Docker handles the target OS environment.
+
+binary_linux:
+	@echo "Building Linux x86_64 binary via Docker..."
+	docker run --rm -v "$(PWD):/src" cdrx/pyinstaller-linux \
+		"pyinstaller --onefile --name todoscope \
+		--add-data 'scanner/templates:scanner/templates' \
+		--add-data 'scanner/static:scanner/static' \
+		--hidden-import=yaml \
+		scanner/cli.py"
+	@mkdir -p dist/linux
+	@mv dist/todoscope dist/linux/todoscope 2>/dev/null || true
+	@echo "Linux binary at: dist/linux/todoscope"
+
+binary_windows:
+	@echo "Building Windows x86_64 .exe via Docker (Wine)..."
+	docker run --rm -v "$(PWD):/src" cdrx/pyinstaller-windows \
+		"pyinstaller --onefile --name todoscope \
+		--add-data 'scanner/templates;scanner/templates' \
+		--add-data 'scanner/static;scanner/static' \
+		--hidden-import=yaml \
+		scanner/cli.py"
+	@mkdir -p dist/windows
+	@mv dist/todoscope.exe dist/windows/todoscope.exe 2>/dev/null || true
+	@echo "Windows binary at: dist/windows/todoscope.exe"
+
+# --- macOS .app + DMG ---
+
 app:
 	@echo "Building macOS .app bundle..."
 	@cd scanner && pipenv run pyinstaller -y --windowed --onedir \
 		--name TodoScope \
+		--icon ../assets/todoscope.icns \
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
 		--hidden-import=yaml \
@@ -286,8 +319,20 @@ app:
 	@echo "App at: dist/TodoScope.app"
 
 dmg: app
-	$(call ensure-executable,scripts/build_dmg.sh)
-	@scripts/build_dmg.sh dist/TodoScope.app
+	@echo "Creating styled DMG with create-dmg..."
+	@rm -f "dist/TodoScope-$$(git describe --always --tag).dmg"
+	create-dmg \
+		--volname "TodoScope" \
+		--background "assets/dmg_background.png" \
+		--window-pos 200 120 \
+		--window-size 660 400 \
+		--icon-size 80 \
+		--icon "TodoScope.app" 165 190 \
+		--app-drop-link 495 190 \
+		--no-internet-enable \
+		"dist/TodoScope-$$(git describe --always --tag).dmg" \
+		"dist/TodoScope.app"
+	@echo "DMG created: dist/TodoScope-$$(git describe --always --tag).dmg"
 
 pypi_build:
 	@cd scanner && pipenv run python -m build --outdir ../dist
@@ -297,6 +342,22 @@ pypi_publish: pypi_build
 
 clean_dist:
 	rm -rf dist/ build/
+
+# --- Docker Push to GHCR ---
+docker_push: it_build
+	@echo "Pushing Docker image to GHCR..."
+	$(CONTAINER_RUNTIME) tag $(IMAGE_NAME):$(IMAGE_TAG) $(GHCR_IMAGE_NAME):$(IMAGE_TAG)
+	$(CONTAINER_RUNTIME) tag $(IMAGE_NAME):$(IMAGE_TAG) $(GHCR_IMAGE_NAME):latest
+	$(CONTAINER_RUNTIME) push $(GHCR_IMAGE_NAME):$(IMAGE_TAG)
+	$(CONTAINER_RUNTIME) push $(GHCR_IMAGE_NAME):latest
+	@echo "Pushed: $(GHCR_IMAGE_NAME):$(IMAGE_TAG)"
+
+# --- Full Release (all local, zero cloud CI) ---
+# Builds every artifact and uploads to GitHub + PyPI + GHCR.
+# Usage: make patch_release && make release_finish && make release_all
+release_all:
+	$(call ensure-executable,scripts/release_all.sh)
+	@scripts/release_all.sh
 
 # --- Deployment Targets ---
 HAS_CAPROVER       := $(shell which caprover 2>/dev/null && echo 1)

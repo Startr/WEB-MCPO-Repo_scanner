@@ -172,24 +172,19 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 - [x] **DMG build script**: `scripts/build_dmg.sh` — staging dir, background, symlink, hdiutil #build
 - [ ] **Verify**: mount DMG → open TodoScope.app → Dock icon, Safari opens, SSE scan works
 
-### Release Pipeline — Makefile Targets (local dev, fast, free) #release #build
+### Release Pipeline — Makefile Targets + Local Cross-Platform Builds #release #build
 
-- [ ] **Add targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist #build
-- [ ] **Verify**: `make binary` and `make dmg` produce correct artifacts locally
-
-### Release Pipeline — GitHub Actions CI/CD (tags only, hybrid) #release #ci
-
-- [ ] **Create `.github/workflows/release.yml`**: triggered ONLY on v* tag push #ci
-  - [ ] Job: docker (ubuntu, multi-arch GHCR push) ~5 billed min
-  - [ ] Job: macos (single runner: CLI binary + .app + DMG) ~50 billed min (10x)
-  - [ ] Job: linux (ubuntu, CLI binary x86_64, works in tmux/SSH) ~3 billed min
-  - [ ] Job: windows (CLI .exe x86_64) ~6 billed min (2x)
-  - [ ] Job: pypi (build + publish) ~2 billed min
-  - [ ] Job: release (download all → GitHub Release)
-  - [ ] Job: update-brew (SHA256 → homebrew-apps auto-commit)
-  - [ ] Budget: ~65 billed min/release (~3% of free tier)
-- [ ] **Code signing placeholder**: gated on APPLE_DEVELOPER_ID secret #macos #security
-- [ ] **Verify**: `make release_finish` → tag push → all CI jobs green
+- [x] **Makefile targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist #build
+- [x] **Icon wired**: `--icon assets/todoscope.icns` in app target #design
+- [x] **Styled DMG**: `create-dmg` with background, icon positions, Applications drop link #design
+- [x] **Cross-platform builds** (Docker, zero cloud CI): #build
+  - [x] `binary_linux`: `cdrx/pyinstaller-linux` Docker container
+  - [x] `binary_windows`: `cdrx/pyinstaller-windows` Docker + Wine
+  - [x] `docker_push`: push to `ghcr.io/startr/todoscope`
+- [x] **`scripts/release_all.sh`**: one command builds ALL artifacts + uploads via `gh` CLI #automation
+- [x] **`make release_all` target**: calls release_all.sh #build
+- [ ] **Code signing**: codesign + notarytool (when Developer ID ready) #macos #security
+- [ ] **Verify full release**: `make release_all` → all artifacts built + uploaded
 
 ### Release Pipeline — Homebrew Tap #release #homebrew #deployment
 
