@@ -74,7 +74,22 @@ def resolve_tunnel(args):
     return None
 
 
+def setup_app_mode_logging():
+    """When running inside a .app bundle (no tty), redirect output to a log file.
+    This keeps the Dock icon alive while making output viewable via tail -f."""
+    if sys.stdout is not None and sys.stdout.isatty():
+        return  # Running in a terminal — output goes to terminal as normal
+
+    log_dir = os.path.expanduser("~/.todoscope")
+    os.makedirs(log_dir, exist_ok=True)
+    log_path = os.path.join(log_dir, "todoscope.log")
+    log_file = open(log_path, "a")
+    sys.stdout = log_file
+    sys.stderr = log_file
+
+
 def main():
+    setup_app_mode_logging()
     from scanner import __version__
 
     parser = argparse.ArgumentParser(

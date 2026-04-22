@@ -26,10 +26,14 @@
       "Read(//tmp/**)",
       "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/generate_emoji_icon.sh)",
       "Bash(./scripts/generate_emoji_icon.sh)",
-      "Bash(iconutil -c iconset -o /tmp/verify_icon2.iconset assets/todoscope.icns)"
+      "Bash(iconutil -c iconset -o /tmp/verify_icon2.iconset assets/todoscope.icns)",
+      "Bash(make binary:*)",
+      "Bash(open dist/TodoScope.app)",
+      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/todoscope_app_launcher.sh)"
     ],
     "additionalDirectories": [
-      "/Users/somma/bin/repo_scanner/scanner/dist"
+      "/Users/somma/bin/repo_scanner/scanner/dist",
+      "/Users/somma/bin/repo_scanner/dist/TodoScope.app"
     ]
   }
 }

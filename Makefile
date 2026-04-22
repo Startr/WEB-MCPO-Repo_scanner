@@ -306,16 +306,33 @@ binary_windows:
 
 # --- macOS .app + DMG ---
 
-app:
-	@echo "Building macOS .app bundle..."
-	@cd scanner && pipenv run pyinstaller -y --windowed --onedir \
-		--name TodoScope \
-		--icon ../assets/todoscope.icns \
-		--add-data "../scanner/templates:scanner/templates" \
-		--add-data "../scanner/static:scanner/static" \
-		--hidden-import=yaml \
-		--osx-bundle-identifier com.startr.todoscope \
-		cli.py --distpath ../dist --workpath ../build
+app: binary
+	@echo "Building macOS .app wrapper..."
+	@# -- Create .app directory structure --
+	@rm -rf dist/TodoScope.app
+	@mkdir -p dist/TodoScope.app/Contents/MacOS
+	@mkdir -p dist/TodoScope.app/Contents/Resources
+	@# -- Copy binary as the app executable (no wrapper — binary IS the .app process) --
+	@cp dist/todoscope dist/TodoScope.app/Contents/MacOS/TodoScope
+	@chmod +x dist/TodoScope.app/Contents/MacOS/TodoScope
+	@# -- Copy icon --
+	@cp assets/todoscope.icns dist/TodoScope.app/Contents/Resources/todoscope.icns
+	@# -- Write Info.plist --
+	@printf '<?xml version="1.0" encoding="UTF-8"?>\n\
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n\
+<plist version="1.0">\n\
+<dict>\n\
+  <key>CFBundleName</key><string>TodoScope</string>\n\
+  <key>CFBundleDisplayName</key><string>TodoScope</string>\n\
+  <key>CFBundleIdentifier</key><string>com.startr.todoscope</string>\n\
+  <key>CFBundleVersion</key><string>$(TAG)</string>\n\
+  <key>CFBundleShortVersionString</key><string>$(TAG)</string>\n\
+  <key>CFBundleIconFile</key><string>todoscope.icns</string>\n\
+  <key>CFBundleExecutable</key><string>TodoScope</string>\n\
+  <key>CFBundlePackageType</key><string>APPL</string>\n\
+  <key>NSHighResolutionCapable</key><true/>\n\
+</dict>\n\
+</plist>\n' > dist/TodoScope.app/Contents/Info.plist
 	@echo "App at: dist/TodoScope.app"
 
 dmg: app
