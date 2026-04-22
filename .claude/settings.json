@@ -3,7 +3,33 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:startr.style)",
-      "WebFetch(domain:sage.is)"
+      "WebFetch(domain:sage.is)",
+      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/todoscope)",
+      "Bash(/Users/somma/bin/repo_scanner/dist/todoscope --version)",
+      "Bash(/Users/somma/bin/repo_scanner/scripts/todoscope --version)",
+      "Bash(/Users/somma/bin/repo_scanner/scripts/todoscope --help)",
+      "Bash(python -m pytest scanner/tests/test_todoscope_cli.py -v)",
+      "Bash(gh repo:*)",
+      "Bash(rm -rf dist/TodoScope.app dist/TodoScope dist/TodoScope-*.dmg)",
+      "Bash(make dmg:*)",
+      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/build_dmg_assets.sh)",
+      "Bash(hdiutil attach:*)",
+      "Read(//Volumes/**)",
+      "Read(//Volumes/TodoScope 1/**)",
+      "Bash(hdiutil detach:*)",
+      "Bash(sips -g all /Users/somma/bin/repo_scanner/assets/todoscope.icns)",
+      "Bash(make app:*)",
+      "Bash(ls dist/TodoScope.app/Contents/Resources/*.icns)",
+      "Bash(ls -lh dist/TodoScope-*.dmg)",
+      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/release_all.sh)",
+      "Bash(iconutil -c iconset -o /tmp/todoscope_check.iconset assets/todoscope.icns)",
+      "Read(//tmp/**)",
+      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/generate_emoji_icon.sh)",
+      "Bash(./scripts/generate_emoji_icon.sh)",
+      "Bash(iconutil -c iconset -o /tmp/verify_icon2.iconset assets/todoscope.icns)"
+    ],
+    "additionalDirectories": [
+      "/Users/somma/bin/repo_scanner/scanner/dist"
     ]
   }
 }

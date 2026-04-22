@@ -111,7 +111,8 @@ HTML_PAGE = """<!DOCTYPE html>
   ctx.font = '560px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('""" + EMOJI + """', size / 2, size / 2 - 10);
+  // Center emoji — positive offset moves down, negative moves up
+  ctx.fillText('""" + EMOJI + """', size / 2, size / 2 + 20);
 
   // --- POST the canvas as PNG to our receiver ---
   document.getElementById('status').textContent = 'Sending to icon builder...';

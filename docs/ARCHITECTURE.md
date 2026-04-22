@@ -4,59 +4,61 @@
 
 Our Repo TODO Scanner follows a modular architecture with clear separation of concerns:
 
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Client    │    │   API Client    │    │   CLI Client    │
-│   (Browser)     │    │   (HTTP/JSON)   │    │   (Planned)     │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────▼───────────────┐
-                    │     Flask Application       │
-                    │   (Web + API Routes)        │
-                    └─────────────┬───────────────┘
-                                  │
-                    ┌─────────────▼───────────────┐
-                    │     Core Scanner Logic      │
-                    │  (Repository Management)    │
-                    └─────────────┬───────────────┘
-                                  │
-          ┌───────────────────────┼───────────────────────┐
-          │                       │                       │
-    ┌─────▼─────┐       ┌─────────▼─────────┐      ┌──────▼──────┐
-    │   Git     │       │   Pattern         │      │   Error     │
-    │ Operations│       │  Recognition      │      │  Handling   │
-    └───────────┘       └───────────────────┘      └─────────────┘
-          │                       │                       │
-    ┌─────▼─────┐       ┌─────────▼─────────┐      ┌──────▼──────┐
-    │ Local     │       │   File System     │      │  Logging &  │
-    │Repository │       │    Scanner        │      │ Monitoring  │
-    │ Storage   │       └───────────────────┘      └─────────────┘
-    └───────────┘
+```mermaid
+flowchart TD
+    %% Client Layer
+    WebClient["Web Client (Browser)"] --> FlaskApp
+    APIClient["API Client (HTTP/JSON)"] --> FlaskApp
+    CLIClient["CLI Client (Planned)"] --> FlaskApp
+
+    %% Application Layer
+    FlaskApp["Flask Application (Web + API Routes)"] --> CoreScanner
+
+    %% Core Layer
+    CoreScanner["Core Scanner Logic (Repository Management)"] --> GitOps
+    CoreScanner --> PatternRecog
+    CoreScanner --> ErrorHandling
+
+    %% Module Details
+    subgraph GitOperations [Git Operations]
+        GitOps["Git Operations"] --> LocalRepo["Local Repository"]
+        LocalRepo --> Storage["Storage"]
+    end
+
+    subgraph PatternRecognition [Pattern Recognition]
+        PatternRecog["Pattern Recognition"] --> FileSystem["File System Scanner"]
+    end
+
+    subgraph ErrorHandling [Error Handling]
+        ErrorHandlingModule["Error Handling"] --> Logging["Logging & Monitoring"]
+    end
 ```
 
 ## Core Components
 
 ### 1. Flask Application (`scanner/app.py`)
+
 - **Web Interface**: Serves HTML templates for user interaction
 - **API Endpoints**: RESTful API following MCP (Model Context Protocol)
 - **Request Routing**: Handles both web and API requests
 - **Response Formatting**: Converts internal data to appropriate formats
 
 ### 2. Scanner Engine (`scanner/app.py`)
+
 - **Repository Cloning**: Git operations for repository management
 - **Pattern Recognition**: Multi-pattern TODO detection (TODO, FIXME, BUG, NOTE)
 - **File Processing**: Recursive directory traversal with .gitignore support
 - **Result Aggregation**: Structures findings into meaningful reports
 
 ### 3. Error Handling (`scanner/error_handling.py`)
+
 - **Exception Management**: Custom exception classes for specific errors
 - **Recovery Strategies**: Automatic retry mechanisms for transient failures
 - **Error Tracking**: Unique error IDs for debugging and monitoring
 - **Graceful Degradation**: Continues operation when possible
 
 ### 4. Web Interface (`scanner/templates/`)
+
 - **Progressive Enhancement**: Works without JavaScript, enhanced with it
 - **Real-time Updates**: Server-sent events for streaming scan results
 - **Responsive Design**: Mobile-friendly interface
@@ -65,6 +67,7 @@ Our Repo TODO Scanner follows a modular architecture with clear separation of co
 ## Data Flow
 
 ### Repository Scanning Process
+
 1. **Input Validation**: Validate repository URL and parameters
 2. **Repository Cloning**: Clone or update local repository copy
 3. **File Discovery**: Traverse directory structure respecting .gitignore
@@ -73,6 +76,7 @@ Our Repo TODO Scanner follows a modular architecture with clear separation of co
 6. **Response Generation**: Format results for web display or API consumption
 
 ### Error Handling Flow
+
 1. **Error Detection**: Catch exceptions at operation boundaries
 2. **Error Classification**: Determine error type and severity
 3. **Recovery Attempt**: Try alternative approaches or retry if appropriate
@@ -82,24 +86,28 @@ Our Repo TODO Scanner follows a modular architecture with clear separation of co
 ## API Architecture
 
 ### MCP Compliance
+
 The API follows Model Context Protocol standards:
+
 - **Structured Responses**: Consistent response format across endpoints
 - **Error Handling**: Standardized error response format
 - **Content Types**: Support for multiple content types
 - **Schema Validation**: Dynamic OpenAPI specification generation
 
 ### Endpoint Design
-```
+
+```bash
 /api/mpco/
-├── scan_repository     (POST) - Scan new repository
-├── list_repositories   (GET)  - List cached repositories  
-├── pull_repository     (POST) - Update repository
-├── scan/{repo_name}    (GET)  - Get cached scan results
-├── stream/{repo_name}  (GET)  - Stream scan results
-└── openapi.json        (GET)  - API specification
+├── scan_repository     #(POST) - Scan new repository
+├── list_repositories   #(GET)  - List cached repositories  
+├── pull_repository     #(POST) - Update repository
+├── scan/{repo_name}    #(GET)  - Get cached scan results
+├── stream/{repo_name}  #(GET)  - Stream scan results
+└── openapi.json        #(GET)  - API specification
 ```
 
 ### Streaming Architecture
+
 - **Server-Sent Events**: Real-time progress updates
 - **Chunked Processing**: Process files incrementally
 - **Backpressure Handling**: Manage client connection state
@@ -107,10 +115,10 @@ The API follows Model Context Protocol standards:
 
 ## File Organization
 
-```
+```bash
 repo_scanner/
-├── app.py                    # Legacy entry point (to be deprecated)
-├── scanner/                  # Main application package
+├── app.py                   # Legacy entry point (to be deprecated)
+├── scanner/                 # Main application package
 │   ├── __init__.py          # Package initialization
 │   ├── app.py               # Core Flask application
 │   ├── error_handling.py    # Error management utilities
@@ -141,6 +149,7 @@ repo_scanner/
 ## Technology Stack
 
 ### Backend
+
 - **Python 3.12+**: Modern Python with type hints
 - **Flask**: Lightweight web framework
 - **GitPython**: Git repository operations
@@ -148,12 +157,14 @@ repo_scanner/
 - **Pipenv**: Dependency management and virtual environments
 
 ### Frontend  
+
 - **HTML5**: Semantic markup
 - **CSS3**: Modern styling with flexbox/grid
 - **Vanilla JavaScript**: Progressive enhancement
 - **Server-Sent Events**: Real-time updates
 
 ### Development Tools
+
 - **Make**: Build automation and task running
 - **pytest**: Test framework
 - **Docker**: Containerization
@@ -162,12 +173,14 @@ repo_scanner/
 ## Security Considerations
 
 ### Current Security Measures
+
 - **Input Validation**: Sanitize repository URLs and user inputs
 - **Path Traversal Protection**: Prevent access outside repository directories
 - **HTML Escaping**: Prevent XSS in web interface
 - **Git Operations**: Isolated repository operations
 
 ### Future Security Enhancements
+
 - **Authentication**: User accounts and API keys
 - **Authorization**: Role-based access control
 - **Rate Limiting**: Prevent abuse and DoS attacks
@@ -177,12 +190,14 @@ repo_scanner/
 ## Performance Characteristics
 
 ### Scalability
+
 - **Single-threaded**: Current implementation is single-process
 - **I/O Bound**: Performance limited by file system and git operations
 - **Memory Efficient**: Streaming results to avoid memory accumulation
 - **Disk Usage**: Local repository storage grows with usage
 
 ### Performance Optimizations
+
 - **Lazy Loading**: Process files on-demand
 - **Streaming Responses**: Avoid buffering large results
 - **Gitignore Respect**: Skip irrelevant files
@@ -191,21 +206,20 @@ repo_scanner/
 ## Future Architecture Plans
 
 ### Microservices Architecture
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Web Service   │    │  Scanner Service │    │  Storage Service│
-│   (Frontend)    │    │   (Processing)   │    │   (Database)    │
-└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
-          │                      │                      │
-          └──────────────────────┼──────────────────────┘
-                                 │
-                    ┌─────────────▼───────────────┐
-                    │     Message Queue           │
-                    │   (Async Processing)        │
-                    └─────────────────────────────┘
+
+```mermaid
+flowchart TD
+    %% Service Layer
+    WebService["Web Service (Frontend)"] --> MessageQueue
+    ScannerService["Scanner Service (Processing)"] --> MessageQueue
+    StorageService["Storage Service (Database)"] --> MessageQueue
+
+    %% Message Queue
+    MessageQueue["Message Queue (Async Processing)"]
 ```
 
 ### Planned Improvements
+
 - **Database Integration**: PostgreSQL for persistent storage
 - **Queue System**: Redis/RabbitMQ for background processing
 - **Caching Layer**: Redis for scan result caching

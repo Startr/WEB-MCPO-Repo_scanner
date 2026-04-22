@@ -74,7 +74,7 @@ freely to describe the kind of work.
 This is the structure that produces kanban cards. Everything else is
 cosmetic. Get this right and the board works.
 
-```
+```markdown
 ## Section Header              ← determines the kanban COLUMN
 - [ ] **Card Title**: Desc     ← becomes a CARD on the board
   - [ ] Subtask one            ← becomes a CHECKLIST ITEM on the card
@@ -95,10 +95,10 @@ Example — this markdown:
   - [ ] Hit the ~1.5GB base-image target after trimming heavy deps
 ```
 
-generates one column ("In Progress") with one card ("Docker Image
-Slimming") showing a two-item checklist, one checked. 
+generates one column ("In Progress") with one card ("Docker Image Slimming") showing a two-item checklist, one checked.
 
 **Parent items** (the cards) need:
+
 - A checkbox: `- [ ]` or `- [x]`
 - A clear title, optionally bold: `- [ ] **Title**: Description`
 - Optional category tag in brackets: `[EXTERNAL]`, `[SITE]`, `[MIXED]`
