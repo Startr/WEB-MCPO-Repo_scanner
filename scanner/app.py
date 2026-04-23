@@ -131,8 +131,13 @@ else:
     BASE_REPO_PATH = _OLD_REPO_PATH
 
 # Local repos config — maps safe display names to metadata dicts (never exposed to web)
-LOCAL_REPOS_YAML = os.path.join(_APP_DIR, "local_repos.yaml")
-LOCAL_REPOS_JSON = os.path.join(_APP_DIR, "local_repos.json")  # legacy, auto-migrated
+# When running via CLI/binary, persist to ~/.todoscope/ so data survives restarts.
+if _DATA_DIR:
+    LOCAL_REPOS_YAML = os.path.join(_DATA_DIR, "local_repos.yaml")
+    LOCAL_REPOS_JSON = os.path.join(_DATA_DIR, "local_repos.json")
+else:
+    LOCAL_REPOS_YAML = os.path.join(_APP_DIR, "local_repos.yaml")
+    LOCAL_REPOS_JSON = os.path.join(_APP_DIR, "local_repos.json")  # legacy, auto-migrated
 
 
 def _normalize_repo_meta(value):
