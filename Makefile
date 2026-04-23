@@ -335,7 +335,6 @@ app: binary
   <key>CFBundleExecutable</key><string>TodoScope</string>\n\
   <key>CFBundlePackageType</key><string>APPL</string>\n\
   <key>NSHighResolutionCapable</key><true/>\n\
-  <key>LSUIElement</key><true/>\n\
 </dict>\n\
 </plist>\n' > dist/TodoScope.app/Contents/Info.plist
 	@echo "App at: dist/TodoScope.app"

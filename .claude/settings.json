@@ -29,7 +29,13 @@
       "Bash(iconutil -c iconset -o /tmp/verify_icon2.iconset assets/todoscope.icns)",
       "Bash(make binary:*)",
       "Bash(open dist/TodoScope.app)",
-      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/todoscope_app_launcher.sh)"
+      "Bash(chmod +x /Users/somma/bin/repo_scanner/scripts/todoscope_app_launcher.sh)",
+      "Bash(pkill -f todoscope)",
+      "Bash(kill -9 46922)",
+      "Bash(chmod +x scripts/generate_menu_icon.sh)",
+      "Bash(./scripts/generate_menu_icon.sh)",
+      "Bash(pkill -9 -f \"scanner.tray\")",
+      "Bash(pkill -9 -f todoscope)"
     ],
     "additionalDirectories": [
       "/Users/somma/bin/repo_scanner/scanner/dist",
