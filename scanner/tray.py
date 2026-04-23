@@ -76,6 +76,7 @@ def main():
 
     host = "127.0.0.1"
     port = find_free_port(5000)
+    url = f"http://{host}:{port}"
 
     # Check if already running — don't launch a second instance
     if wait_for_server(host, port, timeout=1):
@@ -87,13 +88,42 @@ def main():
     flask_thread = threading.Thread(target=_run_flask, args=(host, port), daemon=True)
     flask_thread.start()
 
-    url = f"http://{host}:{port}"
-
     # Wait for server to be ready, then open browser
     if wait_for_server(host, port, timeout=15):
         webbrowser.open(url)
     else:
         print("Warning: server did not start within 15s", file=sys.stderr)
+
+    # --- Dock icon toggle (macOS only) ---
+    # Uses ctypes to call NSApp.setActivationPolicy: at runtime.
+    # Works because pystray provides the Cocoa event loop.
+    dock_visible = [True]  # mutable so the closure can toggle it
+
+    def _set_dock_visibility(visible):
+        """Show or hide the Dock icon by changing the activation policy."""
+        if sys.platform != "darwin":
+            return
+        try:
+            import ctypes, ctypes.util
+            objc = ctypes.cdll.LoadLibrary(ctypes.util.find_library("objc"))
+            objc.objc_getClass.restype = ctypes.c_void_p
+            objc.sel_registerName.restype = ctypes.c_void_p
+            objc.objc_msgSend.restype = ctypes.c_void_p
+            objc.objc_msgSend.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
+            NSApp = objc.objc_msgSend(
+                objc.objc_getClass(b"NSApplication"),
+                objc.sel_registerName(b"sharedApplication"),
+            )
+            # 0 = Regular (Dock icon), 1 = Accessory (no Dock icon)
+            policy = 0 if visible else 1
+            objc.objc_msgSend.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_long]
+            objc.objc_msgSend(NSApp, objc.sel_registerName(b"setActivationPolicy:"), policy)
+        except Exception:
+            pass
+
+    def on_toggle_dock(icon, item):
+        dock_visible[0] = not dock_visible[0]
+        _set_dock_visibility(dock_visible[0])
 
     # Build the menu bar icon + menu
     icon_image = _create_icon_image()
@@ -113,6 +143,10 @@ def main():
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Open Browser", on_open_browser),
         pystray.MenuItem("Show Log", on_show_log),
+        pystray.MenuItem(
+            lambda item: "Hide Dock Icon" if dock_visible[0] else "Show Dock Icon",
+            on_toggle_dock,
+        ),
         pystray.Menu.SEPARATOR,
         pystray.MenuItem("Quit", on_quit),
     )
