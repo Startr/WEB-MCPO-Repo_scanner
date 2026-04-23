@@ -120,6 +120,15 @@ def main():
         tray_main()
         return
 
+    # Check if already running — don't launch a second instance
+    port = args.port
+    if wait_for_server(args.host, port, timeout=1):
+        url = f"http://{args.host}:{port}"
+        print(f"  TodoScope already running on {url}")
+        if not args.no_browser:
+            webbrowser.open(url)
+        return
+
     # Find a free port
     port = find_free_port(args.port)
     if port != args.port:

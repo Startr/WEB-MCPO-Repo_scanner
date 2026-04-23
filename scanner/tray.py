@@ -77,6 +77,12 @@ def main():
     host = "127.0.0.1"
     port = find_free_port(5000)
 
+    # Check if already running — don't launch a second instance
+    if wait_for_server(host, port, timeout=1):
+        print(f"TodoScope already running on {url} — opening browser.")
+        webbrowser.open(url)
+        return
+
     # Start Flask in a daemon thread
     flask_thread = threading.Thread(target=_run_flask, args=(host, port), daemon=True)
     flask_thread.start()
