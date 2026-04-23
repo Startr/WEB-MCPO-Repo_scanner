@@ -76,7 +76,7 @@ def resolve_tunnel(args):
 
 def setup_app_mode_logging():
     """When running inside a .app bundle (no tty), redirect output to a log file.
-    This keeps the Dock icon alive while making output viewable via tail -f."""
+    Output viewable via: tail -f ~/.todoscope/todoscope.log"""
     if sys.stdout is not None and sys.stdout.isatty():
         return  # Running in a terminal — output goes to terminal as normal
 
@@ -90,6 +90,14 @@ def setup_app_mode_logging():
 
 def main():
     setup_app_mode_logging()
+
+    # Auto-detect .app mode: no tty means we're launched as a .app bundle.
+    # Route to the menu bar tray app instead of the terminal CLI.
+    if sys.stdout is None or not sys.stdout.isatty():
+        from scanner.tray import main as tray_main
+        tray_main()
+        return
+
     from scanner import __version__
 
     parser = argparse.ArgumentParser(
@@ -103,7 +111,14 @@ def main():
     parser.add_argument("--tunnel", action="store_true", help="Expose via cloudflared quick tunnel")
     parser.add_argument("--tailscale", action="store_true", help="Expose via tailscale funnel")
     parser.add_argument("--share", action="store_true", help="Expose via best available tunnel (prefers tailscale)")
+    parser.add_argument("--tray", action="store_true", help="Run as menu bar app (🔭 icon in menu bar, no terminal output)")
     args = parser.parse_args()
+
+    # --tray flag: launch menu bar mode from Terminal
+    if args.tray:
+        from scanner.tray import main as tray_main
+        tray_main()
+        return
 
     # Find a free port
     port = find_free_port(args.port)

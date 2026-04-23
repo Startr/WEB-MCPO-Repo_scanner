@@ -262,7 +262,11 @@ binary:
 		--name todoscope \
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
+		--add-data "../assets/todoscope.icns:assets" \
+		--add-data "../assets/todoscope_menu_icon.png:assets" \
 		--hidden-import=yaml \
+		--hidden-import=pystray \
+		--hidden-import=PIL \
 		cli.py --distpath ../dist --workpath ../build
 	@echo "Binary at: dist/todoscope"
 
@@ -308,7 +312,7 @@ binary_windows:
 
 app: binary
 	@echo "Building macOS .app wrapper..."
-	@# -- Create .app directory structure --
+	@# -- Clean previous .app build (not the binary!) --
 	@rm -rf dist/TodoScope.app
 	@mkdir -p dist/TodoScope.app/Contents/MacOS
 	@mkdir -p dist/TodoScope.app/Contents/Resources
@@ -331,6 +335,7 @@ app: binary
   <key>CFBundleExecutable</key><string>TodoScope</string>\n\
   <key>CFBundlePackageType</key><string>APPL</string>\n\
   <key>NSHighResolutionCapable</key><true/>\n\
+  <key>LSUIElement</key><true/>\n\
 </dict>\n\
 </plist>\n' > dist/TodoScope.app/Contents/Info.plist
 	@echo "App at: dist/TodoScope.app"
