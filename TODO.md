@@ -135,20 +135,10 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 
 ### Release Pipeline — Docker CLI Wrapper + Dev Mode #release #docker #homebrew
 
-- [x] **Create `scripts/todoscope`**: bash CLI wrapper (based on ai-ui pattern) #cli #docker
-  - [ ] Commands: start, stop, update, dev, logs, open, status, version, tunnel, tailscale, nuke
-  - [ ] Auto-find free port if default (5000) is taken
-  - [ ] Reuse: ensure_docker, sage_project_dir, find_repo_nearby, is_ephemeral_path
-  - [ ] Image: `ghcr.io/sage-is/todoscope:latest`, container: `todoscope`
-  - [ ] Config dir: `~/.sage-is/` (Sage project registry)
-- [ ] **Dev mode**: smart local development workflow #developer-experience
-  - [ ] Resolution: --dir → $TODOSCOPE_DEV_DIR → find_repo_nearby → saved path → clone fresh
-  - [ ] Mount source into container: scanner/ + app.py
-  - [ ] FLASK_ENV=development, FLASK_DEBUG=1
-  - [ ] --where flag: print saved source location
-  - [ ] Ephemeral path warning
-- [ ] **Tunnel commands**: `todoscope tunnel` + `todoscope tailscale` #networking
-- [ ] **Verify**: `scripts/todoscope start` → `scripts/todoscope open` → works; `scripts/todoscope dev` → hot reload works
+- [x] **Create `scripts/todoscope`**: bash CLI wrapper (11 commands, dev mode, tunnels) #cli #docker
+- [x] **Dev mode**: smart repo discovery, source mounting, hot reload #developer-experience
+- [x] **Tunnel commands**: `todoscope tunnel` + `todoscope tailscale` #networking
+- [ ] **Verify end-to-end**: `scripts/todoscope start` → open → dev → tunnel (needs Docker image built) #testing
 
 ### Release Pipeline — PyInstaller Binary Build (macOS + Linux + Windows) #release #binary #packaging
 
@@ -162,15 +152,17 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
 - [ ] **Verify Linux (headless)**: `./todoscope --no-browser --port 5001` → access via tunnel or LAN
 - [ ] **Verify Windows**: `todoscope.exe` → browser opens, SSE works
 
-### Release Pipeline — Mac .app + DMG (v1.0 browser launcher) #release #macos #app
+### Release Pipeline — Mac .app + DMG + Menu Bar #release #macos #app
 
-- [x] **Build .app**: `make app` → TodoScope.app (25MB, arm64, code-signed) #macos
-- [x] **Create DMG**: `make dmg` → TodoScope-VERSION.dmg (11MB) #macos
-- [x] **Makefile fixes**: added `-y` flag, fixed bundle ID to `com.startr.todoscope` #build
-- [x] **Create `assets/todoscope.icns`**: telescope emoji rendered via Pillow + iconutil #design
-- [x] **DMG art**: background with drag-to-Applications layout, Applications symlink #design
-- [x] **DMG build script**: `scripts/build_dmg.sh` — staging dir, background, symlink, hdiutil #build
-- [ ] **Verify**: mount DMG → open TodoScope.app → Dock icon, Safari opens, SSE scan works
+- [x] **Build .app**: `make app` → TodoScope.app wrapper around PyInstaller binary #macos
+- [x] **Create DMG**: `make dmg` → styled DMG via `create-dmg` with background + Applications link #macos
+- [x] **App icon**: real 🔭 Apple Color Emoji via canvas+receiver (`scripts/generate_emoji_icon.sh`) #design
+- [x] **Menu bar icon**: 🔭 on transparent background via canvas+receiver (`scripts/generate_menu_icon.sh`) #design
+- [x] **pystray menu bar app**: 🔭 in menu bar with Open Browser, Show Log, Quit #macos
+- [x] **Dock icon toggle**: Hide/Show Dock Icon menu item via NSApp.setActivationPolicy ctypes #macos
+- [x] **Duplicate instance prevention**: detects running server, opens browser instead #reliability
+- [x] **Data persistence**: local_repos.yaml, access_keys.csv, repositories all in `~/.todoscope/` #data
+- [x] **Verified**: .app launches → Dock icon bounces → 🔭 in menu bar → browser opens → all menu items work
 
 ### Release Pipeline — Makefile Targets + Local Cross-Platform Builds #release #build
 
@@ -209,12 +201,15 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
   - [ ] Homebrew formula URL/SHA256 updated by CI
 - [ ] **Verify**: `make patch_release` → `make release_finish` → all CI green, all channels updated
 
-### Release Pipeline — Future: Native Mac UI (v1.1+) #release #macos #future
+### Release Pipeline — Future Enhancements #release #future
 
-- [ ] **v1.1 — pystray menu bar icon**: Open Browser / Quit; deps: pystray, Pillow #macos
-- [ ] **v1.2 — pywebview embedded WKWebView**: native window + status bar; deps: pywebview #macos
+- [ ] **Dock icon click → Open Browser**: respond to `applicationShouldHandleReopen:` via PyObjC NSApplication delegate so clicking the running Dock icon opens the browser (like clicking "Open Browser" in menu bar) #macos #ux
+- [ ] **Menu bar icon dark/light mode**: research macOS template images for auto-inverting icon on light menu bar #macos #design
+- [ ] **Linux/Windows tray icon colors**: research platform-appropriate icon styling for pystray on Linux (GNOME/KDE) and Windows #cross-platform #design
+- [ ] **pywebview embedded WKWebView (v2.0)**: native window + status bar; deps: pywebview #macos
   - [ ] Validate SSE streaming through WKWebView before committing
   - [ ] Validate threading model: Flask thread + pystray detached + pywebview main thread
+- [ ] **Branding & Poka-Yoke audit**: ensure all user-facing text, errors, and flows are clear and mistake-proof for v1 #brand #ux
 
 ## Bugs
 

@@ -1,4 +1,4 @@
-# TODO Scanner v0.0.1
+# 🔭 TodoScope
 
 [![GitHub](https://img.shields.io/badge/View%20on-GitHub-brightgreen)](https://github.com/Startr/TodoScope)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
@@ -54,12 +54,34 @@ TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten ac
 
 ## Installation
 
+### Standalone binary (no Python required)
+
+Download from [GitHub Releases](https://github.com/Startr/TodoScope/releases) and run:
+
+```bash
+./todoscope
+```
+
+Opens your browser to `http://localhost:5000`. Data stored in `~/.todoscope/`.
+
+### macOS .app
+
+Download `TodoScope.dmg` from [Releases](https://github.com/Startr/TodoScope/releases), drag to Applications.
+Double-click → 🔭 appears in your menu bar → browser opens. Menu bar icon has Open Browser, Show Log, and Quit.
+
+### pip / uv
+
+```bash
+pip install todoscope    # or: uv tool install todoscope
+todoscope
+```
+
 ### Local development
 
 Requires Python 3.11+ and Git.
 
 ```bash
-git clone https://github.com/Startr/TodoScope.git
+git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
 cd GIT-TodoScope
 pip install pipenv
 cd scanner && pipenv install
@@ -72,7 +94,7 @@ Open `http://localhost:5000`. The security warning on the page walks you through
 ### Docker
 
 ```bash
-git clone https://github.com/Startr/TodoScope.git
+git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
 cd GIT-TodoScope
 make it_build
 make it_run SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(32))")
