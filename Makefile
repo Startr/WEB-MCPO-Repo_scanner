@@ -58,7 +58,8 @@ endef
         sync_todos \
         test test-error test-unit test-coverage test-verbose \
         deploy default-deploy \
-        require_gitflow_next first_release patch_release minor_release major_release \
+        require_gitflow_next release_preflight \
+        first_release patch_release minor_release major_release internal_tag \
         hotfix release_finish hotfix_finish \
         release things_clean \
         binary binary_dir binary_linux binary_windows \
@@ -424,6 +425,21 @@ require_gitflow_next:
 		exit 1; \
 	fi
 
+# Pre-flight checks before a public release. Fails BEFORE any irreversible
+# action (tag creation, push) so a bad state can't produce a half-released tag.
+release_preflight:
+	@echo "→ Pre-flight checks..."
+	@git diff-index --quiet HEAD || \
+		(echo "ERROR: uncommitted changes — commit or stash first" && exit 1)
+	@git fetch origin develop --quiet
+	@[ "$$(git rev-parse develop)" = "$$(git rev-parse origin/develop)" ] || \
+		(echo "ERROR: local develop differs from origin/develop — pull or push first" && exit 1)
+	@command -v gh >/dev/null || (echo "ERROR: gh CLI not installed — run 'brew install gh'" && exit 1)
+	@gh auth status >/dev/null 2>&1 || (echo "ERROR: gh not authenticated — run 'gh auth login'" && exit 1)
+	@docker info >/dev/null 2>&1 || (echo "ERROR: Docker not running — start Docker Desktop" && exit 1)
+	@command -v create-dmg >/dev/null || (echo "ERROR: create-dmg missing — run 'brew install create-dmg'" && exit 1)
+	@echo "  ✓ All checks passed"
+
 first_release: require_gitflow_next
 	git flow release start 0.0.1
 	@echo ""
@@ -440,10 +456,32 @@ minor_release: require_gitflow_next
 major_release: require_gitflow_next
 	git flow release start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1+1".0.0"}')
 
+# hotfix uses git-flow-next's hotfix branch (off master). Auto-bumps PATCH from latest tag.
 hotfix: require_gitflow_next
-	git flow hotfix start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2"."$$3"."$$4+1}')
+	git flow hotfix start $$(git tag --sort=-v:refname | sed 's/^v//' | head -n 1 | awk -F'.' '{print $$1"."$$2"."$$3+1}')
 
-release_finish: require_gitflow_next
+# Lightweight internal tag — no binary release, no git-flow merge ceremony.
+# Auto-increments the 4th segment. v1.0.0 → v1.0.0.1; v1.0.0.3 → v1.0.0.4
+# Use for internal milestones, RCs, demo checkpoints — anything you want to
+# mark in git history without triggering a public binary release.
+internal_tag:
+	@LAST=$$(git tag --sort=-v:refname | head -1 | sed 's/^v//'); \
+	if [ -z "$$LAST" ]; then \
+		echo "ERROR: no tags exist yet — create v0.0.1 or later first via 'make first_release'"; exit 1; \
+	fi; \
+	if echo "$$LAST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		NEXT="v$${LAST}.1"; \
+	elif echo "$$LAST" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		NEXT="v$$(echo "$$LAST" | awk -F. '{print $$1"."$$2"."$$3"."$$4+1}')"; \
+	else \
+		echo "ERROR: latest tag '$$LAST' has unexpected format"; exit 1; \
+	fi; \
+	echo "Tagging $$NEXT (internal — no binary release)"; \
+	git tag -a "$$NEXT" -m "Internal tag $$NEXT"; \
+	git push origin "$$NEXT"; \
+	echo "Pushed $$NEXT to origin."
+
+release_finish: require_gitflow_next release_preflight
 	@$(clear_stale_gitflow_state)
 	@git flow release finish --no-fetch || ( \
 		echo "git-flow finish failed — completing release/$(RELEASE_VERSION) manually..."; \
@@ -458,7 +496,17 @@ release_finish: require_gitflow_next
 	@git push origin develop && git push origin master && git push --tags
 	@git checkout develop
 	@echo ""
-	@echo "=== Release $(RELEASE_VERSION) complete ==="
+	@echo "=== Release $(RELEASE_VERSION) tagged and pushed ==="
+	@# Chain into release_all only for 3-segment public tags.
+	@# 4-segment tags (e.g. v1.0.0.1) skip binaries — use 'make internal_tag' for those.
+	@if echo "$(RELEASE_VERSION)" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$$'; then \
+		echo ""; \
+		echo "=== Building binaries for v$(RELEASE_VERSION) ==="; \
+		$(MAKE) release_all; \
+	else \
+		echo "Non-public version $(RELEASE_VERSION) — skipping binary release."; \
+		echo "Use 'make internal_tag' for lightweight checkpoints."; \
+	fi
 
 hotfix_finish: require_gitflow_next
 	@$(clear_stale_gitflow_state)

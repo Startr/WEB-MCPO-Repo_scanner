@@ -94,17 +94,28 @@ else
     echo "  ⏭  Skipped PyPI publish"
 fi
 
-# --- Create GitHub Release ---
+# --- Create or update GitHub Release (idempotent — safe to re-run) ---
 echo ""
-echo "→ Creating GitHub Release: $TAG"
-gh release create "$TAG" \
-    --title "TodoScope $TAG" \
-    --generate-notes \
-    "dist/todoscope#todoscope-macos-arm64" \
-    "dist/linux/todoscope#todoscope-linux-x86_64" \
-    "dist/windows/todoscope.exe#todoscope-windows-x86_64.exe" \
+ARTIFACTS=(
+    "dist/todoscope#todoscope-macos-arm64"
+    "dist/linux/todoscope#todoscope-linux-x86_64"
+    "dist/windows/todoscope.exe#todoscope-windows-x86_64.exe"
     "dist/TodoScope-${VERSION}.dmg#TodoScope-${VERSION}.dmg"
-echo "  ✓ GitHub Release created: https://github.com/Startr/TodoScope/releases/tag/$TAG"
+)
+
+if gh release view "$TAG" >/dev/null 2>&1; then
+    echo "→ Release $TAG exists — uploading/replacing artifacts..."
+    gh release upload "$TAG" --clobber "${ARTIFACTS[@]}"
+    echo "  ✓ Artifacts updated on existing release"
+else
+    echo "→ Creating GitHub Release: $TAG"
+    gh release create "$TAG" \
+        --title "TodoScope $TAG" \
+        --generate-notes \
+        "${ARTIFACTS[@]}"
+    echo "  ✓ GitHub Release created"
+fi
+echo "  https://github.com/Startr/TodoScope/releases/tag/$TAG"
 
 # --- Update Homebrew tap ---
 echo ""
