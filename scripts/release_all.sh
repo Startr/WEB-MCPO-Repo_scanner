@@ -69,10 +69,18 @@ make binary_linux
 echo "  ✓ dist/linux/todoscope"
 
 # --- Build Windows binary (Docker + Wine) ---
+# Wine in cdrx/pyinstaller-windows breaks under both Rosetta and QEMU on
+# Apple Silicon hosts (Wine + Linux 6.12 kernel + amd64-on-arm64 emulation).
+# Don't fail the whole release if Windows can't build — ship the rest and
+# the upload step will skip Windows artifacts that don't exist.
 echo ""
 echo "→ Building Windows x86_64 .exe (Docker + Wine)..."
-make binary_windows
-echo "  ✓ dist/windows/todoscope.exe"
+if make binary_windows; then
+    echo "  ✓ dist/windows/todoscope.exe"
+else
+    echo "  ⚠  Windows build failed — continuing without Windows artifact."
+    echo "     (Wine + Apple Silicon emulator issue; revisit in v1.0.1.)"
+fi
 
 # --- Build + push Docker image ---
 echo ""
@@ -96,12 +104,27 @@ fi
 
 # --- Create or update GitHub Release (idempotent — safe to re-run) ---
 echo ""
-ARTIFACTS=(
-    "dist/todoscope#todoscope-macos-arm64"
-    "dist/linux/todoscope#todoscope-linux-x86_64"
-    "dist/windows/todoscope.exe#todoscope-windows-x86_64.exe"
-    "dist/TodoScope-${VERSION}.dmg#TodoScope-${VERSION}.dmg"
-)
+# Stage artifacts in a temp dir with distinct filenames. The macOS and Linux
+# binaries both have basename "todoscope" — uploading both as "todoscope"
+# causes a 404 from GitHub's asset endpoint on the second upload.
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+
+stage() {
+    local src="$1" dst_name="$2"
+    if [[ -f "$src" ]]; then
+        cp "$src" "$STAGE/$dst_name"
+        ARTIFACTS+=("$STAGE/$dst_name")
+    else
+        echo "  ⏭  Skipping missing artifact: $src"
+    fi
+}
+
+ARTIFACTS=()
+stage "dist/todoscope"                       "todoscope-macos-arm64"
+stage "dist/linux/todoscope"                 "todoscope-linux-x86_64"
+stage "dist/windows/todoscope.exe"           "todoscope-windows-x86_64.exe"
+stage "dist/TodoScope-${VERSION}.dmg"        "TodoScope-${VERSION}.dmg"
 
 if gh release view "$TAG" >/dev/null 2>&1; then
     echo "→ Release $TAG exists — uploading/replacing artifacts..."

@@ -287,19 +287,24 @@ binary_dir:
 
 binary_linux:
 	@echo "Building Linux x86_64 binary via Docker..."
+	@mkdir -p dist/linux
 	docker run --rm -v "$(PWD):/src" cdrx/pyinstaller-linux \
 		"pyinstaller --onefile --name todoscope \
+		--distpath /src/dist/linux \
+		--workpath /src/build/linux \
 		--add-data 'scanner/templates:scanner/templates' \
 		--add-data 'scanner/static:scanner/static' \
 		--hidden-import=yaml \
 		scanner/cli.py"
-	@mkdir -p dist/linux
-	@mv dist/todoscope dist/linux/todoscope 2>/dev/null || true
 	@echo "Linux binary at: dist/linux/todoscope"
 
 binary_windows:
-	@echo "Building Windows x86_64 .exe via Docker (Wine)..."
-	docker run --rm -v "$(PWD):/src" cdrx/pyinstaller-windows \
+	@echo "Building Windows x86_64 .exe via Docker (Wine on QEMU)..."
+	@echo "  Switching amd64 emulator: Rosetta -> QEMU (Wine incompatible with Rosetta)"
+	@docker run --privileged --rm tonistiigi/binfmt --uninstall rosetta,rosetta-wrapper >/dev/null 2>&1 || true
+	@docker run --privileged --rm tonistiigi/binfmt --install amd64 >/dev/null 2>&1 || true
+	@trap 'echo "  Restoring Rosetta amd64 emulation..."; docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null 2>&1 || true' EXIT; \
+	docker run --rm --platform linux/amd64 -v "$(PWD):/src" cdrx/pyinstaller-windows \
 		"pyinstaller --onefile --name todoscope \
 		--add-data 'scanner/templates;scanner/templates' \
 		--add-data 'scanner/static;scanner/static' \
@@ -357,10 +362,10 @@ dmg: app
 	@echo "DMG created: dist/TodoScope-$$(git describe --always --tag).dmg"
 
 pypi_build:
-	@cd scanner && pipenv run python -m build --outdir ../dist
+	@cd scanner && pipenv run python -m build --outdir $(PWD)/dist $(PWD)
 
 pypi_publish: pypi_build
-	@cd scanner && pipenv run twine upload ../dist/*.whl ../dist/*.tar.gz
+	@cd scanner && pipenv run twine upload $(PWD)/dist/*.whl $(PWD)/dist/*.tar.gz
 
 clean_dist:
 	rm -rf dist/ build/
