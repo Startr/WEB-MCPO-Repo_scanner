@@ -89,11 +89,11 @@ def setup_app_mode_logging():
 
 
 def main():
-    setup_app_mode_logging()
-
-    # Auto-detect .app mode: no tty means we're launched as a .app bundle.
-    # Route to the menu bar tray app instead of the terminal CLI.
-    if sys.stdout is None or not sys.stdout.isatty():
+    # Auto-detect .app mode: no tty AND no CLI args means Finder launch.
+    # If there are CLI args (--version, --help, etc.), let argparse handle them
+    # even when stdout is captured (e.g. pytest, pipes).
+    if (sys.stdout is None or not sys.stdout.isatty()) and len(sys.argv) == 1:
+        setup_app_mode_logging()
         from scanner.tray import main as tray_main
         tray_main()
         return
