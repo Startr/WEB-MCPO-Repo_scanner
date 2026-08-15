@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Streaming TODO Results{% endblock %}
+{% block title %}TodoScope — Scan Results{% endblock %}
 
 {% block head_extra %}
 <style>
@@ -483,7 +483,7 @@
                         // Single source of truth: guide users to the repo for contributions
                         const guidance = document.createElement('p');
                         guidance.style = '--c:#555; --mt:10px; --size:0.9em';
-                        guidance.innerHTML = 'This is a read-only scan. To file issues, add TODOs, or contribute fixes, work directly on the repository:<br>'
+                        guidance.innerHTML = 'TODOs live next to the code that has them. To file issues, add TODOs, or contribute fixes, work directly on the repository:<br>'
                             + '<a href="' + data.repo_url + '" target="_blank" style="--c:#0066cc">' + data.repo_url + '</a>';
                         document.querySelector('.summary').appendChild(guidance);
                         break;
@@ -551,18 +551,18 @@
 
                     case 'error':
                         loadingEl.style.display = 'none';
-                        todoCountEl.textContent = `Error: ${data.message}`;
+                        todoCountEl.textContent = data.message;
                         evtSource.close();
                         break;
                 }
             }
 
             // --- Initial scan stream ---
-            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url, shallow=shallow) }}");
+            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url, shallow=shallow, refresh=refresh) }}");
             evtSource.onmessage = e => handleEvent(JSON.parse(e.data));
             evtSource.onerror = function() {
                 loadingEl.style.display = 'none';
-                todoCountEl.textContent = "Error connecting to server stream";
+                todoCountEl.textContent = "Lost connection to the scan. Reload to try again.";
                 evtSource.close();
             };
 

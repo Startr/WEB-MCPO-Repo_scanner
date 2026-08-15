@@ -13,84 +13,13 @@
 > | Bugs        | `## Bugs`                 | `# BUG:`   |
 > | Done        | `- [x]` items / `## Done` | —          |
 
+<!-- All content below this line has been revised — tools/sync_readme_todos.py syncs it into README.md via `make sync_todos` -->
+
 ## In Progress
 
-### Brand & Landing Page — Scope A (Logged-Out Landing) #brand #landing
-
-The current login page is a cold password prompt with zero context. Turn it into a proper landing page.
-The one-line pitch is: *"See every TODO across all your repos. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished."*
-
-- [x] **Promote login.html into a real landing page**: hero, pitch, features, sign-in #brand #landing #critical
-  - [x] Add brand hero: headline, subhead, and a short "what it is" paragraph
-  - [x] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
-  - [x] Embed screenshot above the fold
-  - [x] Move the sign-in form into a secondary section below the hero
-  - [x] Add "New to TodoScope?" copy with link to README / GitHub
-  - [x] Add social proof / cross-links to sage.is and startr.style
-  - [x] Add OG meta tags (`og:title`, `og:description`, `og:image`)
-- [x] **Surface the MCP / AI agent story on the landing page** #brand #ai #mcp
-  - [x] Add a "Connect your AI agent" section — "Your AI teammates can see what's unfinished" with 3-step onboarding + endpoints table + curl example
-  - [x] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`
-  - [x] Include a one-paragraph framing: "AI agents are part of your team"
-
-### Multi-host repo support #core #frontend
-
-- [x] **Support GitLab / Gitea / Codeberg / Bitbucket / sourcehut + clean pure-local repos** #core #frontend
-  - [x] Add `parse_git_origin()` + `build_web_*_url()` helpers in `scanner/app.py`
-  - [x] Replace `_code_dev_url` and extend SSE `init` payload with `web_file_url_template`
-  - [x] Update `stream_results.html` to consume SSE template instead of github-only regex
-  - [x] Rename `code_dev_url` → `web_view_url`; update labels and `index.html` placeholder
-  - [x] Verify: GitHub, GitLab.com, codeberg.org, bitbucket.org, registered local repo — all five pass (2026-08-15): live-host URL checks confirmed each template's grammar and line anchor (GitHub routes via vscode.dev by design; GitLab `/-/blob/#L`, Forgejo `src/branch/#L`, Bitbucket `src/#lines-`); pure-local lane surfaced and fixed a real bug — `get_repo_origin_url` now treats a missing origin remote as a normal state (returns `''`) instead of a ~3s retry-then-error that killed the stream and hid the repo from the listing
-
-### Incremental scans #performance #core
-
-- [x] **Re-scan only files changed since last run (git-diff incremental)** #performance #core
-  - [x] Add `scan_state_path` / `load_scan_state` / `save_scan_state` helpers in `scanner/app.py`
-  - [x] Add `git_changed_paths(repo_path, last_sha)` returning (changed, deleted) sets
-  - [x] Add `rescan_files(repo_path, rel_paths, exclusions)` — shared helper for both git-diff and future watch path
-  - [x] Wire incremental vs full-scan choice into `stream_data`; persist state at end
-  - [x] Invalidate on: exclusions hash change, force-push (last SHA unreachable), corrupt cache
-  - [x] Verify: first scan, no-op re-scan, single-file edit, branch switch, force-push, exclusions change — all six pass (2026-08-15, six isolated E2E fixtures; two hardening fixes landed: incremental path now uses the canvas-filtered change set, and `find_todos` skips `KANBAN.canvas` by name instead of trusting `file --mime`)
-- [x] **Phase 2: live board — server watches, browser morphs** #performance #core
-  - [x] `scanner/fragments.py` + Jinja partials: server renders board/list HTML; one truth on the wire (markdown-it-py, GFM task lists, blame badges server-side)
-  - [x] Client: deleted `createTodoElement` / `createTodoMarkdownElement` / `renderKanban` DOM builders; idiomorph morphs fragments in place (scroll and state survive)
-  - [x] `scanner/live.py`: watchdog observer per registered local repo — lazy start/stop with subscribers, 400ms debounce, ignores its own `KANBAN.canvas` writes
-  - [x] `/events/<repo>` persistent SSE channel with heartbeats; GitHub webhook publishes to it; cloned repos poll git at 60s while subscribed
-  - [x] No-change law: unchanged repo → cached fragments served, zero scanning; dirty repo → `rescan_files` incremental only
-  - [x] Deleted the client 3s fetch-poll and `location.reload()` doorbell; removed marked.js (markdown renders server-side)
-  - [x] Page load never pulls local repos (working copy is the truth); clones pull behind the cached paint
-  - [x] Checkbox write-back: `POST /api/todo_toggle` flips `- [ ]` ↔ `- [x]` atomically — line-content hash guard (stale view → 409), authed + local repos only, watchdog round-trip morphs the confirmation into every tab
-  - [x] Verify: edit TODO.md in an editor → board morphs in ~1s without reload; second browser tab stays in sync
-  - [x] PyInstaller spec: add hiddenimports for `watchdog`, `markdown_it`, `mdit_py_plugins` so binary builds keep live mode #packaging
+*Nothing in flight. Claim a card by moving it here from TODO.*
 
 ## TODO
-
-### Brand & Landing Page — Scope B (Dashboard) #ux #dashboard
-
-- [ ] **Dashboard orientation**: header, pitch, visual hierarchy #ux #brand
-  - [ ] Add a dashboard header: restate the one-line pitch, orient the user
-  - [ ] Move the GitHub contribute banner to the footer #hierarchy
-- [ ] **Repo entry UX**: one smart input, onboarding empty state, inline help #ux #simplify #onboarding
-  - [ ] Unify repo entry: one input that accepts a git URL *or* a local path, with smart detection
-  - [ ] Empty state for Repositories: onboarding card with quick-start actions
-  - [ ] Clarify the "shallow clone" checkbox: tooltip or inline help #copy
-- [ ] **Repositories table tooling**: search, freshness, refresh #ux #search
-  - [ ] Add search/filter to the Repositories table
-  - [ ] Add a visible "last scanned" timestamp + manual refresh control per repo row
-
-### Brand & Landing Page — Scope C (MCP / Sage.is Integration) #ai #mcp #integration
-
-- [ ] **MCP integration surface**: dedicated page, dashboard shortcuts, guide, health #mcp #ux #docs
-  - [ ] Create a dedicated `/connect` or `/mcp` page with step-by-step instructions
-  - [ ] Surface MCP endpoints on the dashboard: copy-to-clipboard manifest URL and sample cURL #ai
-  - [ ] Write a short guide — `docs/connect-sage.md` — with screenshots
-  - [ ] Add an MCP health indicator to the dashboard #observability
-
-### Brand & Landing Page — Scope D (Brand Consistency) #brand #copy
-
-- [ ] **Brand voice audit**: all user-facing copy and errors #copy #brand
-  - [ ] Audit all user-facing copy against the brand interview voice
-  - [ ] Error messages: review for tone — honest founder voice, not generic Flask errors #ux
 
 ### Brand & Landing Page — Scope E (First-Run & Onboarding) #onboarding
 
@@ -109,33 +38,11 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
   - [x] Document manual install in README: curl into `~/.claude/skills/todo-scope/`
   - [ ] Package as a Claude Code plugin for one-command install
 - [ ] **Promote the skill**: in-app nudges and outreach #brand #ux
-  - [x] README section: convention explainer + install snippet under AI & MCP Integration
-  - [ ] Landing page: mention the skill in the "Connect your AI agent" section
-  - [ ] `/connect` page: skill install step alongside MCP setup
+  - [x] README section: convention explainer + install snippet under AI & Agent Integration (heading renamed 2026-08-15)
+  - [x] Landing page: mention the skill in the "Connect your AI agent" section (2026-08-15)
+  - [x] `/connect` page: skill install step alongside MCP setup (step 4, with copy button — 2026-08-15)
   - [ ] Scanner nudge: when a board is mostly bare single-line cards, suggest running the skill
   - [ ] Cross-post via sage.is and startr.style channels
-
-### Documentation #documentation
-
-- [ ] **Create comprehensive API documentation**: Standalone API reference guide #documentation #api
-  - [ ] Document all endpoints with request/response examples
-  - [ ] Add error code reference
-  - [ ] Include authentication documentation
-  - [ ] Test API documentation completeness
-- [ ] **Add architecture documentation**: System design and component overview #documentation #architecture
-  - [ ] Create component diagram
-  - [ ] Document data flow
-  - [ ] Document deployment options
-  - [ ] Verify architecture docs match current implementation
-- [ ] **Create contributor guide**: Detailed guide for new contributors #documentation #community
-  - [ ] Define code style guide
-  - [ ] Document testing requirements
-  - [ ] Define pull request process
-  - [ ] Test contributor onboarding process
-- [ ] **Create development workflow documentation** #documentation #development
-  - [ ] Document setup process
-  - [ ] Document feature development cycle
-  - [ ] Document testing procedures
 
 ### Features #feature
 
@@ -151,6 +58,10 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
 
 ## Backlog
 
+- [ ] **MCPO: fix the transposed route name, then settle the MCP story** #ai #mcp #decision
+  - [ ] The intended name is MCPO (old repo `Startr/WEB-MCPO-Repo_scanner`, "MCPo API" in Completed and README); routes shipped letter-swapped as `/api/mpco/*` in the founding commit `eb67dac` (2025-05-22) — 14 hits in `scanner/app.py`, 11 more files as of 2026-08-15 (census in [board-dossiers](docs/board-dossiers.md))
+  - [ ] Rename routes to `/api/mcpo/*` with 308 compat redirects from `/api/mpco/*`
+  - [ ] Decide the fork: real MCP server endpoint (JSON-RPC `tools/list` + `tools/call`) or retire the MCP term project-wide — UI copy says "tool API" since the 2026-08-15 brand audit either way
 - [ ] **Share-on-Network firewall test**: verify the desktop app's tray share toggle across the macOS application firewall — accept the incoming-connections prompt, reach the LAN URL from a second device, sign in with an access key. Local curl-to-own-LAN-IP is filtered on the dev Mac, so this needs a real second device. #macos #app #network
 - [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones. #feature #kanban
 - [ ] **TODO editor — remaining scope**: add-TODO form, edit card text, and drag-between-columns write-back. Checkbox toggling shipped (see Phase 2 live board). #feature #editor #kanban
@@ -159,7 +70,9 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
   - [ ] Priority inference from TODO comments #core #parser
   - [ ] Plugin system to extend scanner functionality #extensibility
   - [ ] Task manager integration (Jira, Asana, Trello) #external
-- [ ] **Ralph-loop agent mode**: run an agent loop against TODO.md as the state file — each iteration picks the next unfinished item, works it, checks it off, commits. Fresh context per pass via `claude -p` in a bash loop (true Ralph) or `/loop` with `CLAUDE_CODE_AUTO_COMPACT_WINDOW` lowered to force frequent compaction (approximation). TODO.md is already the ideal Ralph state file. #ai #agent #automation
+- [ ] **Ralph-loop agent mode**: agent loop with TODO.md as the state file #ai #agent #automation
+  - [ ] Each pass: pick the next unfinished item, work it, check it off, commit
+  - [ ] Fresh context per pass: `claude -p` in a bash loop (true Ralph), or `/loop` with `CLAUDE_CODE_AUTO_COMPACT_WINDOW` lowered (approximation)
 
 ### Release Pipeline — Repo Rename #release #brand
 
@@ -257,13 +170,24 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
   - [ ] Signing era: wire APPLE_* env vars into `tauri build`, re-test tauri#11992 on the pinned version, drop the cask's dequarantine postflight
   - [ ] `kill -9` of the shell orphans the sidecar — consider a parent-pid poll in cli.py
 - [ ] **Branding & Poka-Yoke audit**: ensure all user-facing text, errors, and flows are clear and mistake-proof for v1 #brand #ux
+  - [x] Copy + error-message leg shipped 2026-08-15 via the brand voice audit (see Completed)
+  - [ ] Mistake-proofing pass over flows: poka-yoke devices for destructive and confusing paths
 
 ## Bugs
 
-*No known bugs. Use `# BUG:` inline tags to flag defects in source.*
+- [ ] **Public local repos leak `local_path`**: the scan-stream `init` payload sends the registered filesystem path to every viewer #security #privacy
+  - [ ] Repro: mark a local repo public → anonymous scan pages receive the server's absolute path (it powers the vscode:// editor links); found by the brand-audit honesty judge 2026-08-15
+  - [ ] Fix: include `local_path` only for authed sessions, or build editor links server-side
 
 ## Completed
 
+- [x] **Documentation refresh**: all four docs rewritten against current code and fresh-eyes verified; 6 verifier findings fixed, incl. `pipenv run todoscope` now working from a fresh clone (editable install in scanner/Pipfile) — 2026-08-15, full records in [completed-todos](docs/completed-todos.md) #documentation
+- [x] **Brand & Landing — Scope D (Brand Consistency)**: 24-finding voice audit applied; false MCP claim relabeled "tool API"; error messages moved to founder voice — 2026-08-15 #brand #copy
+- [x] **Brand & Landing — Scope C (MCP / Sage.is Integration)**: `/connect` page, dashboard tool-API strip with live status dot, `docs/connect-sage.md` with screenshots — 2026-08-15 #ai #mcp #integration
+- [x] **Brand & Landing — Scope B (Dashboard)**: header + pitch, unified smart repo input with live hint, empty state, table filter, Last Scanned + force-rescan — 2026-08-15 #ux #dashboard
+- [x] **Brand & Landing — Scope A (Logged-Out Landing)**: hero, features strip, screenshot, agent section, OG meta — 2026-08-15 #brand #landing
+- [x] **Multi-host repo support**: GitHub / GitLab / Codeberg / Bitbucket / sourcehut + pure-local; five verification lanes pass; no-origin stream bug fixed — 2026-08-15 #core #frontend
+- [x] **Incremental scans + live board (Phase 2)**: git-diff incremental with scan_state (six-scenario verify), server-rendered fragments, `/events` SSE, watchdog, checkbox write-back — 2026-08-15 #performance #core
 - [x] **Release Pipeline — Package Foundation**: pyproject.toml, scanner/cli.py entry point, frozen-app + data-dir support in app.py, `__version__` single source; verified via `pip install -e .` #release #packaging
 - [x] **Subdirectory Migration**: Python files, tests, and Pipfiles under scanner/; imports and Makefile updated, exercised end-to-end 2026-08-15 #development #structure
 - [x] **Speed up scan**: cached KANBAN board loads instantly on page load while full scan runs in background #performance #ux

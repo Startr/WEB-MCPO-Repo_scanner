@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/badge/python-3.11+-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-black?logo=flask)](https://flask.palletsprojects.com/)
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![MCP](https://img.shields.io/badge/MCP-compatible-7C3AED)](https://modelcontextprotocol.io)
+[![API](https://img.shields.io/badge/API-OpenAPI%203.0-7C3AED)](https://github.com/Startr/TodoScope#ai--agent-integration)
 [![GitHub stars](https://img.shields.io/github/stars/Startr/TodoScope?style=social)](https://github.com/Startr/TodoScope/stargazers)
 [![TODOs](https://img.shields.io/endpoint?url=https://todoscope.sage.is/api/badge/todos/WEB-Sage.is-repo_scanner)](http://localhost:5000/scan_stream/WEB-Sage.is-repo_scanner)
 [![GitHub last commit](https://img.shields.io/github/last-commit/Startr/TodoScope)](https://github.com/Startr/TodoScope/commits)
@@ -14,23 +14,23 @@ Every codebase has a to-do list. Most of them are a mess. TodoScope is about the
 
 **Give your AI assistant a live view of every TODO across all your repos.**
 
-Connect [Sage.is](https://sage.is), [Claude.ai](https://claude.ai), or any MCP-compatible assistant and ask: *"What's still TODO in this project?"* TodoScope answers instantly. It also gives your team a clean web UI to browse, track, and stay on top of inline TODOs and TODO.md files — without leaving the codebase.
+Connect [Sage.is](https://sage.is), [Claude.ai](https://claude.ai), or any assistant that can call an HTTP API, and ask: *"What's still TODO in this project?"* TodoScope answers instantly. It also gives your team a clean web UI to browse, track, and stay on top of inline TODOs and TODO.md files — without leaving the codebase.
 
 The code is open. The project evolves. Get involved.
 
 ![Sage_repo-TODOs.gif](Sage_repo-TODOs.gif)
 
-## AI & MCP Integration
+## AI & Agent Integration
 
 TodoScope implements the [Model Context Protocol](https://modelcontextprotocol.io), making it a first-class tool for AI assistants.
 
 *   **Sage.is AI** and **Claude.ai** can call TodoScope directly — ask your assistant to list, summarize, or prioritize TODOs across any repo it has access to.
-*   Any MCP-compatible client discovers TodoScope automatically via its manifest endpoint.
+*   Clients discover TodoScope through its manifest and its OpenAPI spec — plain HTTP, no SDK.
 *   The OpenAPI spec is generated dynamically — the docs always match the live API.
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/mpco/manifest` | Service discovery for MCP clients |
+| `GET /api/mpco/manifest` | Service discovery manifest |
 | `GET /api/mpco/openapi.json` | Live OpenAPI 3.0 spec |
 | `POST /api/mpco/scan_repository` | Scan a repo, return all TODOs as JSON |
 
@@ -52,7 +52,7 @@ Then run `/todo-scope` in any project.
 
 TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten across repos. TodoScope finds them all:
 
-*   **AI-ready API:** MCP-compliant — Sage.is, Claude.ai, and other assistants query it directly.
+*   **AI-ready API:** plain HTTP with an OpenAPI spec — Sage.is, Claude, and other assistants query it directly.
 *   **Streaming scan:** See TODOs appear in real time as files are scanned.
 *   **TODO.md support:** Detects and renders standalone TODO files alongside inline code comments.
 *   **Live refresh:** Watches local repos for changes and updates the view without a full rescan.
@@ -181,97 +181,145 @@ This project, while dedicated to finding TODOs, has its own list of desired enha
 
 <!-- BEGIN PROJECT TODOS -->
 <!-- This section is automatically generated from TODO.md. Edits here will be overwritten. -->
-## Brand & Landing Page (CEO Review — scoped by surface)
+## In Progress
 
-### Scope A — Logged-Out Landing (login page)
+## TODO
 
-- [ ] **Promote login.html into a real landing page**: hero, pitch, features, sign-in
-- [ ] **Surface the MCP / AI agent story on the landing page**
+### Brand & Landing Page — Scope E (First-Run & Onboarding)
 
-### Scope B — Logged-In Dashboard (index page)
+- [ ] **First-run onboarding**: wizard, demo repo, try-it-live
 
-- [ ] **Add a dashboard header**: restate the one-line pitch in short form, orient the user
-- [ ] **Unify repo entry**: one input that accepts a git URL *or* a local path, with smart detection
-- [ ] **Empty state for Repositories**: when no repos are registered, show a friendly onboarding card with 2-3 suggested quick-start actions (scan a demo repo, register a local path, copy MCP endpoint)
-- [ ] **Surface MCP endpoints on the dashboard**: a small "Connect to an AI agent" card with copy-to-clipboard buttons for the manifest URL and a sample cURL
-- [ ] **Add search/filter to the Repositories table** (relevant as soon as the list grows past ~10)
-- [ ] **Add a visible "last scanned" timestamp + manual refresh control** per repo row
-- [ ] **Move the GitHub contribute banner to the footer** — it's competing with the primary action
-- [ ] **Clarify the "shallow clone" checkbox**: tooltip or inline help explaining when to use it
+### todo-scope Skill — Publish & Promote
 
-### Scope C — MCP / Sage.is Integration Surface
+- [ ] **Publish the todo-scope skill**: ship with the repo, package, document install
+- [ ] **Promote the skill**: in-app nudges and outreach
 
-- [ ] **Create a dedicated `/connect` or `/mcp` page** with step-by-step instructions to wire TodoScope into Sage, Claude Desktop, and generic MCP clients
-- [ ] **Add a "Copy MCP manifest URL" button** visible on the logged-in dashboard
-- [ ] **Write a short guide** — `docs/connect-sage.md` — with screenshots showing an end-to-end Sage → TodoScope query
-- [ ] **Add an MCP health indicator** to the dashboard: green dot when the manifest endpoint is responding, red when not
+### Features
 
-### Scope D — Brand Consistency & Copy
+- [ ] **Explore scan results**: search, README context, metrics, exports
 
-- [ ] **Audit all user-facing copy** against the brand interview voice: honest founder tone, clarity-first, never buzzwordy
-- [x] **Footer update**: added cross-links to sage.is and startr.style; "Part of the Startr ecosystem" framing
-- [x] **Rename "Todoscope" → "TodoScope"** consistently across templates, README, caprover manifest, and page titles
-- [x] **Favicon**: replaced the clipboard emoji with a telescope (🔭) — consistent with the "scope" metaphor in the name
-- [x] **Page titles**: descriptive, brand-consistent `<title>` tags applied to base / index / login
-- [x] **Noindex on login page**: added `<meta name="robots" content="noindex, nofollow">` so self-hosted instances don't get indexed
-- [x] **Meta description**: added the one-line pitch as the default meta description in base.html
-- [ ] **Error messages**: review for tone — should match Startr voice, not generic flask errors
+### Tech Debt
 
-### Scope E — First-Run & Onboarding Experience
+- [x] **Refactor `stream_results.html` JS**: superseded — the hand-built DOM builders are deleted; the server renders partials and the client morphs them (see Phase 2 live board).
 
-- [ ] **First-run wizard**: after setting the first access key, walk the user through registering a repo and connecting an AI agent
-- [ ] **Include a demo/sample repo option** on first visit so the user can see streaming results before registering anything of their own
-- [ ] **Add a "Try it live" section** to the logged-out landing that runs a preview scan against a public demo repo
+## Backlog
 
-## Documentation & Planning TODOs
-- [ ] **Create comprehensive API documentation**: Standalone API reference guide
-- [ ] **Add architecture documentation**: System design and component overview
-- [ ] **Create contributor guide**: Detailed guide for new contributors
-- [ ] **Enhance code documentation**: Add comprehensive docstrings
-- [ ] **Create development workflow documentation**: Detailed workflow guide
+- [ ] **MCPO: fix the transposed route name, then settle the MCP story**
+- [ ] **Share-on-Network firewall test**: verify the desktop app's tray share toggle across the macOS application firewall — accept the incoming-connections prompt, reach the LAN URL from a second device, sign in with an access key. Local curl-to-own-LAN-IP is filtered on the dev Mac, so this needs a real second device.
+- [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones.
+- [ ] **TODO editor — remaining scope**: add-TODO form, edit card text, and drag-between-columns write-back. Checkbox toggling shipped (see Phase 2 live board).
+- [ ] **Publish CapRover one-click app source**: Add `caprover-one-click.yml` to the Sage-is one-click repo
+- [ ] **Scanner extensibility**: smarter parsing, plugins, external integrations
+- [ ] **Ralph-loop agent mode**: agent loop with TODO.md as the state file
 
-## High Priority
-- [x] Fix the MAJOR issue with existing repositories not working.
-- [x] Implement a robust error handling mechanism for the scanner.
-- [x] Broaden TODO pattern recognition (e.g., FIXME, BUG, NOTE).
-- [x] DRY Makefile targets. (Allow passing args to targets?)
-- [x] Enable streaming of API results for improved responsiveness.
-- [ ] Migrate Python files and dependencies to subdirectory structure.
+### Release Pipeline — Repo Rename
 
-## Medium Priority
-- [ ] Add detection of TODO.md and TODO.txt files. #feature #core (no capitalization needed)
-- [ ] Implement a user-friendly web interface for displaying TODO files.
-- [ ] Include the option to look at the TODO files with our MCPo Api.
-- [ ] Add summary from repo readme files to the web interface. (optioanlly the top 20lines)
-- [ ] Implement a search feature for TODO comments.
-- [ ] Develop a dashboard to visualize TODO metrics across projects.
-- [ ] Offer report downloads in multiple formats (CSV, JSON, PDF).
-- [ ] Integrate with GitHub webhooks for automated repository scanning.
-- [ ] Enhance TODO file processing:
+- [x] **Rename GitHub repo**: `Startr/WEB-MCPO-Repo_scanner` → `Startr/TodoScope`
+- [x] **Update Docker image**: `ghcr.io/startr/todoscope`
+- [x] **Update all internal references**: pyproject.toml, scripts, templates, docs, README, CapRover
+- [x] **Convention**: clone to `GIT-TodoScope/` locally for dev clarity
+- [x] **Verified**: 45 tests passing, all links updated
 
-## Tech Debt
-- [ ] **Refactor `stream_results.html` JS**: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Replace with server-rendered Jinja2 partials + SSE that push HTML fragments, or at minimum extract shared styles into named constants.
+### Release Pipeline — Docker CLI Wrapper + Dev Mode
 
-## Low Priority
-- [ ] Publish CapRover one-click app source: add `caprover-one-click.yml` to the Startr one-click repo and register it as a custom source in CapRover.
-- [ ] Add TodoScope to the `Startr/homebrew-apps` tap: write a Formula that pulls the Docker image and wires up a launchd service.
-- [ ] Introduce user authentication for secure access.
-- [ ] Implement priority inference from TODO comments.
-- [ ] Design a plugin system to extend scanner functionality.
-- [ ] Facilitate integration with task managers (Jira, Asana, Trello).
-- [ ] Create a command-line interface (CLI) for versatile use.
-- [ ] Improve visibility of scrollable local repositories list on the main page.
+- [x] **Create `scripts/todoscope`**: bash CLI wrapper (11 commands, dev mode, tunnels)
+- [x] **Dev mode**: smart repo discovery, source mounting, hot reload
+- [x] **Tunnel commands**: `todoscope tunnel` + `todoscope tailscale`
+- [ ] **Verify end-to-end**: `scripts/todoscope start` → open → dev → tunnel (needs Docker image built)
+
+### Release Pipeline — PyInstaller Binary Build (macOS + Linux + Windows)
+
+- [x] **Create `todoscope.spec`**: PyInstaller spec file (two targets: CLI onefile + .app windowed)
+- [x] **Add dev deps to Pipfile**: pyinstaller, build, twine
+- [x] **Makefile targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist
+- [x] **Verified**: `make binary` → `dist/todoscope` (11MB ARM64) → `./dist/todoscope --version` → `1.0.0`
+- [ ] **Cross-platform binaries — build & verify**
+
+### Release Pipeline — Mac .app + DMG + Menu Bar
+
+- [x] **Build .app**: `make app` → TodoScope.app wrapper around PyInstaller binary
+- [x] **Create DMG**: `make dmg` → styled DMG via `create-dmg` with background + Applications link
+- [x] **App icon**: real 🔭 Apple Color Emoji via canvas+receiver (`scripts/generate_emoji_icon.sh`)
+- [x] **Menu bar icon**: 🔭 on transparent background via canvas+receiver (`scripts/generate_menu_icon.sh`)
+- [x] **pystray menu bar app**: 🔭 in menu bar with Open Browser, Show Log, Quit
+- [x] **Dock icon toggle**: Hide/Show Dock Icon menu item via NSApp.setActivationPolicy ctypes
+- [x] **Duplicate instance prevention**: detects running server, opens browser instead
+- [x] **Data persistence**: local_repos.yaml, access_keys.csv, repositories all in `~/.todoscope/`
+- [x] **Verified**: .app launches → Dock icon bounces → 🔭 in menu bar → browser opens → all menu items work
+
+### Release Pipeline — Makefile Targets + Local Cross-Platform Builds
+
+- [x] **Makefile targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist
+- [x] **Icon wired**: `--icon assets/todoscope.icns` in app target
+- [x] **Styled DMG**: `create-dmg` with background, icon positions, Applications drop link
+- [x] **Cross-platform builds** (Docker, zero cloud CI):
+- [x] **`scripts/release_all.sh`**: one command builds ALL artifacts + uploads via `gh` CLI
+- [x] **`make release_all` target**: calls release_all.sh
+- [ ] **Code signing**: Developer ID credentials — consumed by the Tauri shell's bundler, per [the verdict](docs/efforts/app-shell-v2/decisions/the-verdict.md)
+- [ ] **Verify full release**: `make release_all` → all artifacts built + uploaded
+
+### Release Pipeline — Homebrew Tap
+
+- [ ] **Homebrew tap**: formula, cask, ecosystem updates
+
+### Release Pipeline — Automated Release Flow
+
+- [ ] **One-command release**: `make patch_release` + `make release_finish` triggers everything
+- [ ] **Version single-source-of-truth**: `scanner/__init__.py` drives everything
+
+### Release Pipeline — Future Enhancements
+
+- [ ] **Tray & Dock polish**: platform icon behavior across macOS, Linux, Windows
+- [ ] **Tauri shell (v2.0)**: built 2026-08-15 — `src-tauri/` shell, `make tauri_dev`/`tauri_build`/`tauri_dmg`, cask route; settled points in [shell build choices](docs/efforts/app-shell-v2/decisions/shell-build-choices.md)
+- [ ] **Branding & Poka-Yoke audit**: ensure all user-facing text, errors, and flows are clear and mistake-proof for v1
+
+## Bugs
+
+- [ ] **Public local repos leak `local_path`**: the scan-stream `init` payload sends the registered filesystem path to every viewer
 
 ## Completed
-- [x] Implement comprehensive error handling with custom exceptions, retries, and recovery strategies.
-- [x] Create testing infrastructure with unit and integration tests.
-- [x] Add Makefile targets and test runner for easy test execution.
-- [x] Honor .gitignore patterns during repository scans.
-- [x] Stream scan results efficiently in the web UI.
-- [x] Ensure proper HTML escaping for multi-line display.
-- [x] Broaden TODO pattern recognition to include FIXME, BUG, and NOTE in various comment formats.
-- [x] Fix server hanging issue: server no longer becomes unresponsive after completing scans.
-- [x] Skip `scanner/repositories/` when scanning this project as a local repo — prevents recursing into managed cloned repos.
+
+- [x] **Documentation refresh**: all four docs rewritten against current code and fresh-eyes verified; 6 verifier findings fixed, incl. `pipenv run todoscope` now working from a fresh clone (editable install in scanner/Pipfile) — 2026-08-15, full records in [completed-todos](docs/completed-todos.md)
+- [x] **Brand & Landing — Scope D (Brand Consistency)**: 24-finding voice audit applied; false MCP claim relabeled "tool API"; error messages moved to founder voice — 2026-08-15
+- [x] **Brand & Landing — Scope C (MCP / Sage.is Integration)**: `/connect` page, dashboard tool-API strip with live status dot, `docs/connect-sage.md` with screenshots — 2026-08-15
+- [x] **Brand & Landing — Scope B (Dashboard)**: header + pitch, unified smart repo input with live hint, empty state, table filter, Last Scanned + force-rescan — 2026-08-15
+- [x] **Brand & Landing — Scope A (Logged-Out Landing)**: hero, features strip, screenshot, agent section, OG meta — 2026-08-15
+- [x] **Multi-host repo support**: GitHub / GitLab / Codeberg / Bitbucket / sourcehut + pure-local; five verification lanes pass; no-origin stream bug fixed — 2026-08-15
+- [x] **Incremental scans + live board (Phase 2)**: git-diff incremental with scan_state (six-scenario verify), server-rendered fragments, `/events` SSE, watchdog, checkbox write-back — 2026-08-15
+- [x] **Release Pipeline — Package Foundation**: pyproject.toml, scanner/cli.py entry point, frozen-app + data-dir support in app.py, `__version__` single source; verified via `pip install -e .`
+- [x] **Subdirectory Migration**: Python files, tests, and Pipfiles under scanner/; imports and Makefile updated, exercised end-to-end 2026-08-15
+- [x] **Speed up scan**: cached KANBAN board loads instantly on page load while full scan runs in background
+- [x] **Fix existing repositories not working**
+- [x] **Robust error handling**: custom exceptions, retries, and recovery strategies
+- [x] **Broaden TODO pattern recognition**: FIXME, BUG, NOTE in various comment formats
+- [x] **DRY Makefile targets**
+- [x] **Enable streaming of API results**
+- [x] **TODO.md and TODO.txt file detection**
+- [x] **Web interface for displaying TODO files**
+- [x] **MCPo API for TODO files**
+- [x] **GitHub webhook integration** for automated repository scanning
+- [x] **TODO file processing**: diverse filenames, root and subdirectory scanning, content display
+- [x] **Testing infrastructure**: unit and integration tests
+- [x] **Makefile targets and test runner**
+- [x] **Honor .gitignore patterns** during repository scans
+- [x] **Stream scan results** in the web UI
+- [x] **HTML escaping** for multi-line display
+- [x] **Fix server hanging** after completing scans
+- [x] **Skip `scanner/repositories/`** when scanning this project as a local repo
+- [x] **User authentication**: access_keys.csv with session and Bearer token auth
+- [x] **Footer update**: cross-links to sage.is and startr.style
+- [x] **Rename "Todoscope" to "TodoScope"** consistently
+- [x] **Favicon**: telescope emoji
+- [x] **Page titles**: descriptive, brand-consistent `<title>` tags
+- [x] **Noindex on login page**
+- [x] **Meta description**: one-line pitch as default meta description
+- [x] **YAML config migration**: `local_repos.yaml` with public/webhook metadata
+- [x] **Line-number tracking** in `parse_todo_md()` for all cards and children
+- [x] **Kanban resource links**: board guide, `/resources` page, footer link
+- [x] **Configurable editor link targets**: vscode.dev, VS Code, Cursor, JetBrains, custom URI templates
+- [x] **Public repo views**: per-repo public flag, auth bypass for read-only routes
+- [x] **Webhook refresh**: HMAC-SHA256 verification, rate limiting, pull + kanban rebuild
+- [x] **Git author visualization**: blame enrichment, author badges on kanban cards
 <!-- END PROJECT TODOS -->
 
 ## Changelog
@@ -281,7 +329,7 @@ This project, while dedicated to finding TODOs, has its own list of desired enha
 - Access key authentication with CSV-backed key management and login/logout flow
 - Live TODO count badge endpoint (`/api/badge/todos/:repo`)
 - Streaming scan results in the web UI via SSE
-- MCP-compatible API: manifest, OpenAPI spec, and `scan_repository` endpoint
+- Agent-ready API: manifest, OpenAPI spec, and `scan_repository` endpoint
 - Broadened TODO pattern recognition: `FIXME`, `BUG`, `NOTE` alongside `TODO`
 - `.gitignore`-aware scanning; skips `scanner/repositories/` in local scans
 - TodoScope branding: naming, favicon, meta/OG tags, footer ecosystem links

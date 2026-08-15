@@ -1,11 +1,8 @@
-"""
-Robust Error Handling System for Repo Scanner
+"""Typed errors, recovery strategies, and retry decorators.
 
-This module provides:
-- Custom exception classes for different error types
-- Error context manager for consistent handling
-- Recovery strategies and retry mechanisms
-- Comprehensive logging and monitoring
+Exceptions carry a category and severity so callers can decide what to do
+with them; ErrorHandler logs them and can attempt recovery; the decorators
+wrap risky calls so they fail softly or retry instead of crashing the app.
 """
 
 import functools
@@ -25,7 +22,7 @@ except ImportError:
     current_app = None
 
 class ErrorSeverity(Enum):
-    """Error severity levels for categorization and handling"""
+    """Severity of an error: low to critical."""
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
@@ -33,7 +30,7 @@ class ErrorSeverity(Enum):
 
 
 class ErrorCategory(Enum):
-    """Categories of errors for better handling and recovery"""
+    """What kind of operation failed: network, git, filesystem, and so on."""
     VALIDATION = "validation"
     NETWORK = "network"
     FILESYSTEM = "filesystem"
@@ -45,7 +42,7 @@ class ErrorCategory(Enum):
 
 @dataclass
 class ErrorContext:
-    """Context information for errors"""
+    """What the caller was doing when the error happened."""
     operation: str
     component: str
     user_id: Optional[str] = None
@@ -60,7 +57,7 @@ class ErrorContext:
 
 
 class ScannerError(Exception):
-    """Base exception class for all scanner-related errors"""
+    """Parent of every scanner error. Carries category, severity, context."""
     
     def __init__(
         self,
@@ -84,12 +81,12 @@ class ScannerError(Exception):
         self.error_id = self._generate_error_id()
 
     def _generate_error_id(self) -> str:
-        """Generate a unique error ID for tracking"""
+        """Give the error a short ID for logs and API responses."""
         import uuid
         return f"ERR-{int(self.timestamp)}-{str(uuid.uuid4())[:8]}"
 
     def _generate_user_message(self) -> str:
-        """Generate a user-friendly error message"""
+        """Pick a message a user can act on, based on the category."""
         category_messages = {
             ErrorCategory.VALIDATION: "Invalid input provided. Please check your data and try again.",
             ErrorCategory.NETWORK: "Network connectivity issue. Please check your connection and retry.",
@@ -102,7 +99,7 @@ class ScannerError(Exception):
         return category_messages.get(self.category, "An unexpected error occurred. Please try again.")
 
     def to_dict(self) -> Dict[str, Any]:
-        """Convert error to dictionary for logging/API responses"""
+        """The error as a plain dict, for logs and JSON responses."""
         return {
             "error_id": self.error_id,
             "message": self.message,
@@ -198,7 +195,7 @@ class SystemError(ScannerError):
 
 
 class ErrorHandler:
-    """Centralized error handler with logging and recovery strategies"""
+    """Logs errors, counts them, and tries registered recovery strategies."""
     
     def __init__(self, logger: logging.Logger):
         self.logger = logger
@@ -210,7 +207,7 @@ class ErrorHandler:
         error_category: ErrorCategory, 
         strategy: Callable
     ):
-        """Register a recovery strategy for a specific error category"""
+        """Attach a recovery strategy to an error category."""
         self.recovery_strategies[error_category] = strategy
 
     def handle_error(
@@ -218,7 +215,7 @@ class ErrorHandler:
         error: Union[ScannerError, Exception], 
         context: Optional[ErrorContext] = None
     ) -> ScannerError:
-        """Handle an error with appropriate logging and recovery attempts"""
+        """Log an error, count it, and attempt recovery if it's recoverable."""
         
         # Convert regular exceptions to ScannerError
         if not isinstance(error, ScannerError):
@@ -231,7 +228,7 @@ class ErrorHandler:
             )
         else:
             scanner_error = error
-            # Important fix: Always use the provided context if available
+            # Keep the provided context even when the error already carries one.
             if context:
                 scanner_error.context = context
 
@@ -241,14 +238,14 @@ class ErrorHandler:
         # Track error frequency
         self._track_error(scanner_error)
         
-        # Attempt recovery if applicable
+        # Attempt recovery if this category is recoverable
         if scanner_error.recoverable:
             self._attempt_recovery(scanner_error)
         
         return scanner_error
 
     def _log_error(self, error: ScannerError):
-        """Log error with appropriate level and context"""
+        """Log at a level that matches the severity."""
         log_data = error.to_dict()
         log_message = f"[{error.error_id}] {error.message}"
         
@@ -265,13 +262,13 @@ class ErrorHandler:
             self.logger.info(log_message, extra={"error_data": log_data})
 
     def _track_error(self, error: ScannerError):
-        """Track error frequency for monitoring"""
+        """Count errors per category + operation, for the stats call."""
         # Fix: Use the actual context operation instead of 'unknown'
         key = f"{error.category.value}:{error.context.operation}"
         self.error_counts[key] = self.error_counts.get(key, 0) + 1
 
     def _attempt_recovery(self, error: ScannerError):
-        """Attempt to recover from error using registered strategies"""
+        """Run the registered strategy for the error's category, if any."""
         strategy = self.recovery_strategies.get(error.category)
         if strategy:
             try:
@@ -282,12 +279,12 @@ class ErrorHandler:
                 )
 
     def get_error_stats(self) -> Dict[str, int]:
-        """Get error statistics for monitoring"""
+        """Copy of the per-category/operation error counts."""
         return self.error_counts.copy()
 
 
 class RetryConfig:
-    """Configuration for retry mechanisms"""
+    """How many attempts, how long between them, what to retry."""
     
     def __init__(
         self,
@@ -314,7 +311,7 @@ def with_error_handling(
     retry_config: Optional[RetryConfig] = None,
     context_data: Optional[Dict[str, Any]] = None
 ):
-    """Decorator for adding comprehensive error handling to functions"""
+    """Decorator that retries a call and routes failures through the handler."""
     
     def decorator(func: Callable):
         @functools.wraps(func)
@@ -390,7 +387,7 @@ def error_context(
     component: str,
     **context_kwargs
 ):
-    """Context manager for handling errors within a specific operation"""
+    """Context manager that wraps a block's errors with operation context."""
     context = ErrorContext(
         operation=operation,
         component=component,
@@ -419,7 +416,7 @@ def safe_operation(
     log_errors=True,
     reraise_critical=True
 ):
-    """Decorator for operations that should not crash the application"""
+    """Decorator that swallows failures and returns a default instead."""
     
     def decorator(func: Callable):
         @functools.wraps(func)
@@ -450,7 +447,7 @@ def safe_operation(
 
 @with_error_handling("complex_op", "test_component")
 def complex_operation(scenario):
-    """Test function for complex error scenarios"""
+    """Smoke-test the decorators against each error category."""
     if scenario == "validation":
         raise ValidationError("Invalid input", field="email")
     elif scenario == "network":

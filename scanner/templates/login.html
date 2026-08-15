@@ -1,7 +1,7 @@
-{% extends "base.html" %} {% block title %}TodoScope — See every TODO across your repos{% endblock %} {% block head_extra %}
+{% extends "base.html" %} {% block title %}TodoScope — See every TODO across all your repos{% endblock %} {% block head_extra %}
 <meta name="robots" content="noindex, nofollow" />
 <meta property="og:title" content="TodoScope — See every TODO across all your repos" />
-<meta property="og:description" content="Most tools tell you what's done. TodoScope tells you what isn't. Self-hosted, MCP-native, open source — for teams and the AI agents on them." />
+<meta property="og:description" content="Most tools tell you what's done. TodoScope tells you what isn't. Self-hosted, open source — for teams and the AI agents on them." />
 <meta property="og:image" content="{{ url_for('static', filename='Sage_repo-TODOs.gif', _external=True) }}" />
 <meta property="og:type" content="website" />
 {% endblock %} {% block github_banner %}{% endblock %} {% block content %}
@@ -80,11 +80,11 @@
 <div style="--d: flex; gap: 20px; --mb: 50px; --fw: wrap">
   <div style="--f: 1; --w: 100%; --bgc: #f9f9f9; --p: 24px; --radius: 8px; --b: 1px solid #eee; --shadow: 4; --m: auto">
     <h3 style="--mt: 0; --mb: 8px; --size: 1.05em; --c: #333">TODOs pile up and vanish.</h3>
-    <p style="--c: #555; --size: 0.9em; --mb: 0; --lh: 1.5">Inline TODOs, FIXME notes, TODO.md files — scattered across repos, invisible to everyone. TodoScope surfaces them all in one place.</p>
+    <p style="--c: #555; --size: 0.9em; --mb: 0; --lh: 1.5">The best place for an issue is next to the code that has it. Your TODOs, FIXMEs, and TODO.md files stay where they live — TodoScope shows them all in one place.</p>
   </div>
   <div style="--f: 1; --w: 100%; --bgc: #f9f9f9; --p: 24px; --radius: 8px; --b: 1px solid #eee; --shadow: 4; --m: auto">
     <h3 style="--mt: 0; --mb: 8px; --size: 1.05em; --c: #333">Built for your whole team — including AI.</h3>
-    <p style="--c: #555; --size: 0.9em; --mb: 0; --lh: 1.5">Your AI assistants are part of the team. Give them the same live view of what is unfinished that you have.</p>
+    <p style="--c: #555; --size: 0.9em; --mb: 0; --lh: 1.5">Your AI assistants are part of the team. Give them the same live view of what's unfinished that you have.</p>
   </div>
   <div style="--f: 1; --w: 100%; --bgc: #f9f9f9; --p: 24px; --radius: 8px; --b: 1px solid #eee; --shadow: 4; --m: auto">
     <h3 style="--mt: 0; --mb: 8px; --size: 1.05em; --c: #333">Self-hosted. Your code stays yours.</h3>
@@ -97,12 +97,17 @@
 
 <div style="--bgc: #f9f9f9; --p: 30px; --radius: 8px; --b: 1px solid #ddd; --shadow: 4; --mb: 50px">
   <h3 style="--mt: 0; --mb: 12px; --c: #333">Your AI teammates can see what's unfinished.</h3>
-  <p style="--c: #555; --mb: 24px">TodoScope gives AI assistants the same awareness your team has. Ask any connected assistant what is left to do — it answers from live data, not guesswork.</p>
+  <p style="--c: #555; --mb: 24px">TodoScope gives AI assistants the same awareness your team has. Ask any connected assistant what's left to do — it answers from live data, not guesswork.</p>
   <ol style="--c: #333; --mb: 24px; --pl: 20px; --lh: 1.8">
     <li>Point your AI assistant at this server.</li>
     <li>Give it an access key — the same way you sign in.</li>
     <li>Ask it: <em>"What's still TODO in this project?"</em></li>
   </ol>
+  <p style="--c: #555; --size: 0.9em; --mb: 0">
+    Using Claude Code? The <code>todo-scope</code> skill keeps any repo's TODO.md in
+    board-ready shape —
+    <a href="https://github.com/Startr/TodoScope#the-todo-scope-skill" target="_blank" rel="noopener" style="--c: #0066cc">one command to install</a>.
+  </p>
   <details style="--mt: 16px">
     <summary style="--cur: pointer; --c: #0066cc; --size: 0.9em">Technical details — API endpoints and example</summary>
     <div style="--mt: 16px">
@@ -128,7 +133,7 @@
       </div>
 
       <h4 style="--c: #555; --size: 0.9em; --mt: 20px; --mb: 8px">Available endpoints</h4>
-      <p style="--c: #666; --size: 0.85em; --mb: 12px">TodoScope currently implements the Model Context Protocol (MCP). Any compatible client can discover and call these endpoints.</p>
+      <p style="--c: #666; --size: 0.85em; --mb: 12px">TodoScope announces its tools through a manifest and an OpenAPI spec, over plain HTTP. Any client that can read the spec can discover and call these endpoints.</p>
       <div style="--of-x: auto">
         <table style="--w: 100%; --size: 0.85em; border-collapse: collapse; --lh: 1.6">
           <thead>

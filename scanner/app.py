@@ -13,7 +13,7 @@ import csv
 import fnmatch
 import yaml
 
-# Import our robust error handling system - now import directly since we're in the scanner package
+# Import our error handling module (same package, direct import)
 from .error_handling import (
     ErrorCategory, ErrorSeverity, ErrorContext, ScannerError,
     ValidationError, NetworkError, GitOperationError, FileSystemError,
@@ -33,7 +33,7 @@ if getattr(sys, 'frozen', False):
 else:
     app = Flask(__name__)
 
-app.logger.setLevel(logging.INFO)  # Ensure INFO level is set for our logs
+app.logger.setLevel(logging.INFO)  # INFO for our logs
 
 # --- Data directory ---
 # CLI sets TODOSCOPE_DATA_DIR; Docker/dev uses scanner/ relative paths as fallback.
@@ -147,7 +147,7 @@ def require_auth():
         return
     # API clients get 401 JSON; browsers get redirected to /login
     if request.accept_mimetypes.accept_json and not request.accept_mimetypes.accept_html:
-        return jsonify({'error': 'Unauthorized', 'hint': 'Pass ?key=<your-key> or Authorization: Bearer <key>'}), 401
+        return jsonify({'error': 'Valid access key required', 'hint': 'Pass ?key=<your-key> or Authorization: Bearer <key>'}), 401
     return redirect(url_for('login', next=request.url))
 
 # Initialize the centralized error handler
@@ -187,7 +187,7 @@ SCAN_STATE_SCHEMA = 1  # bump on incompatible cache format change → invalidate
 
 
 def _normalize_repo_meta(value):
-    """Ensure a repo entry is a full metadata dict, not a bare path string."""
+    """Normalize a repo entry: a metadata dict, not a bare path string."""
     if isinstance(value, str):
         return {'path': value, 'public': False, 'webhook_secret': None}
     # Fill in missing keys for older dicts
@@ -302,7 +302,7 @@ def resolve_repo_path(name):
 # Flask error handlers for different error types
 @app.errorhandler(ScannerError)
 def handle_scanner_error(error: ScannerError):
-    """Handle custom scanner errors"""
+    """Route a scanner error to JSON or the index page."""
     app.error_handler.handle_error(error)
     
     if request.path.startswith('/api/'):
@@ -321,7 +321,7 @@ def handle_scanner_error(error: ScannerError):
 
 @app.errorhandler(500)
 def handle_internal_error(error):
-    """Handle unexpected internal errors"""
+    """Wrap a 500 in a SystemError and run it through the normal path."""
     scanner_error = SystemError(
         "An unexpected internal error occurred",
         original_exception=error,
@@ -346,7 +346,7 @@ class TodoItem:
 
 @safe_operation(default_return=None)
 def ensure_dir_exists(path):
-    """Ensure the directory exists, creating it if necessary."""
+    """Make the directory if it's missing."""
     try:
         os.makedirs(path, exist_ok=True)
     except OSError as e:
@@ -354,7 +354,7 @@ def ensure_dir_exists(path):
 
 @safe_operation(default_return=None)
 def sanitize_for_llm(text):
-    """Sanitize text to avoid issues with LLM processing."""
+    """Normalize quote characters so text survives LLM parsing."""
     if text is None:
         return None
         
@@ -366,7 +366,7 @@ def sanitize_for_llm(text):
 
 @with_error_handling("git_validation", "repository_manager", RetryConfig(max_attempts=1))
 def is_valid_git_repo(path_to_check: str) -> bool:
-    """Checks if the given path is a valid Git repository work tree."""
+    """True if the path is a git working tree."""
     if not path_to_check:
         raise ValidationError("Repository path cannot be empty", field="path")
     
@@ -791,6 +791,21 @@ def build_web_repo_url(parts):
     # gitlab, gitea, bitbucket all share host/owner/repo at the root.
     return f"https://{host}/{owner}/{repo}"
 
+def _last_scanned_str(repo_name):
+    """Local-time display string for the repo's last scan, or None if never
+    scanned (or the scan state is unreadable).
+    """
+    state = load_scan_state(repo_name)
+    iso = (state or {}).get('scanned_at')
+    if not iso:
+        return None
+    try:
+        dt = datetime.fromisoformat(iso.replace('Z', '+00:00')).astimezone()
+        return dt.strftime('%Y-%m-%d %H:%M')
+    except ValueError:
+        return None
+
+
 @with_error_handling("list_repositories", "repository_manager")
 def list_local_repositories():
     """List all repositories: registered local repos + cloned repos.
@@ -815,6 +830,7 @@ def list_local_repositories():
                     'source': 'local',
                     'public': meta.get('public', False),
                     'webhook_secret': bool(meta.get('webhook_secret')),
+                    'last_scanned_str': _last_scanned_str(name),
                 })
                 seen_names.add(name)
         except Exception as e:
@@ -843,7 +859,8 @@ def list_local_repositories():
                         'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                         'origin_url': origin_url or "",
                         'web_view_url': build_web_repo_url(parse_git_origin(origin_url)),
-                        'source': 'cloned'
+                        'source': 'cloned',
+                        'last_scanned_str': _last_scanned_str(item),
                     })
             except Exception as e:
                 app.logger.warning(f"Error processing repository {item}: {e}")
@@ -1134,7 +1151,7 @@ def login():
             session['authed_key'] = key
             session.permanent = bool(request.form.get('remember'))
             return redirect(request.args.get('next') or url_for('index'))
-        return render_template('login.html', error='Invalid key.', auth_enabled=_auth_enabled())
+        return render_template('login.html', error="That key doesn't match. Check it and try again.", auth_enabled=_auth_enabled())
     return render_template('login.html', error=None, auth_enabled=_auth_enabled())
 
 @app.route('/logout')
@@ -1142,19 +1159,43 @@ def logout():
     session.pop('authed_key', None)
     return redirect(url_for('login'))
 
+def _classify_repo_input(value):
+    """'path' when the input reads as a filesystem path, else 'url'.
+    Mirrors the client-side hint chip in index.html — keep the two in sync.
+    Prefix-based on purpose: deterministic, so the hint never lies about
+    what submit will do.
+    """
+    if '://' in value or value.startswith('git@'):
+        return 'url'
+    if value.startswith(('/', '~', '.')):
+        return 'path'
+    return 'url'
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
-        repo_url = request.form.get('repo_url')
+        repo_url = (request.form.get('repo_url') or '').strip()
         if not repo_url:
-            return render_template('index.html', error="Repository URL is required")
+            return render_template('index.html', error="Enter a repo URL or a local path to scan",
+                                   local_repos=list_local_repositories())
+        if _classify_repo_input(repo_url) == 'path':
+            return _register_local_path(os.path.expanduser(repo_url),
+                                        (request.form.get('display_name') or '').strip(),
+                                        then_scan=True)
         shallow = '1' if request.form.get('shallow') == 'on' else ''
         return redirect(url_for('scan_stream', repo_url=repo_url, shallow=shallow))
-    
+
     # Get list of local repositories to display
     local_repos = list_local_repositories()
-    
+
     return render_template('index.html', local_repos=local_repos)
+
+@app.route('/connect')
+def connect():
+    """Step-by-step guide for pointing an AI agent at this server."""
+    return render_template('connect.html')
+
 
 @app.route('/setup/add_key', methods=['POST'])
 def setup_add_key():
@@ -1180,23 +1221,22 @@ def setup_add_key():
     session.permanent = True  # bootstrap happens on the owner's machine
     return redirect(url_for('index'))
 
-@app.route('/add_local', methods=['POST'])
-def add_local_repo():
-    """Register a local repository path. The path is stored server-side only
-    and never exposed to the web — only the display name is visible.
+def _register_local_path(local_path, display_name, then_scan=False):
+    """Validate and register a local repository path. Shared by the unified
+    dashboard input and the /add_local route. Paths stay server-side only —
+    the web sees display names, never filesystem locations.
     """
-    local_path = request.form.get('local_path', '').strip()
-    display_name = request.form.get('display_name', '').strip()
-    local_repos = list_local_repositories()
-
     if not local_path:
-        return render_template('index.html', error="Path is required", local_repos=local_repos)
+        return render_template('index.html', error="Path is required",
+                               local_repos=list_local_repositories())
 
     if not os.path.isdir(local_path):
-        return render_template('index.html', error="Path does not exist on this machine", local_repos=local_repos)
+        return render_template('index.html', error="Path does not exist on this machine",
+                               local_repos=list_local_repositories())
 
     if not is_valid_git_repo(local_path):
-        return render_template('index.html', error="Path is not a git repository", local_repos=local_repos)
+        return render_template('index.html', error="Path is not a git repository",
+                               local_repos=list_local_repositories())
 
     # Default display name to directory basename
     if not display_name:
@@ -1207,7 +1247,18 @@ def add_local_repo():
     save_local_repos(repos)
     app.logger.info(f"Registered local repo: {display_name}")
 
+    if then_scan:
+        return redirect(url_for('scan_stream', repo_url=display_name))
     return redirect(url_for('index'))
+
+
+@app.route('/add_local', methods=['POST'])
+def add_local_repo():
+    """Register a local repository path. The path is stored server-side only
+    and never exposed to the web — only the display name is visible.
+    """
+    return _register_local_path(request.form.get('local_path', '').strip(),
+                                request.form.get('display_name', '').strip())
 
 @app.route('/remove_local/<path:repo_name>')
 def remove_local_repo(repo_name):
@@ -1360,6 +1411,8 @@ def scan_repo(repo_url):
 def stream_data(repo_url):
     """Stream the scan results for a repository."""
     shallow = request.args.get('shallow') == '1'
+    # refresh=1 → manual full rescan: ignore the incremental cache entirely.
+    force_full = request.args.get('refresh') == '1'
     def generate():
         try:
             # Flush padding — forces proxies (Cloudflare, nginx) to send the stream immediately
@@ -1453,7 +1506,7 @@ def stream_data(repo_url):
             # Incremental: re-parse only files changed since the last scan's HEAD
             # (plus uncommitted/untracked). Falls back to full scan on any mismatch
             # so the cache can never produce stale results.
-            state = load_scan_state(repo_name)
+            state = None if force_full else load_scan_state(repo_name)
             current_head = _git_head_sha(repo_path)
             exc_hash = exclusions_hash(exclusions)
             changed, deleted = (None, None)
@@ -1564,7 +1617,7 @@ def stream_data(repo_url):
 
         except Exception as e:
             app.logger.error(f"Error streaming scan: {str(e)}")
-            yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
+            yield f"data: {json.dumps({'type': 'error', 'message': f'Scan stopped: {e}'})}\n\n"
     
     # Use Response directly with headers that disable all buffering layers
     return Response(
@@ -1581,7 +1634,9 @@ def stream_data(repo_url):
 def scan_stream(repo_url):
     """Render the streaming scan page for a repository."""
     shallow = request.args.get('shallow', '')
-    return render_template('stream_results.html', repo_url=repo_url, shallow=shallow)
+    refresh = request.args.get('refresh', '')
+    return render_template('stream_results.html', repo_url=repo_url, shallow=shallow,
+                           refresh=refresh)
 
 
 @app.route('/events/<path:repo_name>')
@@ -1803,7 +1858,7 @@ def mpco_manifest():
     """Return the MPCO tool manifest."""
     return jsonify({
         "schema_version": "v1",
-        "name_for_human": "TODO Scanner",
+        "name_for_human": "TodoScope",
         "name_for_model": "todo_scanner",
         "description_for_human": "Scans git repositories for TODO comments in code",
         "description_for_model": "Use this tool to scan git repositories for TODO comments. Input a git repository URL and get back a list of TODO comments found in the code.",
@@ -1843,7 +1898,7 @@ def get_api_schema():
     spec = {
         "openapi": "3.0.1",
         "info": {
-            "title": "TODO Scanner API",
+            "title": "TodoScope API",
             "description": "API for scanning git repositories for TODO comments",
             "version": "v1"
         },

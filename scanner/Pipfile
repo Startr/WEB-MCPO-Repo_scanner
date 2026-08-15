@@ -11,6 +11,7 @@ Pillow = "*"
 markdown-it-py = "*"
 mdit-py-plugins = "*"
 watchdog = "*"
+todoscope = {file = "..", editable = true}
 
 [dev-packages]
 pytest = "*"

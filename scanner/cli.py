@@ -69,7 +69,7 @@ def resolve_tunnel(args):
         for cmd in ("tailscale", "cloudflared"):
             if subprocess.run(["which", cmd], capture_output=True).returncode == 0:
                 return cmd
-        print("Error: neither tailscale nor cloudflared found on PATH.", file=sys.stderr)
+        print("--share needs tailscale or cloudflared on your PATH. Install one, then rerun.", file=sys.stderr)
         sys.exit(1)
     return None
 
@@ -102,7 +102,7 @@ def main():
 
     parser = argparse.ArgumentParser(
         prog="todoscope",
-        description="TodoScope — See every TODO across all your projects.",
+        description="TodoScope — See every TODO across all your repos.",
     )
     parser.add_argument("--version", action="version", version=f"todoscope {__version__}")
     parser.add_argument("--port", type=int, default=5000, help="Port to listen on (default: 5000, auto-finds free port if taken)")

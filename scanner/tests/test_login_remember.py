@@ -45,4 +45,4 @@ def test_no_remember_sets_session_cookie(keyed_client):
 def test_bad_key_still_rejected(keyed_client):
     resp = keyed_client.post('/login', data={'key': 'wrong', 'remember': 'on'})
     assert resp.status_code == 200
-    assert b'Invalid key' in resp.data
+    assert b'Check it and try again' in resp.data

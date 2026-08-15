@@ -3,31 +3,85 @@
 {% block title %}TodoScope — Dashboard{% endblock %}
 
 {% block content %}
+    <header style="--mb:20px">
+        <h2 style="--mb:4px">Your repositories, one board</h2>
+        <p style="--c:#555; --m:0">
+            See every TODO across all your repos — the awareness layer for your team
+            and the AI agents on it.
+        </p>
+    </header>
+
     <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
-        <h2>Enter Repository URL</h2>
-        <input type="text" name="repo_url" placeholder="https://github.com/user/repo.git  ·  GitLab / Gitea / Bitbucket also work" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
-        <div style="--d:flex; --ai:center; gap:12px">
-            <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer">Scan Repository</button>
-            <label style="--d:flex; --ai:center; --c:#555; --size:0.9em">
+        <h2>Add a repository</h2>
+        <input type="text" name="repo_url" id="repo-source" required autocomplete="off"
+               placeholder="Git URL or local path — https://github.com/user/repo.git or /path/to/repo"
+               style="--w:100%; --p:10px; --mb:6px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
+        <p id="detect-hint" style="--c:#888; --size:0.85em; --mt:0; --mb:12px">
+            Paste a git URL to clone and scan, or a local path to scan in place.
+        </p>
+        <div id="local-extras" hidden style="--mb:12px">
+            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)"
+                   style="--w:100%; --p:10px; --mb:6px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
+            <span style="--c:#888; --size:0.85em">Path stays on this machine — the repo list and API show the display name, not the path.</span>
+        </div>
+        <div style="--d:flex; --ai:center; gap:12px; --fw:wrap">
+            <button type="submit" id="add-repo-btn" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer">Scan Repository</button>
+            <label id="shallow-label" style="--d:flex; --ai:center; --c:#555; --size:0.9em; --cur:help"
+                   title="Fetches only the latest commit — faster for big repos. Git-history features (author badges, blame) will be thin until a full clone.">
                 <input type="checkbox" name="shallow" style="--mr:6px">
-                Shallow clone (faster, fetches only latest commit)
+                Shallow clone <span style="--c:#999; --ml:4px">ⓘ</span>
             </label>
         </div>
     </form>
+    <script>
+        // Live hint chip — mirrors _classify_repo_input() in app.py; keep in sync.
+        (function () {
+            var input = document.getElementById('repo-source');
+            var hint = document.getElementById('detect-hint');
+            var extras = document.getElementById('local-extras');
+            var button = document.getElementById('add-repo-btn');
+            var shallow = document.getElementById('shallow-label');
+            var neutral = hint.textContent;
 
-    <details style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
-        <summary style="--cur:pointer; --weight:bold">Add Local Repository</summary>
-        <form method="POST" action="{{ url_for('add_local_repo') }}" style="--mt:10px">
-            <input type="text" name="local_path" placeholder="/path/to/your/repo" required style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
-            <input type="text" name="display_name" placeholder="Display name (optional, defaults to folder name)" style="--w:100%; --p:10px; --mb:10px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
-            <button type="submit" style="--bgc:#007bff; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">Register</button>
-            <span style="--c:#888; --size:0.85em; --ml:10px">Path stays on this machine — never sent to the browser.</span>
-        </form>
-    </details>
+            function classify(v) {
+                if (!v) return 'empty';
+                if (v.indexOf('://') !== -1 || v.indexOf('git@') === 0) return 'url';
+                if (/^[\/~.]/.test(v)) return 'path';
+                return 'url';
+            }
+
+            function render() {
+                var kind = classify(input.value.trim());
+                if (kind === 'path') {
+                    hint.textContent = '⌂ Local path detected — scanned in place, nothing leaves this machine.';
+                    extras.hidden = false;
+                    shallow.style.display = 'none';
+                    button.textContent = 'Register & Scan';
+                } else if (kind === 'url') {
+                    hint.textContent = '⎇ Git URL detected — will clone and scan.';
+                    extras.hidden = true;
+                    shallow.style.display = 'flex';
+                    button.textContent = 'Scan Repository';
+                } else {
+                    hint.textContent = neutral;
+                    extras.hidden = true;
+                    shallow.style.display = 'flex';
+                    button.textContent = 'Scan Repository';
+                }
+            }
+
+            input.addEventListener('input', render);
+            render();
+        })();
+    </script>
 
     {% if local_repos %}
     <div style="--mt:30px; --bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
-        <h2>Repositories</h2>
+        <div style="--d:flex; --jc:space-between; --ai:baseline; --fw:wrap; gap:8px">
+            <h2 style="--m:0">Repositories</h2>
+            <input type="search" id="repo-filter" placeholder="Filter…"
+                   style="--p:6px 10px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --size:0.9em; --w:100%; --w-sm:auto">
+        </div>
         <p>Registered local and previously cloned repositories:</p>
         <div style="--maxh:400px; --ofy:auto; --bb:1px solid #eee;">
             <table style="--w:100%; border-collapse:collapse; --mb: 1.6rem">
@@ -35,13 +89,14 @@
                     <tr>
                         <th style="--ta:left; --p:8px; --bb:2px solid #ddd">Repository</th>
                         <th style="--ta:left; --p:8px; --bb:2px solid #ddd">Last Updated</th>
+                        <th style="--ta:left; --p:8px; --bb:2px solid #ddd">Last Scanned</th>
                         <th style="--ta:center; --p:8px; --bb:2px solid #ddd"></th>
                         <th style="--ta:center; --p:8px; --bb:2px solid #ddd"></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for repo in local_repos %}
-                    <tr>
+                    <tr data-repo="{{ repo.name|lower }}">
                         <td style="--p:8px; --bb:1px solid #ddd">
                             {{ repo.name }}
                             {% if repo.source == 'local' %}
@@ -55,8 +110,10 @@
                             {% endif %}
                         </td>
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.last_modified_str }}</td>
-                        <td style="--p:8px; --bb:1px solid #ddd; --ta:center">
+                        <td style="--p:8px; --bb:1px solid #ddd; --c:{{ '#333' if repo.last_scanned_str else '#999' }}">{{ repo.last_scanned_str or 'never' }}</td>
+                        <td style="--p:8px; --bb:1px solid #ddd; --ta:center; white-space:nowrap">
                             <a href="{{ url_for('scan_stream', repo_url=repo.name) }}" style="--bgc:#4CAF50; --c:white; --p:5px 10px; --radius:3px; --td:none; --d:inline-block">View TODOs</a>
+                            <a href="{{ url_for('scan_stream', repo_url=repo.name, refresh=1) }}" title="Full rescan — ignores the incremental cache" style="--c:#4CAF50; --p:5px 6px; --radius:3px; --td:none; --d:inline-block; --b:1px solid #4CAF50; --ml:2px">⟳</a>
                         </td>
                         <td style="--p:8px; --bb:1px solid #ddd; --ta:center; white-space:nowrap">
                             {% if repo.source != 'local' %}
@@ -73,8 +130,8 @@
                         </td>
                     </tr>
                     {% if repo.source == 'local' %}
-                    <tr>
-                        <td colspan="4" style="--p:0 8px 8px 8px; --bb:1px solid #ddd">
+                    <tr data-repo="{{ repo.name|lower }}">
+                        <td colspan="5" style="--p:0 8px 8px 8px; --bb:1px solid #ddd">
                             <details style="--size:0.82em; --c:#666">
                                 <summary style="--cur:pointer">Webhook</summary>
                                 <div style="--mt:6px; --p:8px; --bgc:#fafafa; --radius:4px; --b:1px solid #eee">
@@ -83,7 +140,7 @@
                                         Webhook URL: <code id="wh-url-{{ loop.index }}" style="--size:0.95em">{{ request.host_url }}api/webhook/{{ repo.name }}</code>
                                         <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('wh-url-{{ loop.index }}').textContent)" style="--bgc:transparent; --b:1px solid #ccc; --radius:3px; --p:2px 6px; --cur:pointer; --size:0.9em; --ml:4px">Copy</button>
                                     </p>
-                                    <p style="--mb:6px; --c:#888">Add this URL to your GitHub/GitLab webhook settings. Use the secret below for HMAC verification.</p>
+                                    <p style="--mb:6px; --c:#888">Add this URL to your GitHub/GitLab webhook settings. The secret lives in local_repos.yaml on this machine — use it for HMAC verification.</p>
                                     <form method="POST" action="{{ url_for('manage_webhook_secret', repo_name=repo.name) }}" style="--d:inline">
                                         <input type="hidden" name="action" value="remove">
                                         <button type="submit" style="--bgc:#ff9800; --c:white; --p:4px 10px; --radius:3px; --b:none; --cur:pointer; --size:0.9em">Disable Webhook</button>
@@ -105,6 +162,84 @@
             </table>
         </div>
         <hr style="--d:block; --h:3rem; --m:-3rem 0 1rem; --bt:none; --bb: 1px solid #ddd; --bg:linear-gradient(to top, rgba(249, 249, 249, 1) 0%, rgba(249, 249, 249, 0) 100%); --pos:relative; --z:1;">
+    </div>
+    <script>
+        // Repo table filter — hides both the main row and its webhook sub-row.
+        (function () {
+            var filter = document.getElementById('repo-filter');
+            if (!filter) return;
+            filter.addEventListener('input', function () {
+                var q = filter.value.trim().toLowerCase();
+                document.querySelectorAll('tr[data-repo]').forEach(function (tr) {
+                    tr.hidden = q !== '' && tr.getAttribute('data-repo').indexOf(q) === -1;
+                });
+            });
+        })();
+    </script>
+    {% endif %}
+
+    <div style="--mt:30px; --bgc:#f0f7ff; --p:16px 20px; --radius:5px; --b:1px solid #cfe3ff; --d:flex; --jc:space-between; --ai:center; --fw:wrap; gap:12px">
+        <div style="--d:flex; --ai:center; gap:10px">
+            <span id="mcp-dot" style="--d:inline-block; --w:10px; --h:10px; --radius:50%; --bgc:#bbb; flex-shrink:0"></span>
+            <span style="--size:0.9em; --c:#333"><strong>AI agents:</strong> tool API <span id="mcp-status" style="--c:#888">checking…</span></span>
+        </div>
+        <div style="--d:flex; --ai:center; gap:8px; --fw:wrap">
+            <button type="button" id="copy-manifest" data-api-path="/api/mpco/manifest"
+                    style="--bgc:transparent; --b:1px solid #99c2f0; --c:#1565c0; --radius:4px; --p:5px 12px; --cur:pointer; --size:0.85em">Copy manifest URL</button>
+            <button type="button" id="copy-curl"
+                    style="--bgc:transparent; --b:1px solid #99c2f0; --c:#1565c0; --radius:4px; --p:5px 12px; --cur:pointer; --size:0.85em">Copy sample cURL</button>
+            <a href="/connect" style="--c:#0066cc; --size:0.9em; --td:none">Setup guide →</a>
+        </div>
+    </div>
+    <script>
+        // MCP strip — status probe + copy shortcuts. Deep version lives at /connect.
+        (function () {
+            var dot = document.getElementById('mcp-dot');
+            var status = document.getElementById('mcp-status');
+            fetch('/api/mpco/manifest').then(function (r) {
+                if (!r.ok) throw new Error(r.status);
+                return r.json();
+            }).then(function () {
+                dot.style.setProperty('--bgc', '#4CAF50');
+                status.textContent = 'online';
+            }).catch(function () {
+                dot.style.setProperty('--bgc', '#dc3545');
+                status.textContent = 'unreachable';
+            });
+
+            function flash(btn, text) {
+                var old = btn.textContent;
+                navigator.clipboard.writeText(text).then(function () {
+                    btn.textContent = 'Copied';
+                    setTimeout(function () { btn.textContent = old; }, 2000);
+                });
+            }
+            var manifestBtn = document.getElementById('copy-manifest');
+            manifestBtn.addEventListener('click', function () {
+                flash(manifestBtn, window.location.origin + manifestBtn.getAttribute('data-api-path'));
+            });
+            var curlBtn = document.getElementById('copy-curl');
+            curlBtn.addEventListener('click', function () {
+                flash(curlBtn, 'curl ' + window.location.origin + '/api/mpco/list_repositories \\\n  -H "Authorization: Bearer YOUR_KEY"');
+            });
+        })();
+    </script>
+
+    {% if not local_repos %}
+    <div style="--mt:30px; --bgc:#f9f9f9; --p:24px; --radius:5px; --b:1px solid #ddd; --shadow:4; --ta:center">
+        <h2 style="--mb:8px">No repositories yet</h2>
+        <p style="--c:#555; --mb:16px">
+            Add your first one above — paste a git URL to clone it, or a local path
+            to scan in place without anything leaving this machine.
+        </p>
+        <div style="--d:flex; --jc:center; --ai:center; gap:12px; --fw:wrap">
+            <button type="button"
+                    onclick="var i = document.getElementById('repo-source'); i.value = 'https://github.com/Startr/TodoScope.git'; i.dispatchEvent(new Event('input')); i.focus(); i.scrollIntoView({behavior: 'smooth', block: 'center'})"
+                    style="--bgc:#007bff; --c:white; --p:8px 16px; --b:none; --radius:4px; --cur:pointer">
+                Try it with TodoScope's own repo
+            </button>
+            <a href="/resources" style="--c:#0066cc; --size:0.9em">How the board works →</a>
+        </div>
     </div>
     {% endif %}
 {% endblock %}

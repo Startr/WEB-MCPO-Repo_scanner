@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "0a9cc9171a401afe4cddb04f85b63c8f0005b11a541184d61bd73d7a6c1b5dec"
+            "sha256": "00dc1c02c6bc5674137e8b6c9cd403d5f334c79b7d8bbba94494e69837eb4e4f"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -414,6 +414,10 @@
             ],
             "markers": "python_version >= '2.7' and python_version not in '3.0, 3.1, 3.2'",
             "version": "==1.17.0"
+        },
+        "todoscope": {
+            "editable": true,
+            "file": ".."
         },
         "watchdog": {
             "hashes": [
