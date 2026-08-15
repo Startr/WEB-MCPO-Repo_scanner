@@ -1,5 +1,9 @@
 {% extends "base.html" %} {% block title %}TodoScope — See every TODO across your repos{% endblock %} {% block head_extra %}
 <meta name="robots" content="noindex, nofollow" />
+<meta property="og:title" content="TodoScope — See every TODO across all your repos" />
+<meta property="og:description" content="Most tools tell you what's done. TodoScope tells you what isn't. Self-hosted, MCP-native, open source — for teams and the AI agents on them." />
+<meta property="og:image" content="{{ url_for('static', filename='Sage_repo-TODOs.gif', _external=True) }}" />
+<meta property="og:type" content="website" />
 {% endblock %} {% block github_banner %}{% endblock %} {% block content %}
 
 <div style="--ta: center; --mt: 40px; --mb: 40px">
@@ -65,6 +69,11 @@
         <span>View on GitHub</span>
       </a>
     </div>
+    <p style="--ta: center; --c: #777; --size: 0.85em; --mt: 14px; --mb: 0">
+      New to TodoScope? The
+      <a href="https://github.com/Startr/TodoScope#readme" target="_blank" rel="noopener" style="--c: #0066cc">README</a>
+      covers install, access keys, and connecting your first repo.
+    </p>
   </form>
 </div>
 
@@ -132,13 +141,13 @@
           </thead>
           <tbody style="--c: #555">
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mpco/manifest" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><a href="/api/mpco/manifest" target="_blank" rel="noopener" style="--c: #0066cc; --td: none"><code data-api-path="/api/mpco/manifest" _="init set my.textContent to window.location.origin + @data-api-path"></code></a></td>
               <td style="--p: 8px; --bb: 1px solid #eee">GET</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">No</td>
               <td style="--p: 8px; --bb: 1px solid #eee">Service discovery</td>
             </tr>
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mpco/openapi.json" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><a href="/api/mpco/openapi.json" target="_blank" rel="noopener" style="--c: #0066cc; --td: none"><code data-api-path="/api/mpco/openapi.json" _="init set my.textContent to window.location.origin + @data-api-path"></code></a></td>
               <td style="--p: 8px; --bb: 1px solid #eee">GET</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">No</td>
               <td style="--p: 8px; --bb: 1px solid #eee">OpenAPI 3.0 spec</td>
@@ -173,5 +182,14 @@
     </div>
   </details>
 </div>
+
+<p style="--ta: center; --c: #888; --size: 0.85em; --mb: 30px">
+  From the team behind
+  <a href="https://sage.is" target="_blank" rel="noopener" style="--c: #0066cc">Sage.is</a>
+  — styled with
+  <a href="https://startr.style" target="_blank" rel="noopener" style="--c: #0066cc">startr.style</a>.
+  Open source on
+  <a href="https://github.com/Startr/TodoScope" target="_blank" rel="noopener" style="--c: #0066cc">GitHub</a>.
+</p>
 
 {% endblock %}

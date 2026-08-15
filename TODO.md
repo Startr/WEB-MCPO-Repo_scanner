@@ -20,26 +20,18 @@
 The current login page is a cold password prompt with zero context. Turn it into a proper landing page.
 The one-line pitch is: *"See every TODO across all your repos. The awareness layer for teams — and the AI agents on them — who need to know what's actually unfinished."*
 
-- [ ] **Promote login.html into a real landing page**: hero, pitch, features, sign-in #brand #landing #critical
+- [x] **Promote login.html into a real landing page**: hero, pitch, features, sign-in #brand #landing #critical
   - [x] Add brand hero: headline, subhead, and a short "what it is" paragraph
   - [x] Add a 3-bullet "what makes it different" strip (the inversion, MCP-native, open-source)
   - [x] Embed screenshot above the fold
   - [x] Move the sign-in form into a secondary section below the hero
-  - [ ] Add "New to TodoScope?" copy with link to README / GitHub
-  - [ ] Add social proof / cross-links to sage.is and startr.style
-  - [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`)
-- [ ] **Surface the MCP / AI agent story on the landing page** #brand #ai #mcp
-  - [ ] Add a "Connect your AI agent" section
-  - [ ] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`
-  - [ ] Include a one-paragraph framing: "AI agents are part of your team"
-
-### Release Pipeline — Package Foundation #release #packaging
-
-- [x] **Create `pyproject.toml`**: package metadata, entry point, setuptools build #packaging
-- [x] **Create `scanner/cli.py`**: CLI entry point #cli #packaging
-- [x] **Update `scanner/app.py`**: frozen app + data dir + auto-migrate support #packaging #core
-- [x] **`__version__` already in `scanner/__init__.py`** at 1.0.0 #packaging
-- [x] **Verified**: `pip install -e .` → `todoscope` command starts server, auto-migrates repos to `~/.todoscope/`
+  - [x] Add "New to TodoScope?" copy with link to README / GitHub
+  - [x] Add social proof / cross-links to sage.is and startr.style
+  - [x] Add OG meta tags (`og:title`, `og:description`, `og:image`)
+- [x] **Surface the MCP / AI agent story on the landing page** #brand #ai #mcp
+  - [x] Add a "Connect your AI agent" section — "Your AI teammates can see what's unfinished" with 3-step onboarding + endpoints table + curl example
+  - [x] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`
+  - [x] Include a one-paragraph framing: "AI agents are part of your team"
 
 ### Multi-host repo support #core #frontend
 
@@ -48,7 +40,7 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
   - [x] Replace `_code_dev_url` and extend SSE `init` payload with `web_file_url_template`
   - [x] Update `stream_results.html` to consume SSE template instead of github-only regex
   - [x] Rename `code_dev_url` → `web_view_url`; update labels and `index.html` placeholder
-  - [ ] Verify: GitHub, GitLab.com, codeberg.org, bitbucket.org, registered local repo
+  - [x] Verify: GitHub, GitLab.com, codeberg.org, bitbucket.org, registered local repo — all five pass (2026-08-15): live-host URL checks confirmed each template's grammar and line anchor (GitHub routes via vscode.dev by design; GitLab `/-/blob/#L`, Forgejo `src/branch/#L`, Bitbucket `src/#lines-`); pure-local lane surfaced and fixed a real bug — `get_repo_origin_url` now treats a missing origin remote as a normal state (returns `''`) instead of a ~3s retry-then-error that killed the stream and hid the repo from the listing
 
 ### Incremental scans #performance #core
 
@@ -58,8 +50,8 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
   - [x] Add `rescan_files(repo_path, rel_paths, exclusions)` — shared helper for both git-diff and future watch path
   - [x] Wire incremental vs full-scan choice into `stream_data`; persist state at end
   - [x] Invalidate on: exclusions hash change, force-push (last SHA unreachable), corrupt cache
-  - [ ] Verify: first scan, no-op re-scan, single-file edit, branch switch, force-push, exclusions change
-- [ ] **Phase 2: live board — server watches, browser morphs** #performance #core
+  - [x] Verify: first scan, no-op re-scan, single-file edit, branch switch, force-push, exclusions change — all six pass (2026-08-15, six isolated E2E fixtures; two hardening fixes landed: incremental path now uses the canvas-filtered change set, and `find_todos` skips `KANBAN.canvas` by name instead of trusting `file --mime`)
+- [x] **Phase 2: live board — server watches, browser morphs** #performance #core
   - [x] `scanner/fragments.py` + Jinja partials: server renders board/list HTML; one truth on the wire (markdown-it-py, GFM task lists, blame badges server-side)
   - [x] Client: deleted `createTodoElement` / `createTodoMarkdownElement` / `renderKanban` DOM builders; idiomorph morphs fragments in place (scroll and state survive)
   - [x] `scanner/live.py`: watchdog observer per registered local repo — lazy start/stop with subscribers, 400ms debounce, ignores its own `KANBAN.canvas` writes
@@ -69,18 +61,7 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
   - [x] Page load never pulls local repos (working copy is the truth); clones pull behind the cached paint
   - [x] Checkbox write-back: `POST /api/todo_toggle` flips `- [ ]` ↔ `- [x]` atomically — line-content hash guard (stale view → 409), authed + local repos only, watchdog round-trip morphs the confirmation into every tab
   - [x] Verify: edit TODO.md in an editor → board morphs in ~1s without reload; second browser tab stays in sync
-  - [ ] PyInstaller spec: add hiddenimports for `watchdog`, `markdown_it`, `mdit_py_plugins` so binary builds keep live mode #packaging
-
-### Subdirectory Migration #development #structure
-
-- [ ] **Migrate Python files and dependencies to subdirectory structure**
-  - [x] Create scanner subdirectory
-  - [x] Implement `__init__.py`
-  - [x] Move `error_handling.py` to scanner subdirectory
-  - [x] Update imports in `app.py`
-  - [x] Move remaining Python files (test files) to `scanner/tests`
-  - [x] Move Pipfile and Pipfile.lock to scanner subdirectory
-  - [ ] Test and update the Makefile accordingly
+  - [x] PyInstaller spec: add hiddenimports for `watchdog`, `markdown_it`, `mdit_py_plugins` so binary builds keep live mode #packaging
 
 ## TODO
 
@@ -170,6 +151,7 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
 
 ## Backlog
 
+- [ ] **Share-on-Network firewall test**: verify the desktop app's tray share toggle across the macOS application firewall — accept the incoming-connections prompt, reach the LAN URL from a second device, sign in with an access key. Local curl-to-own-LAN-IP is filtered on the dev Mac, so this needs a real second device. #macos #app #network
 - [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones. #feature #kanban
 - [ ] **TODO editor — remaining scope**: add-TODO form, edit card text, and drag-between-columns write-back. Checkbox toggling shipped (see Phase 2 live board). #feature #editor #kanban
 - [ ] **Publish CapRover one-click app source**: Add `caprover-one-click.yml` to the Sage-is one-click repo #deployment #caprover
@@ -282,6 +264,8 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
 
 ## Completed
 
+- [x] **Release Pipeline — Package Foundation**: pyproject.toml, scanner/cli.py entry point, frozen-app + data-dir support in app.py, `__version__` single source; verified via `pip install -e .` #release #packaging
+- [x] **Subdirectory Migration**: Python files, tests, and Pipfiles under scanner/; imports and Makefile updated, exercised end-to-end 2026-08-15 #development #structure
 - [x] **Speed up scan**: cached KANBAN board loads instantly on page load while full scan runs in background #performance #ux
 - [x] **Fix existing repositories not working**
 - [x] **Robust error handling**: custom exceptions, retries, and recovery strategies #core #error-handling

@@ -333,11 +333,13 @@ fn build_tray(app: &tauri::App) -> tauri::Result<()> {
     let icon = tauri::image::Image::from_bytes(include_bytes!(
         "../../assets/todoscope_menu_icon.png"
     ))?;
+    // No tray-level on_menu_event: menu events are app-wide in Tauri, so the
+    // Builder::on_menu_event handler already receives tray clicks — a second
+    // registration here made every menu action fire twice (double zoom steps).
     TrayIconBuilder::new()
         .icon(icon)
         .icon_as_template(true)
         .menu(&menu)
-        .on_menu_event(|app, event| handle_menu_event(app, event.id().as_ref()))
         .build(app)?;
     Ok(())
 }

@@ -407,14 +407,23 @@ def get_repo_origin_url(repo_path):
         raise ValidationError("Repository path cannot be empty", field="repo_path")
     
     try:
-        # Run git command to get the remote origin URL
+        # Run git command to get the remote origin URL.
+        # `git config --get` exits 1 when the key is absent — for a pure-local
+        # repo that is a normal state, not an error, so return '' (callers fall
+        # back to the registered path / editor links) instead of raising into
+        # the retry machinery.
         result = subprocess.run(
             ['git', '-C', repo_path, 'config', '--get', 'remote.origin.url'],
-            capture_output=True, text=True, check=True, timeout=10
+            capture_output=True, text=True, timeout=10
         )
+        if result.returncode == 1 and not result.stdout.strip():
+            return ''
+        if result.returncode != 0:
+            raise subprocess.CalledProcessError(
+                result.returncode, 'git config', result.stdout, result.stderr)
         return result.stdout.strip()
     except subprocess.CalledProcessError as e:
-        raise GitOperationError(f"Failed to get origin URL for repo at {repo_path}", 
+        raise GitOperationError(f"Failed to get origin URL for repo at {repo_path}",
                                git_command="git config", original_exception=e)
     except subprocess.TimeoutExpired as e:
         raise GitOperationError(f"Timeout getting origin URL for {repo_path}", 
@@ -850,7 +859,10 @@ _TODO_PATTERN = re.compile(
 )
 
 # Filenames handled separately by find_todo_files() — never scan for inline comments.
-_SKIP_FILE_NAMES = {'todo.md', 'todo.txt'}
+# todo.md/todo.txt are handled by the TODO-file pass, not the inline scanner.
+# KANBAN.canvas is the scanner's own output — scanning it would re-ingest todo
+# text as JSON (today it survives only because `file` calls it application/json).
+_SKIP_FILE_NAMES = {'todo.md', 'todo.txt', 'kanban.canvas', 'kanban.canvas.tmp'}
 # Directories pruned from os.walk (version control, IDE state, dep caches).
 _SKIP_DIR_NAMES = {'.git', '.obsidian', 'node_modules', '__pycache__', '.venv', 'venv'}
 
@@ -1481,12 +1493,14 @@ def stream_data(repo_url):
 
             if changed is not None:
                 # --- Incremental path ---
+                # effective_changed: the scanner's own KANBAN.canvas writes are
+                # not repo changes — keep them out of the count and the rescan.
                 short = (state.get('last_head') or '')[:7]
-                yield f"data: {json.dumps({'type': 'status', 'message': f'Incremental scan — {len(changed)} file(s) changed since {short}...'})}\n\n"
+                yield f"data: {json.dumps({'type': 'status', 'message': f'Incremental scan — {len(effective_changed)} file(s) changed since {short}...'})}\n\n"
                 cached_todos = dict(state.get('todos') or {})
                 for path in deleted:
                     cached_todos.pop(path, None)
-                fresh = rescan_files(repo_path, changed, exclusions)
+                fresh = rescan_files(repo_path, effective_changed, exclusions)
                 cached_todos.update(fresh)
                 for rel_path, items in cached_todos.items():
                     for item in items:
