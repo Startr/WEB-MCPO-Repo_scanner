@@ -6,7 +6,7 @@ import mimetypes
 from pathlib import Path
 import logging
 import json
-from datetime import datetime
+from datetime import datetime, timedelta
 from functools import wraps
 import hashlib
 import csv
@@ -21,6 +21,8 @@ from .error_handling import (
     with_error_handling, error_context, safe_operation
 )
 
+from . import fragments
+
 # --- Frozen app detection (PyInstaller bundles) ---
 import sys
 if getattr(sys, 'frozen', False):
@@ -32,19 +34,56 @@ else:
     app = Flask(__name__)
 
 app.logger.setLevel(logging.INFO)  # Ensure INFO level is set for our logs
-app.secret_key = os.environ.get('SECRET_KEY') or os.urandom(24)
 
 # --- Data directory ---
 # CLI sets TODOSCOPE_DATA_DIR; Docker/dev uses scanner/ relative paths as fallback.
 _DATA_DIR = os.environ.get('TODOSCOPE_DATA_DIR', '')
+
+
+def _load_secret_key():
+    """SECRET_KEY env wins. With a data dir, persist a generated key so
+    sessions survive restarts. Otherwise fall back to per-process random."""
+    env_key = os.environ.get('SECRET_KEY')
+    if env_key:
+        return env_key
+    if _DATA_DIR:
+        key_path = os.path.join(_DATA_DIR, '.secret_key')
+        try:
+            if os.path.exists(key_path):
+                with open(key_path, 'rb') as f:
+                    key = f.read()
+                if key:
+                    return key
+            key = os.urandom(24)
+            os.makedirs(_DATA_DIR, exist_ok=True)
+            fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+            with os.fdopen(fd, 'wb') as f:
+                f.write(key)
+            return key
+        except OSError:
+            pass  # unwritable data dir: per-process key
+    return os.urandom(24)
+
+
+app.secret_key = _load_secret_key()
+app.permanent_session_lifetime = timedelta(days=30)  # "Remember me" horizon
 
 # --- Access key auth ---
 if _DATA_DIR:
     ACCESS_KEYS_FILE = os.path.join(_DATA_DIR, "access_keys.csv")
 else:
     ACCESS_KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_keys.csv")
-# Routes that must stay public for MCP discovery and auth itself
-_PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login', '/resources'}
+# Routes that must stay public for MCP discovery, auth itself, and shell readiness probes
+_PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login', '/resources', '/health'}
+
+
+@app.route('/health')
+def health():
+    """Readiness probe for the desktop shell. Public: no auth, no side effects.
+    `auth` lets the shell refuse network sharing while no access key exists."""
+    from scanner import __version__
+    return jsonify({'status': 'ok', 'app': 'todoscope', 'version': __version__,
+                    'auth': _auth_enabled()})
 
 def load_access_keys():
     """Return set of valid keys from access_keys.csv. Empty set = auth disabled."""
@@ -62,6 +101,9 @@ def _auth_enabled():
     return bool(load_access_keys())
 
 def _is_authenticated():
+    from flask import has_request_context
+    if not has_request_context():
+        return False  # background fragment rendering (live.py)
     keys = load_access_keys()
     if not keys:
         return True  # No keys file → open access
@@ -79,7 +121,7 @@ def inject_auth_status():
     return {'auth_enabled': _auth_enabled(), 'is_authenticated': _is_authenticated()}
 
 # Read-only route prefixes that public repos expose without auth
-_PUBLIC_REPO_PREFIXES = ('/scan_stream/', '/stream_data/', '/api/repo_fingerprint/', '/api/todo_files/')
+_PUBLIC_REPO_PREFIXES = ('/scan_stream/', '/stream_data/', '/events/', '/api/repo_fingerprint/', '/api/todo_files/')
 
 
 def _is_public_repo_route():
@@ -135,9 +177,13 @@ else:
 if _DATA_DIR:
     LOCAL_REPOS_YAML = os.path.join(_DATA_DIR, "local_repos.yaml")
     LOCAL_REPOS_JSON = os.path.join(_DATA_DIR, "local_repos.json")
+    SCAN_STATE_DIR = os.path.join(_DATA_DIR, "scan_state")
 else:
     LOCAL_REPOS_YAML = os.path.join(_APP_DIR, "local_repos.yaml")
     LOCAL_REPOS_JSON = os.path.join(_APP_DIR, "local_repos.json")  # legacy, auto-migrated
+    SCAN_STATE_DIR = os.path.join(_APP_DIR, "scan_state")
+
+SCAN_STATE_SCHEMA = 1  # bump on incompatible cache format change → invalidates old caches
 
 
 def _normalize_repo_meta(value):
@@ -665,6 +711,77 @@ def is_text_file(file_path):
     except Exception as e:
         raise ProcessingError(f"Error checking file type: {file_path}", original_exception=e)
 
+# File-view URL templates per host kind.
+# Placeholders: {host} {owner} {repo} {branch} {path} {line}
+_HOST_TEMPLATES = {
+    'github':    'https://vscode.dev/github/{owner}/{repo}/blob/{branch}/{path}#L{line}',
+    'gitlab':    'https://{host}/{owner}/{repo}/-/blob/{branch}/{path}#L{line}',
+    'gitea':     'https://{host}/{owner}/{repo}/src/branch/{branch}/{path}#L{line}',
+    'bitbucket': 'https://bitbucket.org/{owner}/{repo}/src/{branch}/{path}#lines-{line}',
+    'sourcehut': 'https://git.sr.ht/~{owner}/{repo}/tree/{branch}/item/{path}#L{line}',
+}
+
+_ORIGIN_RE = re.compile(
+    r'^(?:https?://(?:[^@/]+@)?|git@|ssh://(?:[^@/]+@)?)'  # https://, git@, ssh:// (optional user)
+    r'(?P<host>[^:/]+)'                                    # host
+    r'[:/]~?(?P<owner>[^/]+)/'                             # :owner/  or  /owner/  (strip sr.ht's ~)
+    r'(?P<repo>[^/]+?)(?:\.git)?/?$'                       # repo (strip .git, optional trailing /)
+)
+
+def parse_git_origin(url):
+    """Return {kind, host, owner, repo} for a known git host, else None.
+    Accepts https://, ssh://, and git@host:owner/repo forms.
+    """
+    if not url:
+        return None
+    m = _ORIGIN_RE.match(url.strip())
+    if not m:
+        return None
+    host = m.group('host').lower()
+    if host == 'github.com':
+        kind = 'github'
+    elif host == 'gitlab.com' or host.startswith('gitlab.'):
+        kind = 'gitlab'
+    elif host == 'bitbucket.org':
+        kind = 'bitbucket'
+    elif host == 'codeberg.org':
+        kind = 'gitea'
+    elif host == 'git.sr.ht':
+        kind = 'sourcehut'
+    else:
+        return None
+    return {'kind': kind, 'host': host, 'owner': m.group('owner'), 'repo': m.group('repo')}
+
+def build_web_file_url_template(parts, branch='HEAD'):
+    """Return a file-view URL template with {path} and {line} left unsubstituted,
+    suitable for the frontend to fill in per TODO. None if host kind is unknown.
+    """
+    if not parts:
+        return None
+    tmpl = _HOST_TEMPLATES.get(parts['kind'])
+    if not tmpl:
+        return None
+    # Substitute everything except {path} and {line} so the frontend just string-replaces.
+    return tmpl.format(
+        host=parts['host'], owner=parts['owner'], repo=parts['repo'],
+        branch=branch, path='{path}', line='{line}',
+    )
+
+def build_web_repo_url(parts):
+    """Return a repo-root web URL for the host, or None if unknown."""
+    if not parts:
+        return None
+    kind = parts['kind']
+    owner = parts['owner']
+    repo = parts['repo']
+    host = parts['host']
+    if kind == 'github':
+        return f"https://vscode.dev/github/{owner}/{repo}"
+    if kind == 'sourcehut':
+        return f"https://git.sr.ht/~{owner}/{repo}"
+    # gitlab, gitea, bitbucket all share host/owner/repo at the root.
+    return f"https://{host}/{owner}/{repo}"
+
 @with_error_handling("list_repositories", "repository_manager")
 def list_local_repositories():
     """List all repositories: registered local repos + cloned repos.
@@ -672,10 +789,6 @@ def list_local_repositories():
     """
     repos = []
     seen_names = set()
-
-    def _code_dev_url(origin_url):
-        m = re.match(r'.*github\.com[:/]([^/]+)/([^/.]+?)(?:\.git)?$', origin_url or "")
-        return f"https://vscode.dev/github/{m.group(1)}/{m.group(2)}" if m else None
 
     # 1. Registered local repos (name->meta mapping, paths stay server-side)
     for name, meta in load_local_repos().items():
@@ -689,7 +802,7 @@ def list_local_repositories():
                     'last_modified': last_modified,
                     'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                     'origin_url': origin_url or "",
-                    'code_dev_url': _code_dev_url(origin_url),
+                    'web_view_url': build_web_repo_url(parse_git_origin(origin_url)),
                     'source': 'local',
                     'public': meta.get('public', False),
                     'webhook_secret': bool(meta.get('webhook_secret')),
@@ -720,7 +833,7 @@ def list_local_repositories():
                         'last_modified': last_modified,
                         'last_modified_str': datetime.fromtimestamp(last_modified).strftime('%Y-%m-%d %H:%M:%S'),
                         'origin_url': origin_url or "",
-                        'code_dev_url': _code_dev_url(origin_url),
+                        'web_view_url': build_web_repo_url(parse_git_origin(origin_url)),
                         'source': 'cloned'
                     })
             except Exception as e:
@@ -728,6 +841,194 @@ def list_local_repositories():
 
     repos.sort(key=lambda x: x['last_modified'], reverse=True)
     return repos
+
+# Shared regex used by find_todos() and rescan_files(). Module-level so both
+# code paths use identical pattern semantics.
+_TODO_PATTERN = re.compile(
+    r'(?:#+|//|/\*|<!--|;)\s*(?:TODO|FIXME|BUG|NOTE)(?:\s*:|(?:\s+))',
+    re.IGNORECASE,
+)
+
+# Filenames handled separately by find_todo_files() — never scan for inline comments.
+_SKIP_FILE_NAMES = {'todo.md', 'todo.txt'}
+# Directories pruned from os.walk (version control, IDE state, dep caches).
+_SKIP_DIR_NAMES = {'.git', '.obsidian', 'node_modules', '__pycache__', '.venv', 'venv'}
+
+
+def _scan_file_for_todos(repo_path, rel_path):
+    """Parse one file for inline TODO comments. Returns [] when the file should
+    be skipped (binary / git-ignored / unreadable / TODO.md handled elsewhere).
+    Used by both find_todos() (os.walk) and rescan_files() (explicit list).
+    """
+    if os.path.basename(rel_path).lower() in _SKIP_FILE_NAMES:
+        return []
+    file_path = os.path.join(repo_path, rel_path)
+    if not os.path.isfile(file_path):
+        return []
+    try:
+        if is_git_ignored(repo_path, file_path):
+            return []
+        if not is_text_file(file_path):
+            return []
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+            lines = f.readlines()
+    except Exception as e:
+        app.logger.warning(f"Could not read {rel_path}: {e}")
+        return []
+    items = []
+    for i, line in enumerate(lines):
+        if _TODO_PATTERN.search(line):
+            todo_text = line.strip()
+            next_line_text = lines[i + 1].strip() if i + 1 < len(lines) else None
+            items.append(TodoItem(rel_path, i + 1, todo_text, next_line_text))
+    return items
+
+
+def scan_state_path(repo_name):
+    """Absolute path to the per-repo scan-state JSON file."""
+    safe = re.sub(r'[^A-Za-z0-9._-]', '_', repo_name or '')
+    return os.path.join(SCAN_STATE_DIR, f"{safe}.json")
+
+
+def load_scan_state(repo_name):
+    """Load the per-repo scan state. Returns None if missing, corrupt, or
+    written by a different schema version.
+    """
+    path = scan_state_path(repo_name)
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            state = json.load(f)
+    except (json.JSONDecodeError, OSError) as e:
+        app.logger.warning(f"Discarding corrupt scan state {path}: {e}")
+        return None
+    if state.get('schema') != SCAN_STATE_SCHEMA:
+        return None
+    return state
+
+
+def save_scan_state(repo_name, state):
+    """Atomic write via sibling .tmp + os.replace. Best-effort — logs on failure."""
+    try:
+        ensure_dir_exists(SCAN_STATE_DIR)
+        path = scan_state_path(repo_name)
+        tmp = path + '.tmp'
+        with open(tmp, 'w', encoding='utf-8') as f:
+            json.dump(state, f)
+        os.replace(tmp, path)
+    except OSError as e:
+        app.logger.warning(f"Could not persist scan state for {repo_name}: {e}")
+
+
+def exclusions_hash(exclusions):
+    """Stable md5 over sorted (path, reason) tuples — None-safe."""
+    items = sorted((e.get('path', ''), e.get('reason', '')) for e in (exclusions or []))
+    return hashlib.md5(repr(items).encode()).hexdigest()[:12]
+
+
+def _git_head_sha(repo_path):
+    """Return the current HEAD SHA, or None if the repo has no commits / isn't a git repo."""
+    try:
+        r = subprocess.run(
+            ['git', '-C', repo_path, 'rev-parse', 'HEAD'],
+            capture_output=True, text=True, timeout=5,
+        )
+        if r.returncode != 0:
+            return None
+        return r.stdout.strip() or None
+    except (subprocess.SubprocessError, OSError):
+        return None
+
+
+def git_changed_paths(repo_path, last_sha):
+    """Return (changed, deleted) sets of repo-relative paths since last_sha.
+
+    Combines:
+      - `git diff --name-status <last_sha>..HEAD`  → committed changes since last scan
+      - `git status --porcelain=v1`                → untracked + modified working tree
+
+    Returns (None, None) if last_sha is unreachable (force-push, shallow horizon)
+    or any git command fails — caller should fall back to a full scan.
+    """
+    if not last_sha:
+        return None, None
+    try:
+        # Is the recorded SHA still reachable? Force-push or shallow-clone past
+        # the boundary makes the diff meaningless.
+        chk = subprocess.run(
+            ['git', '-C', repo_path, 'merge-base', '--is-ancestor', last_sha, 'HEAD'],
+            capture_output=True, text=True, timeout=5,
+        )
+        if chk.returncode != 0:
+            return None, None
+
+        changed, deleted = set(), set()
+
+        diff = subprocess.run(
+            ['git', '-C', repo_path, 'diff', '--name-status', f'{last_sha}..HEAD'],
+            capture_output=True, text=True, timeout=10,
+        )
+        if diff.returncode != 0:
+            return None, None
+        for line in diff.stdout.splitlines():
+            parts = line.split('\t')
+            if len(parts) < 2:
+                continue
+            status, path = parts[0], parts[-1]  # rename emits "R100  old  new" → take new
+            if status.startswith('D'):
+                deleted.add(path)
+            else:
+                changed.add(path)
+            # Renames: old path is gone too
+            if status.startswith('R') and len(parts) == 3:
+                deleted.add(parts[1])
+
+        status = subprocess.run(
+            ['git', '-C', repo_path, 'status', '--porcelain=v1', '--untracked-files=all'],
+            capture_output=True, text=True, timeout=10,
+        )
+        if status.returncode != 0:
+            return None, None
+        for line in status.stdout.splitlines():
+            if len(line) < 4:
+                continue
+            xy, path = line[:2], line[3:]
+            # Rename in working tree: "R  old -> new"
+            if ' -> ' in path:
+                old, new = path.split(' -> ', 1)
+                deleted.add(old)
+                changed.add(new)
+            elif 'D' in xy:
+                deleted.add(path)
+            else:
+                changed.add(path)
+        return changed, deleted
+    except (subprocess.SubprocessError, OSError):
+        return None, None
+
+
+def rescan_files(repo_path, rel_paths, exclusions=None):
+    """Re-parse the given files. Returns dict[rel_path -> list[TodoItem-dict]].
+
+    Files that no longer exist or are excluded yield an empty list (caller
+    should drop them from the cache). The watch-mode path (Phase 2) will call
+    this same helper from a watchdog Observer.
+    """
+    out = {}
+    for rel in rel_paths:
+        if os.path.basename(rel).lower() in _SKIP_FILE_NAMES:
+            continue  # TODO.md is handled by find_todo_files
+        if is_excluded(rel, exclusions):
+            out[rel] = []
+            continue
+        items = _scan_file_for_todos(repo_path, rel)
+        out[rel] = [
+            {'line_num': t.line_num, 'todo_text': t.todo_text, 'next_line': t.next_line}
+            for t in items
+        ]
+    return out
+
 
 @with_error_handling("find_todos", "file_processor")
 def find_todos(repo_path, exclusions=None, skipped=None):
@@ -742,17 +1043,6 @@ def find_todos(repo_path, exclusions=None, skipped=None):
     if not os.path.isdir(repo_path):
         raise FileSystemError(f"Repository path does not exist: {repo_path}", path=repo_path)
 
-    # Expanded pattern to match more comment styles and annotation types
-    # This includes TODO, FIXME, BUG, and NOTE in various comment formats
-    todo_pattern = re.compile(
-        r'(?:#+|//|/\*|<!--|;)\s*(?:TODO|FIXME|BUG|NOTE)(?:\s*:|(?:\s+))',
-        re.IGNORECASE
-    )
-
-    # Directories to skip entirely (version control, IDE/editor state, dependency caches)
-    SKIP_DIRS = {'.git', '.obsidian', 'node_modules', '__pycache__', '.venv', 'venv'}
-    # Files handled separately by find_todo_files() — don't scan for inline comments
-    SKIP_FILES = {'todo.md', 'todo.txt'}
     # Never scan repos we manage — avoids recursing into cloned repos when this
     # project itself is registered as a local repo to track.
     _base_repo_real = os.path.realpath(BASE_REPO_PATH)
@@ -763,16 +1053,15 @@ def find_todos(repo_path, exclusions=None, skipped=None):
             # skip the managed-repos directory, and honour .todoscope-exclude.csv.
             dirs[:] = [
                 d for d in dirs
-                if d not in SKIP_DIRS
+                if d not in _SKIP_DIR_NAMES
                 and os.path.commonpath([os.path.realpath(os.path.join(root, d)), _base_repo_real]) != _base_repo_real
                 and not is_excluded(os.path.relpath(os.path.join(root, d), repo_path), exclusions)
             ]
             for file in files:
-                if file.lower() in SKIP_FILES:
+                if file.lower() in _SKIP_FILE_NAMES:
                     continue
 
-                file_path = os.path.join(root, file)
-                rel_path = os.path.relpath(file_path, repo_path)
+                rel_path = os.path.relpath(os.path.join(root, file), repo_path)
 
                 # Honour .todoscope-exclude.csv exclusions
                 exc = is_excluded(rel_path, exclusions)
@@ -781,34 +1070,8 @@ def find_todos(repo_path, exclusions=None, skipped=None):
                         skipped.append({'path': rel_path, 'reason': exc['reason']})
                     continue
 
-                try:
-                    # Skip files that are ignored by git
-                    if is_git_ignored(repo_path, file_path):
-                        app.logger.debug(f"Skipping git-ignored file: {rel_path}")
-                        continue
-
-                    if not is_text_file(file_path):
-                        continue
-                        
-                    app.logger.debug(f"Processing file: {rel_path}")
-                    
-                    with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                        lines = f.readlines()
-                        
-                    for i, line in enumerate(lines):
-                        # Look for expanded TODO patterns
-                        if todo_pattern.search(line):
-                            todo_text = line.strip()
-                            next_line_text = lines[i+1].strip() if i+1 < len(lines) else None
-                            # Yield the TodoItem as it's found instead of accumulating them
-                            yield TodoItem(rel_path, i+1, todo_text, next_line_text)
-                            
-                except ProcessingError:
-                    # Re-raise processing errors
-                    raise
-                except Exception as e:
-                    # Convert other exceptions to ProcessingError
-                    raise ProcessingError(f"Error processing file {rel_path}", original_exception=e)
+                for item in _scan_file_for_todos(repo_path, rel_path):
+                    yield item
 
 @with_error_handling("find_todo_files", "file_processor")
 def find_todo_files(repo_path, exclusions=None, skipped=None):
@@ -857,6 +1120,7 @@ def login():
         key = request.form.get('key', '').strip()
         if key in load_access_keys():
             session['authed_key'] = key
+            session.permanent = bool(request.form.get('remember'))
             return redirect(request.args.get('next') or url_for('index'))
         return render_template('login.html', error='Invalid key.', auth_enabled=_auth_enabled())
     return render_template('login.html', error=None, auth_enabled=_auth_enabled())
@@ -901,6 +1165,7 @@ def setup_add_key():
             writer.writerow(['key', 'label'])
         writer.writerow([key, label])
     session['authed_key'] = key
+    session.permanent = True  # bootstrap happens on the owner's machine
     return redirect(url_for('index'))
 
 @app.route('/add_local', methods=['POST'])
@@ -1062,6 +1327,11 @@ def webhook_trigger(repo_name):
     write_canvas(repo_path, canvas)
 
     card_count = sum(1 for n in canvas['nodes'] if n['type'] == 'text')
+
+    # Push fresh fragments to any subscribed live clients
+    from . import live
+    live.notify_change(repo_name)
+
     return jsonify({
         'ok': True,
         'pull': pull_result.get('message', ''),
@@ -1108,22 +1378,41 @@ def stream_data(repo_url):
                             cached_canvas = json.load(_cf)
                     except (json.JSONDecodeError, OSError):
                         pass
-                init_payload = {'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch}
-                if cached_canvas:
-                    init_payload['cached_canvas'] = cached_canvas
+                parts = parse_git_origin(origin_url)
+                init_payload = {
+                    'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch,
+                    'host_kind': parts['kind'] if parts else None,
+                    'host':      parts['host'] if parts else None,
+                    'owner':     parts['owner'] if parts else None,
+                    'repo':      parts['repo'] if parts else None,
+                    'web_file_url_template': build_web_file_url_template(parts, branch or 'HEAD'),
+                }
                 # Local repos expose their path for local editor URIs (vscode://, cursor://)
                 if repo_url in load_local_repos():
                     init_payload['local_path'] = existing_path
                 yield f"data: {json.dumps(init_payload)}\n\n"
+                # Instant-load: render the previous board (marked stale) while the scan runs
+                if cached_canvas:
+                    prev_state = load_scan_state(repo_name)
+                    stale_html = fragments.render_kanban_html(
+                        cached_canvas, (prev_state or {}).get('blame'), stale=True)
+                    yield f"data: {json.dumps({'type': 'kanban', 'html': stale_html})}\n\n"
                 todo_md_files = find_todo_files(existing_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
-                    yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
+                    md_html = fragments.render_todo_md_files_html(todo_md_files)
+                    yield f"data: {json.dumps({'type': 'todo_md_files', 'count': len(todo_md_files), 'html': md_html})}\n\n"
 
-                # Now pull/refresh in the background (user already sees TODO.md)
-                yield f"data: {json.dumps({'type': 'status', 'message': 'Updating repository...'})}\n\n"
-                repo_path = clone_repository(repo_url, shallow=shallow)
-                # Reload exclusions in case the pull updated .todoscope-exclude.csv
-                exclusions = load_exclusions(repo_path)
+                if repo_url in load_local_repos():
+                    # Local working copies are the truth — nothing to pull.
+                    # Freshness is the live channel's job, not page load's.
+                    repo_path = existing_path
+                else:
+                    # Cloned repo: the cached board is already painted; pull
+                    # behind it and let the fresh fragments morph in changes.
+                    yield f"data: {json.dumps({'type': 'status', 'message': 'Checking for new commits...'})}\n\n"
+                    repo_path = clone_repository(repo_url, shallow=shallow)
+                    # Reload exclusions in case the pull updated .todoscope-exclude.csv
+                    exclusions = load_exclusions(repo_path)
             else:
                 # New repo — must clone first
                 yield f"data: {json.dumps({'type': 'status', 'message': 'Cloning repository...'})}\n\n"
@@ -1133,20 +1422,86 @@ def stream_data(repo_url):
                 exclusions = load_exclusions(repo_path)
 
                 branch = get_repo_branch(repo_path)
-                yield f"data: {json.dumps({'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch})}\n\n"
+                parts = parse_git_origin(origin_url)
+                init_payload = {
+                    'type': 'init', 'repo_name': repo_name, 'repo_url': origin_url, 'branch': branch,
+                    'host_kind': parts['kind'] if parts else None,
+                    'host':      parts['host'] if parts else None,
+                    'owner':     parts['owner'] if parts else None,
+                    'repo':      parts['repo'] if parts else None,
+                    'web_file_url_template': build_web_file_url_template(parts, branch or 'HEAD'),
+                }
+                yield f"data: {json.dumps(init_payload)}\n\n"
                 todo_md_files = find_todo_files(repo_path, exclusions=exclusions, skipped=skipped)
                 if todo_md_files:
-                    yield f"data: {json.dumps({'type': 'todo_md_files', 'files': todo_md_files})}\n\n"
+                    md_html = fragments.render_todo_md_files_html(todo_md_files)
+                    yield f"data: {json.dumps({'type': 'todo_md_files', 'count': len(todo_md_files), 'html': md_html})}\n\n"
 
-            yield f"data: {json.dumps({'type': 'status', 'message': 'Scanning code for inline TODOs...'})}\n\n"
+            # --- Decide incremental vs full scan ---
+            # Incremental: re-parse only files changed since the last scan's HEAD
+            # (plus uncommitted/untracked). Falls back to full scan on any mismatch
+            # so the cache can never produce stale results.
+            state = load_scan_state(repo_name)
+            current_head = _git_head_sha(repo_path)
+            exc_hash = exclusions_hash(exclusions)
+            changed, deleted = (None, None)
+            if state and state.get('last_head') and state.get('exclusions_hash') == exc_hash:
+                changed, deleted = git_changed_paths(repo_path, state['last_head'])
 
-            # Stream each TODO as it's found, collecting them for kanban generation
             todo_count = 0
             todos_collected = []
-            for todo in find_todos(repo_path, exclusions=exclusions, skipped=skipped):
-                todo_count += 1
-                todos_collected.append(todo)
-                yield f"data: {json.dumps({'type': 'todo', 'todo': todo.to_dict(), 'count': todo_count})}\n\n"
+
+            # --- The law: no change → no scan ---
+            # KANBAN.canvas is written by the scanner itself and never counts
+            # as a repo change.
+            effective_changed = None
+            if changed is not None:
+                effective_changed = {
+                    p for p in changed
+                    if os.path.basename(p) not in ('KANBAN.canvas', 'KANBAN.canvas.tmp')
+                }
+
+            if effective_changed is not None and not effective_changed and not deleted:
+                yield f"data: {json.dumps({'type': 'status', 'message': 'No changes since last scan — serving cached results.'})}\n\n"
+                blame_data = state.get('blame') or {}
+                for rel_path, items in (state.get('todos') or {}).items():
+                    for item in items:
+                        todos_collected.append(TodoItem(rel_path, item['line_num'], item['todo_text'], item['next_line']))
+                todo_count = len(todos_collected)
+                from .kanban import build_kanban
+                canvas, _cards = build_kanban(todo_md_files, todos_collected)
+                md_sources = {f['file_path']: f['content'] for f in todo_md_files if f.get('content')}
+                todos_html = fragments.render_todos_list_html(
+                    [t.to_dict() for t in todos_collected], blame_data)
+                yield f"data: {json.dumps({'type': 'todos_list', 'count': todo_count, 'html': todos_html})}\n\n"
+                yield f"data: {json.dumps({'type': 'kanban', 'html': fragments.render_kanban_html(canvas, blame_data, md_sources=md_sources)})}\n\n"
+                source = 'local' if repo_url in load_local_repos() else 'cloned'
+                yield f"data: {json.dumps({'type': 'complete', 'count': todo_count, 'repo_name': repo_name, 'source': source})}\n\n"
+                return
+
+            if changed is not None:
+                # --- Incremental path ---
+                short = (state.get('last_head') or '')[:7]
+                yield f"data: {json.dumps({'type': 'status', 'message': f'Incremental scan — {len(changed)} file(s) changed since {short}...'})}\n\n"
+                cached_todos = dict(state.get('todos') or {})
+                for path in deleted:
+                    cached_todos.pop(path, None)
+                fresh = rescan_files(repo_path, changed, exclusions)
+                cached_todos.update(fresh)
+                for rel_path, items in cached_todos.items():
+                    for item in items:
+                        todo = TodoItem(rel_path, item['line_num'], item['todo_text'], item['next_line'])
+                        todo_count += 1
+                        todos_collected.append(todo)
+                todos_html = fragments.render_todos_list_html([t.to_dict() for t in todos_collected])
+                yield f"data: {json.dumps({'type': 'todos_list', 'count': todo_count, 'html': todos_html})}\n\n"
+            else:
+                # --- Full-scan path (today's behavior) ---
+                yield f"data: {json.dumps({'type': 'status', 'message': 'Scanning code for inline TODOs...'})}\n\n"
+                for todo in find_todos(repo_path, exclusions=exclusions, skipped=skipped):
+                    todo_count += 1
+                    todos_collected.append(todo)
+                    yield f"data: {json.dumps({'type': 'todo', 'count': todo_count, 'html': fragments.render_todo_item_html(todo.to_dict())})}\n\n"
 
             # Report excluded paths before completion so the client can render them
             if skipped:
@@ -1157,13 +1512,36 @@ def stream_data(repo_url):
             from .kanban import build_kanban, write_canvas
             canvas, cards = build_kanban(todo_md_files, todos_collected)
             write_canvas(repo_path, canvas)
-            yield f"data: {json.dumps({'type': 'kanban', 'canvas': canvas})}\n\n"
+            md_sources = {f['file_path']: f['content'] for f in todo_md_files if f.get('content')}
+            yield f"data: {json.dumps({'type': 'kanban', 'html': fragments.render_kanban_html(canvas, md_sources=md_sources)})}\n\n"
 
             # Git blame attribution — runs after kanban so the board appears immediately.
             # Best-effort: blame failure never blocks the scan.
             blame_data = collect_blame_data(repo_path, cards)
             if blame_data:
-                yield f"data: {json.dumps({'type': 'blame', 'blame': blame_data})}\n\n"
+                yield f"data: {json.dumps({'type': 'kanban', 'html': fragments.render_kanban_html(canvas, blame_data, md_sources=md_sources)})}\n\n"
+                todos_html = fragments.render_todos_list_html(
+                    [t.to_dict() for t in todos_collected], blame_data)
+                yield f"data: {json.dumps({'type': 'todos_list', 'count': todo_count, 'html': todos_html})}\n\n"
+
+            # Persist scan state for next-time incremental scan. Best-effort —
+            # failure here just means the next scan falls back to full.
+            if current_head:
+                todos_by_file = {}
+                for t in todos_collected:
+                    todos_by_file.setdefault(t.file_path, []).append({
+                        'line_num': t.line_num,
+                        'todo_text': t.todo_text,
+                        'next_line': t.next_line,
+                    })
+                save_scan_state(repo_name, {
+                    'schema': SCAN_STATE_SCHEMA,
+                    'last_head': current_head,
+                    'exclusions_hash': exc_hash,
+                    'scanned_at': datetime.utcnow().isoformat() + 'Z',
+                    'todos': todos_by_file,
+                    'blame': blame_data or {},
+                })
 
             # Send completion event with repo_name for fingerprint polling
             # Tell the client whether this is a local or cloned repo (for refresh behavior)
@@ -1190,6 +1568,45 @@ def scan_stream(repo_url):
     """Render the streaming scan page for a repository."""
     shallow = request.args.get('shallow', '')
     return render_template('stream_results.html', repo_url=repo_url, shallow=shallow)
+
+
+@app.route('/events/<path:repo_name>')
+def live_events(repo_name):
+    """Persistent SSE channel — pushes freshly rendered board/list fragments
+    whenever the repo changes (watchdog for local repos, git poll for clones).
+    The client subscribes after its initial scan completes and morphs the
+    fragments in place; no reload, no client-side polling.
+    """
+    repo_path = resolve_repo_path(repo_name)
+    if not repo_path:
+        return jsonify({'error': 'Unknown repository'}), 404
+
+    from . import live
+    is_local = repo_name in load_local_repos()
+    q = live.subscribe(repo_name, repo_path, is_local)
+
+    def generate():
+        try:
+            yield ": connected\n\n"
+            while True:
+                try:
+                    event = q.get(timeout=15)
+                except live.Empty:
+                    yield ": ping\n\n"   # heartbeat keeps proxies from closing us
+                    continue
+                yield f"data: {json.dumps(event)}\n\n"
+        finally:
+            live.unsubscribe(repo_name, q)
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype='text/event-stream',
+        headers={
+            'Cache-Control': 'no-cache, no-transform',
+            'X-Accel-Buffering': 'no',
+            'Connection': 'keep-alive',
+        }
+    )
 
 @app.route('/api/badge/todos/<path:repo_name>')
 def badge_todos(repo_name):
@@ -1249,6 +1666,58 @@ def repo_fingerprint(repo_name):
         return jsonify({'fingerprint': head.stdout.strip(), 'dirty': dirty, 'todo_hash': todo_hash})
     except Exception:
         return jsonify({'fingerprint': '', 'dirty': False, 'todo_hash': ''})
+
+@app.route('/api/todo_toggle/<path:repo_name>', methods=['POST'])
+def api_todo_toggle(repo_name):
+    """Flip a task checkbox in a TODO file — write-back from the web UI.
+
+    Local repos only (the file is the real working copy). Guarded by a
+    per-line content hash so a view that predates an editor save can never
+    clobber a changed line — stale writes get 409 and the next live morph
+    shows the viewer reality. The file write itself triggers the watchdog,
+    which rescans and pushes fresh fragments to every subscriber.
+    """
+    local_repos = load_local_repos()
+    if repo_name not in local_repos:
+        return jsonify({'error': 'Write-back is only available for registered local repositories'}), 403
+    repo_path = local_repos[repo_name]['path']
+
+    data = request.get_json(silent=True) or {}
+    rel_path = data.get('file_path') or ''
+    line_num = data.get('line_num')
+    line_hash = data.get('line_hash') or ''
+    checked = bool(data.get('checked'))
+
+    target = os.path.realpath(os.path.join(repo_path, rel_path))
+    if not target.startswith(os.path.realpath(repo_path) + os.sep):
+        return jsonify({'error': 'Invalid path'}), 400
+    if os.path.basename(target).lower() not in ('todo.md', 'todo.txt'):
+        return jsonify({'error': 'Not a TODO file'}), 400
+
+    try:
+        with open(target, 'r', encoding='utf-8') as f:
+            lines = f.read().splitlines(True)
+    except OSError as e:
+        return jsonify({'error': f'Cannot read file: {e}'}), 404
+
+    if not isinstance(line_num, int) or not (1 <= line_num <= len(lines)):
+        return jsonify({'error': 'Line out of range'}), 409
+    raw = lines[line_num - 1]
+    body = raw.rstrip('\r\n')
+    ending = raw[len(body):]
+    if hashlib.md5(body.rstrip().encode()).hexdigest()[:8] != line_hash:
+        return jsonify({'error': 'Line changed since render'}), 409
+    m = re.match(r'^(\s*[-*+] )\[( |x|X)\](.*)$', body)
+    if not m:
+        return jsonify({'error': 'Not a task line'}), 409
+
+    lines[line_num - 1] = f"{m.group(1)}[{'x' if checked else ' '}]{m.group(3)}{ending}"
+    tmp = target + '.td-tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        f.writelines(lines)
+    os.replace(tmp, target)
+    return jsonify({'ok': True, 'line': line_num, 'checked': checked})
+
 
 @app.route('/api/todo_files/<path:repo_name>')
 def api_todo_files(repo_name):

@@ -8,6 +8,9 @@ flask = "*"
 pyyaml = "*"
 pystray = "*"
 Pillow = "*"
+markdown-it-py = "*"
+mdit-py-plugins = "*"
+watchdog = "*"
 
 [dev-packages]
 pytest = "*"
@@ -17,4 +20,4 @@ build = "*"
 twine = "*"
 
 [requires]
-python_full_version = ">=3.12"
+python_version = "3.12"

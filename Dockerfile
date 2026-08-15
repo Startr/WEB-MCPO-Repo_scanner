@@ -10,7 +10,10 @@ WORKDIR /app
 # desktop-only and not used inside the container.
 RUN pip install --no-cache-dir \
         flask \
-        pyyaml
+        pyyaml \
+        markdown-it-py \
+        mdit-py-plugins \
+        watchdog
 
 # Copy the rest of the application code
 COPY . /app/

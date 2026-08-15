@@ -22,7 +22,7 @@ _datas = [
     ('scanner/static',    'scanner/static'),
 ]
 
-_hiddenimports = ['yaml']
+_hiddenimports = ['yaml', 'watchdog.observers', 'markdown_it', 'mdit_py_plugins.tasklists']
 
 _entry = 'scanner/cli.py'
 

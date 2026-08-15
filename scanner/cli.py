@@ -108,6 +108,7 @@ def main():
     parser.add_argument("--port", type=int, default=5000, help="Port to listen on (default: 5000, auto-finds free port if taken)")
     parser.add_argument("--host", default="127.0.0.1", help="Host to bind to (default: 127.0.0.1)")
     parser.add_argument("--no-browser", action="store_true", help="Don't open browser — headless mode for tmux/SSH/phone")
+    parser.add_argument("--exact-port", action="store_true", help="Bind exactly --port and fail if taken (desktop shell handshake)")
     parser.add_argument("--tunnel", action="store_true", help="Expose via cloudflared quick tunnel")
     parser.add_argument("--tailscale", action="store_true", help="Expose via tailscale funnel")
     parser.add_argument("--share", action="store_true", help="Expose via best available tunnel (prefers tailscale)")
@@ -120,19 +121,20 @@ def main():
         tray_main()
         return
 
-    # Check if already running — don't launch a second instance
     port = args.port
-    if wait_for_server(args.host, port, timeout=1):
-        url = f"http://{args.host}:{port}"
-        print(f"  TodoScope already running on {url}")
-        if not args.no_browser:
-            webbrowser.open(url)
-        return
+    if not args.exact_port:
+        # Check if already running — don't launch a second instance
+        if wait_for_server(args.host, port, timeout=1):
+            url = f"http://{args.host}:{port}"
+            print(f"  TodoScope already running on {url}")
+            if not args.no_browser:
+                webbrowser.open(url)
+            return
 
-    # Find a free port
-    port = find_free_port(args.port)
-    if port != args.port:
-        print(f"Port {args.port} in use, using {port} instead.")
+        # Find a free port
+        port = find_free_port(args.port)
+        if port != args.port:
+            print(f"Port {args.port} in use, using {port} instead.")
 
     # Ensure data dir exists
     data_dir = os.path.expanduser("~/.todoscope")

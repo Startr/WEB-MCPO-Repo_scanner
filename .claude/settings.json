@@ -37,11 +37,13 @@
       "Bash(pkill -9 -f \"scanner.tray\")",
       "Bash(pkill -9 -f todoscope)",
       "Bash(timeout 10 pipenv run python -m scanner.cli --version)",
-      "Bash(echo \"EXIT=$?\")"
+      "Bash(echo \"EXIT=$?\")",
+      "Bash(mkdir -p ~/.claude/skills/poka-yoke ~/.claude/skills/muda && ls ~/.claude/skills/)"
     ],
     "additionalDirectories": [
       "/Users/somma/bin/repo_scanner/scanner/dist",
-      "/Users/somma/bin/repo_scanner/dist/TodoScope.app"
+      "/Users/somma/bin/repo_scanner/dist/TodoScope.app",
+      "/Users/somma/.claude/skills"
     ]
   }
 }

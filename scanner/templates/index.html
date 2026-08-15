@@ -5,7 +5,7 @@
 {% block content %}
     <form method="POST" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --b:1px solid #ddd; --shadow:4;">
         <h2>Enter Repository URL</h2>
-        <input type="text" name="repo_url" placeholder="https://github.com/username/repository.git" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
+        <input type="text" name="repo_url" placeholder="https://github.com/user/repo.git  ·  GitLab / Gitea / Bitbucket also work" required style="--w:100%; --p:10px; --mb:15px; --b:1px solid #ddd; --shadow-inset:4; --radius:4px; --bxs:border-box">
         <div style="--d:flex; --ai:center; gap:12px">
             <button type="submit" style="--bgc:#4CAF50; --c:white; --p:10px 15px; --b:none; --radius:4px; --cur:pointer">Scan Repository</button>
             <label style="--d:flex; --ai:center; --c:#555; --size:0.9em">
@@ -50,8 +50,8 @@
                             {% if repo.public %}
                             <span style="--bgc:#e3f2fd; --c:#1565c0; --p:2px 6px; --radius:3px; --size:0.75em; --ml:4px">public</span>
                             {% endif %}
-                            {% if repo.code_dev_url %}
-                            <a href="{{ repo.code_dev_url }}" target="_blank" rel="noopener noreferrer" style="--c:#0066cc; --size:0.8em; --ml:8px; --td:none">code.dev ↗</a>
+                            {% if repo.web_view_url %}
+                            <a href="{{ repo.web_view_url }}" target="_blank" rel="noopener noreferrer" style="--c:#0066cc; --size:0.8em; --ml:8px; --td:none">Open ↗</a>
                             {% endif %}
                         </td>
                         <td style="--p:8px; --bb:1px solid #ddd">{{ repo.last_modified_str }}</td>

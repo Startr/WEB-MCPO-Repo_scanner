@@ -153,6 +153,8 @@
     .kanban-card ul { list-style: none; padding-left: 4px; }
     .kanban-card li { position: relative; }
     .kanban-card li input[type="checkbox"] { margin-right: 4px; pointer-events: none; }
+    /* Write-back: enabled checkboxes on authed views of local repos */
+    input.td-writable { pointer-events: auto !important; cursor: pointer; }
     /* Stale board indicator — shown while scan is in progress */
     .kanban-stale-banner {
         text-align: center;
@@ -167,7 +169,7 @@
     }
     .kanban-board.kanban-stale { opacity: 0.55; }
 
-    /* Author badge — appended by blame SSE event */
+    /* Author badge — rendered server-side from blame data */
     .kanban-card .card-author {
         font-size: 0.72em;
         color: #888;
@@ -204,6 +206,7 @@
         font-family: monospace;
     }
 </style>
+<script src="https://cdn.jsdelivr.net/npm/idiomorph@0.7.4/dist/idiomorph.min.js"></script>
 {% endblock %}
 
 {% block content %}
@@ -221,7 +224,7 @@
     <details id="kanban-guide" style="--bgc:#f9f9f9; --p:12px 16px; --radius:5px; --b:1px solid #ddd; --mb:20px; --size:0.88em; --c:#555">
         <summary style="--cur:pointer; --weight:bold; --c:#333">How this Kanban board works</summary>
         <div style="--mt:10px; --lh:1.6">
-            <p style="--mb:8px">The board is generated from your code. Edit your <code>TODO.md</code> or inline comments, rescan, and the board updates.</p>
+            <p style="--mb:8px">The board is generated from your code. Edit your <code>TODO.md</code> or inline comments and the board updates live.</p>
             <table style="--w:100%; --bc:collapse; --size:0.95em; --mb:8px">
                 <thead><tr style="--ta:left; --bb:2px solid #ddd">
                     <th style="--p:4px 8px">Column</th><th style="--p:4px 8px">How items get there</th>
@@ -250,14 +253,14 @@
         <div class="loading-spinner"></div>
         <span>Scanning repository files...</span>
     </div>
-    
+
     <div id="kanban-container" style="display:none">
         <div style="--d:flex; --jc:space-between; --ai:baseline; --fw:wrap; gap:8px">
             <h2 class="section-title" style="--mb:0">Kanban Board</h2>
             <div class="editor-selector" id="editor-selector">
                 <span class="editor-label">Open in:</span>
                 <select id="editor-mode" title="Choose where file links open">
-                    <option value="web">vscode.dev</option>
+                    <option value="web">Web ↗</option>
                     <option value="vscode">VS Code</option>
                     <option value="cursor">Cursor</option>
                     <option value="jetbrains">JetBrains</option>
@@ -269,14 +272,14 @@
                        style="display:none">
             </div>
         </div>
-        <div id="kanban-board" class="kanban-board"></div>
+        <div id="kanban-live"></div>
     </div>
 
     <div id="todo-md-files-container">
         <h2 class="section-title">TODO.md Files Found</h2>
         <div id="todo-md-files"></div>
     </div>
-    
+
     <div id="excluded-container" style="display:none; --mt:20px">
         <details style="--bgc:#fff8e1; --p:15px; --radius:5px; --b:1px solid #f0c040">
             <summary style="--cur:pointer; --weight:bold; --c:#7a5c00">
@@ -288,11 +291,11 @@
 
     <h2 class="section-title">TODO Comments in Code</h2>
     <div id="todos-container"></div>
-    
+
     <div class="no-results" id="no-results" style="--bgc:#f9f9f9; --p:20px; --radius:5px; --ta:center; --c:#666; display:none;">
         <p>No TODO comments found in this repository.</p>
     </div>
-    
+
     {% if is_authenticated %}
     <div id="rescan-bar" style="display:none; --mt:20px; --p:12px; --radius:5px; --bgc:#f0f8ff; --b:1px solid #007bff; --ai:center; --jc:space-between">
         <span id="rescan-msg">Scan complete.</span>
@@ -305,10 +308,6 @@
     </div>
 
     <script>
-        function parseMd(src) {
-            return marked.parse(src).replace(/<(ul|ol)(\s|>)/g, '<$1 style="--w: max-content;"$2');
-        }
-
         document.addEventListener('DOMContentLoaded', function() {
             const todosContainer = document.getElementById('todos-container');
             const todoMdFilesContainer = document.getElementById('todo-md-files-container');
@@ -320,13 +319,16 @@
             const noResultsEl = document.getElementById('no-results');
             const todoMdSummaryEl = document.getElementById('todo-md-summary');
             const inlineCountLinkEl = document.getElementById('inline-count-link');
+            const kanbanContainer = document.getElementById('kanban-container');
+            const kanbanLive = document.getElementById('kanban-live');
 
             // Initially hide the TODO.md files section
             todoMdFilesContainer.style.display = 'none';
 
             // --- Editor link system ---
             // Repo context — populated from the 'init' SSE event
-            let ghOwner = null, ghRepo = null, ghBranch = 'HEAD';
+            let webFileUrlTemplate = null;  // backend-provided, has {path} and {line} placeholders
+            let repoOwner = null, repoName = null, repoBranch = 'HEAD';
             let localPath = null;  // set for local repos only
 
             // Editor mode — persisted in localStorage
@@ -355,14 +357,16 @@
                     file: filePath || '',
                     line: String(line),
                     local_path: localPath || '',
-                    owner: ghOwner || '',
-                    repo: ghRepo || '',
-                    branch: ghBranch || 'HEAD',
+                    owner: repoOwner || '',
+                    repo: repoName || '',
+                    branch: repoBranch || 'HEAD',
                 };
                 switch (mode) {
                     case 'web':
-                        if (!ghOwner) return null;
-                        return `https://vscode.dev/github/${vars.owner}/${vars.repo}/blob/${vars.branch}/${vars.file}#L${vars.line}`;
+                        if (!webFileUrlTemplate) return null;
+                        return webFileUrlTemplate
+                            .replace('{path}', encodeURI(vars.file))
+                            .replace('{line}', vars.line);
                     case 'vscode':
                         if (!localPath) return null;
                         return `vscode://file/${vars.local_path}/${vars.file}:${vars.line}`;
@@ -382,9 +386,10 @@
                 }
             }
 
-            // Re-render all editor links on the page when the mode changes
-            function reRenderLinks() {
-                document.querySelectorAll('[data-editor-link]').forEach(a => {
+            // Fill in hrefs on server-rendered editor links (they arrive with no
+            // href and display:none — the server doesn't know the user's editor)
+            function reRenderLinks(root) {
+                (root || document).querySelectorAll('[data-editor-link]').forEach(a => {
                     const fp = a.dataset.filePath;
                     const ln = parseInt(a.dataset.lineNum, 10) || null;
                     const href = buildEditorLink(fp, ln);
@@ -397,241 +402,83 @@
                 });
             }
 
-            // Helper: create a data-attributed editor link element
-            function makeEditorLink(filePath, lineNum, text) {
-                const href = buildEditorLink(filePath, lineNum);
-                const a = document.createElement('a');
-                a.dataset.editorLink = '1';
-                a.dataset.filePath = filePath || '';
-                a.dataset.lineNum = String(lineNum || '');
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                a.textContent = text || 'Open';
-                a.style.cssText = '--c:#0066cc; --td:none';
-                if (href) {
-                    a.href = href;
-                } else {
-                    a.style.display = 'none';
-                }
-                return a;
+            // Morph a server-rendered fragment into place — scroll position,
+            // open <details>, and focus survive; only what changed is touched.
+            function morph(el, html) {
+                Idiomorph.morph(el, html, { morphStyle: 'innerHTML' });
+                reRenderLinks(el);
+                enableWriteback(el);
             }
 
-            // Function to create a TODO item element
-            function createTodoElement(todo) {
-                const todoEl = document.createElement('div');
-                todoEl.className = 'todo-item';
-                todoEl.style = '--bgc:#f9f9f9; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #4CAF50; --shadow:6';
+            // --- Checkbox write-back (authed views of local repos only) ---
+            const PAGE_AUTHED = {{ 'true' if is_authenticated else 'false' }};
+            let currentRepo = null;
+            let repoWritable = false;
 
-                const filePath = document.createElement('div');
-                filePath.className = 'file-path';
-                filePath.style = '--weight:bold; --c:#333; --mb:5px';
-                filePath.textContent = todo.file_path;
-
-                const openLink = makeEditorLink(todo.file_path, todo.line_num, 'Open in editor');
-                openLink.style.cssText += '; --fs:0.8em; --ml:10px; --weight:normal';
-                filePath.appendChild(openLink);
-
-                const lineNum = document.createElement('div');
-                lineNum.className = 'line-num';
-                lineNum.style = '--c:#666; --size:0.9em';
-                lineNum.textContent = `Line ${todo.line_num}`;
-                
-                const todoText = document.createElement('div');
-                todoText.className = 'todo-text';
-                todoText.style = '--bgc:#fff; --p:10px; --radius:3px; --b:1px solid #ddd; --shadow:4; --m:10px 0; --ff:monospace; --ws:pre-wrap';
-                todoText.innerHTML = highlightTodo(todo.todo_text);
-                
-                todoEl.appendChild(filePath);
-                todoEl.appendChild(lineNum);
-                todoEl.appendChild(todoText);
-                
-                // Add next line if it exists
-                if (todo.next_line) {
-                    const nextLine = document.createElement('div');
-                    nextLine.className = 'next-line';
-                    nextLine.style = '--bgc:#f5f5f5; --p:10px; --radius:3px; --b:1px solid #ddd; --shadow:4; --ff:monospace; --ws:pre-wrap';
-                    nextLine.textContent = todo.next_line;
-                    todoEl.appendChild(nextLine);
-                }
-                
-                return todoEl;
-            }
-            
-            // Function to create a TODO.md file element
-            function createTodoMarkdownElement(mdFile) {
-                const mdFileEl = document.createElement('div');
-                mdFileEl.className = 'todo-md-file';
-                mdFileEl.style = '--bgc:#f0f8ff; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #007bff; --shadow:6';
-                
-                const filePath = document.createElement('div');
-                filePath.className = 'file-path';
-                filePath.style = '--weight:bold; --c:#333; --mb:10px';
-                filePath.textContent = mdFile.file_path;
-
-                const mdOpenLink = makeEditorLink(mdFile.file_path, null, 'Open in editor');
-                mdOpenLink.style.cssText += '; --fs:0.8em; --ml:10px; --weight:normal';
-                filePath.appendChild(mdOpenLink);
-
-                mdFileEl.appendChild(filePath);
-                
-                if (mdFile.content) {
-                    const content = document.createElement('div');
-                    content.className = 'markdown-content';
-                    content.innerHTML = parseMd(mdFile.content);
-                    mdFileEl.appendChild(content);
-                } else {
-                    const noContent = document.createElement('div');
-                    noContent.style = '--c:#999; --p:10px;';
-                    noContent.textContent = 'Could not read content of file.';
-                    mdFileEl.appendChild(noContent);
-                }
-                
-                return mdFileEl;
-            }
-            
-            // Function to highlight TODO in text
-            function highlightTodo(text) {
-                if (!text) return '';
-                return text.replace(/(#+\s*TODO|\/\/\s*TODO|TODO:)/gi, '<span class="highlight">$1</span>');
-            }
-            
-            // Render a JSON Canvas 1.0 object as a visual kanban board
-            function renderKanban(canvas, stale) {
-                const board = document.getElementById('kanban-board');
-                const container = document.getElementById('kanban-container');
-                if (!canvas || !canvas.nodes) return;
-
-                // Separate groups (columns) from text (cards)
-                const groups = canvas.nodes.filter(n => n.type === 'group');
-                const cards  = canvas.nodes.filter(n => n.type === 'text');
-
-                // Sort columns left-to-right by x position
-                groups.sort((a, b) => a.x - b.x);
-
-                // Assign each card to the column whose x-range contains it
-                function cardsInGroup(g) {
-                    return cards
-                        .filter(c => c.x >= g.x && c.x < g.x + g.width)
-                        .sort((a, b) => a.y - b.y);
-                }
-
-                board.innerHTML = '';
-                board.className = stale ? 'kanban-board kanban-stale' : 'kanban-board';
-
-                // Stale banner — shown when displaying previous board during scan
-                const oldBanner = container.querySelector('.kanban-stale-banner');
-                if (oldBanner) oldBanner.remove();
-                if (stale) {
-                    const banner = document.createElement('div');
-                    banner.className = 'kanban-stale-banner';
-                    banner.textContent = 'Showing last known board — scan in progress\u2026';
-                    container.insertBefore(banner, board);
-                }
-
-                groups.forEach(g => {
-                    const colCards = cardsInGroup(g);
-                    const colorClass = g.color ? `kanban-col-${g.color}` : 'kanban-col-none';
-
-                    const colEl = document.createElement('div');
-                    colEl.className = `kanban-column ${colorClass}`;
-
-                    // Column header with count badge
-                    const header = document.createElement('div');
-                    header.className = 'kanban-column-header';
-                    header.innerHTML = `${g.label || 'Untitled'} <span class="kanban-column-count">${colCards.length}</span>`;
-                    colEl.appendChild(header);
-
-                    // Render each card's markdown text with code.dev link
-                    colCards.forEach(c => {
-                        const cardEl = document.createElement('div');
-                        const isInline = c.source === 'inline';
-                        cardEl.className = isInline ? 'kanban-card kanban-card-inline' : 'kanban-card';
-                        cardEl.innerHTML = parseMd(c.text || '');
-
-                        // Style the file:line location reference as a right-aligned indicator
-                        // It's the last <p> containing a <code> with a file:L pattern
-                        const paras = cardEl.querySelectorAll('p');
-                        if (paras.length > 0) {
-                            const lastP = paras[paras.length - 1];
-                            const code = lastP.querySelector('code');
-                            if (code && /:\d+|:L\d+/.test(code.textContent)) {
-                                lastP.className = 'card-location';
-                            }
-                        }
-
-                        // Add clickable link wrapping the location reference
-                        if (c.file_path) {
-                            const locEl = cardEl.querySelector('.card-location') || null;
-                            const editorHref = buildEditorLink(c.file_path, c.line_num);
-                            if (editorHref) {
-                                const link = document.createElement('a');
-                                link.href = editorHref;
-                                link.target = '_blank';
-                                link.rel = 'noopener noreferrer';
-                                link.style = '--c:#0066cc; --td:none';
-                                link.dataset.editorLink = '1';
-                                link.dataset.filePath = c.file_path;
-                                link.dataset.lineNum = String(c.line_num || '');
-                                if (locEl) {
-                                    link.innerHTML = locEl.innerHTML;
-                                    locEl.innerHTML = '';
-                                    locEl.appendChild(link);
-                                } else {
-                                    link.textContent = isInline
-                                        ? `${c.file_path}:${c.line_num}`
-                                        : `${c.file_path}:L${c.line_num}`;
-                                    link.className = 'card-location';
-                                    cardEl.appendChild(link);
-                                }
-                            }
-                        }
-
-                        colEl.appendChild(cardEl);
-                    });
-
-                    board.appendChild(colEl);
+            function enableWriteback(root) {
+                if (!repoWritable) return;
+                (root || document).querySelectorAll('input[data-td-line]').forEach(cb => {
+                    cb.disabled = false;
+                    cb.classList.add('td-writable');
                 });
-
-                container.style.display = 'block';
             }
 
-            // Connect to the event stream
-            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url, shallow=shallow) }}");
-            
-            // Handle events from the server
-            evtSource.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                
+            document.addEventListener('change', function(e) {
+                const cb = e.target;
+                if (!cb.matches || !cb.matches('input[data-td-line]') || !repoWritable) return;
+                // Optimistic: the checkbox already flipped natively. The POST writes
+                // the TODO file; the watchdog round-trip morphs the confirmation in.
+                fetch(`/api/todo_toggle/${encodeURIComponent(currentRepo)}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        file_path: cb.dataset.tdFile,
+                        line_num: parseInt(cb.dataset.tdLine, 10),
+                        line_hash: cb.dataset.tdHash,
+                        checked: cb.checked,
+                    }),
+                }).then(r => {
+                    if (!r.ok) cb.checked = !cb.checked;  // stale view — next morph shows reality
+                }).catch(() => { cb.checked = !cb.checked; });
+            });
+
+            // Shared dispatcher — the initial scan stream and the persistent
+            // live channel speak the same event vocabulary.
+            function handleEvent(data) {
                 switch(data.type) {
                     case 'status':
-                        // Update the spinner text with server progress messages
                         loadingEl.querySelector('span').textContent = data.message;
                         break;
 
                     case 'init':
                         // Initialize the page with repository information
+                        currentRepo = data.repo_name;
+                        repoWritable = PAGE_AUTHED && !!data.local_path;
                         repoNameEl.textContent = `Repository: ${data.repo_name}`;
                         repoUrlEl.textContent = `URL: ${data.repo_url}`;
-                        // Extract owner/repo for editor links (GitHub repos)
-                        const ghMatch = data.repo_url.match(/github\.com[:/]([^/]+)\/([^/.]+?)(?:\.git)?$/);
-                        if (ghMatch) {
-                            ghOwner = ghMatch[1];
-                            ghRepo = ghMatch[2];
-                            ghBranch = data.branch || 'HEAD';
-                        }
+                        // Backend supplies parsed host metadata + a file-URL template for any
+                        // recognized host (GitHub / GitLab / Gitea / Bitbucket / sourcehut).
+                        // Unknown hosts (and pure-local repos) leave the template null.
+                        webFileUrlTemplate = data.web_file_url_template || null;
+                        repoOwner = data.owner || null;
+                        repoName = data.repo || null;
+                        repoBranch = data.branch || 'HEAD';
                         // Local repos expose their filesystem path for local editor URIs
                         if (data.local_path) {
                             localPath = data.local_path;
                         }
-                        // Hide local-only editor options when no local path is available
+                        // Disable options whose required context is missing
                         const localOnlyModes = ['vscode', 'cursor', 'jetbrains'];
                         localOnlyModes.forEach(m => {
                             const opt = editorModeEl.querySelector(`option[value="${m}"]`);
                             if (opt) opt.disabled = !localPath;
                         });
-                        // If saved mode requires local path but none available, fall back to web
-                        if (localOnlyModes.includes(editorModeEl.value) && !localPath) {
-                            editorModeEl.value = ghOwner ? 'web' : 'custom';
+                        const webOpt = editorModeEl.querySelector('option[value="web"]');
+                        if (webOpt) webOpt.disabled = !webFileUrlTemplate;
+                        // If saved mode is no longer usable, pick the first available fallback
+                        const currentOpt = editorModeEl.querySelector(`option[value="${editorModeEl.value}"]`);
+                        if (currentOpt && currentOpt.disabled) {
+                            editorModeEl.value = webFileUrlTemplate ? 'web' : (localPath ? 'vscode' : 'custom');
                         }
                         // Single source of truth: guide users to the repo for contributions
                         const guidance = document.createElement('p');
@@ -639,41 +486,40 @@
                         guidance.innerHTML = 'This is a read-only scan. To file issues, add TODOs, or contribute fixes, work directly on the repository:<br>'
                             + '<a href="' + data.repo_url + '" target="_blank" style="--c:#0066cc">' + data.repo_url + '</a>';
                         document.querySelector('.summary').appendChild(guidance);
-                        // Instant-load previous kanban board if available
-                        if (data.cached_canvas) {
-                            renderKanban(data.cached_canvas, true);
-                        }
                         break;
-                        
+
+                    case 'kanban':
+                        morph(kanbanLive, data.html);
+                        kanbanContainer.style.display = 'block';
+                        break;
+
                     case 'todo':
-                        // Hide spinner once results start flowing — the count is the progress indicator now
+                        // One card streamed in during a full scan — append as-is
                         loadingEl.style.display = 'none';
-                        const todoEl = createTodoElement(data.todo);
-                        todosContainer.appendChild(todoEl);
+                        todosContainer.insertAdjacentHTML('beforeend', data.html);
+                        if (todosContainer.lastElementChild) reRenderLinks(todosContainer.lastElementChild);
                         inlineCountLinkEl.textContent = `Found ${data.count} TODO items so far...`;
                         break;
-                        
-                    case 'todo_md_files':
-                        // Show TODO.md files, update spinner to reflect progress
-                        loadingEl.querySelector('span').textContent = 'Scanning code for inline TODOs...';
-                        todoMdFilesContainer.style.display = 'block';
 
-                        // Add TODO.md files to the page and surface count in the summary
-                        if (data.files && data.files.length > 0) {
-                            const mdCount = data.files.length;
-                            todoMdSummaryEl.innerHTML = `<a href="#todo-md-files-container" style="--c:#0066cc; --td:none">${mdCount} TODO.md file${mdCount !== 1 ? 's' : ''} found</a> · `;
+                    case 'todos_list':
+                        // Full list fragment — cached, incremental, blame, and live paths
+                        loadingEl.style.display = 'none';
+                        morph(todosContainer, data.html);
+                        noResultsEl.style.display = data.count === 0 ? 'block' : 'none';
+                        inlineCountLinkEl.textContent = data.count === 0
+                            ? 'No inline TODO items found'
+                            : `Found ${data.count} TODO items ↓`;
+                        break;
+
+                    case 'todo_md_files':
+                        if (data.count > 0) {
+                            morph(todoMdFiles, data.html);
+                            todoMdFilesContainer.style.display = 'block';
+                            todoMdSummaryEl.innerHTML = `<a href="#todo-md-files-container" style="--c:#0066cc; --td:none">${data.count} TODO.md file${data.count !== 1 ? 's' : ''} found</a> · `;
                             todoMdSummaryEl.style.display = '';
-                            const countText = document.createElement('p');
-                            countText.textContent = `The repository contains ${mdCount} TODO.md file(s):`;
-                            todoMdFiles.appendChild(countText);
-                            
-                            data.files.forEach(mdFile => {
-                                const mdFileEl = createTodoMarkdownElement(mdFile);
-                                todoMdFiles.appendChild(mdFileEl);
-                            });
                         }
                         break;
-                        
+
                     case 'excluded':
                         if (data.items && data.items.length > 0) {
                             document.getElementById('excluded-count').textContent = data.items.length;
@@ -690,7 +536,6 @@
                         break;
 
                     case 'complete':
-                        // Mark the scan as complete
                         loadingEl.style.display = 'none';
                         if (data.count === 0) {
                             noResultsEl.style.display = 'block';
@@ -699,123 +544,37 @@
                             inlineCountLinkEl.textContent = `Found ${data.count} TODO items ↓`;
                         }
                         evtSource.close();
-                        // Show rescan bar and start watching for repo changes
-                        document.getElementById('rescan-bar').style.display = 'flex';
-                        if (data.repo_name) { watchForChanges(data.repo_name, data.source); }
-                        break;
-                        
-                    case 'kanban':
-                        // Render the fresh board — replaces stale cached version
-                        renderKanban(data.canvas, false);
-                        break;
-
-                    case 'blame':
-                        // Patch kanban cards and inline TODO items with author badges
-                        if (data.blame) {
-                            // Patch kanban cards via data-editor-link elements
-                            document.querySelectorAll('[data-editor-link]').forEach(a => {
-                                const key = a.dataset.filePath + ':' + a.dataset.lineNum;
-                                const info = data.blame[key];
-                                if (!info) return;
-                                const card = a.closest('.kanban-card');
-                                if (card && !card.querySelector('.card-author')) {
-                                    const badge = document.createElement('span');
-                                    badge.className = 'card-author';
-                                    badge.textContent = info.author;
-                                    badge.title = info.date;
-                                    const loc = card.querySelector('.card-location');
-                                    if (loc) {
-                                        loc.appendChild(document.createTextNode(' '));
-                                        loc.appendChild(badge);
-                                    } else {
-                                        card.appendChild(badge);
-                                    }
-                                }
-                            });
-                            // Patch inline TODO items in the list view
-                            document.querySelectorAll('#todos-container .todo-item').forEach(item => {
-                                const fpEl = item.querySelector('.file-path');
-                                const lnEl = item.querySelector('.line-num');
-                                if (!fpEl || !lnEl) return;
-                                const fp = fpEl.childNodes[0]?.textContent?.trim();
-                                const lnMatch = lnEl.textContent.match(/\d+/);
-                                if (!fp || !lnMatch) return;
-                                const key = fp + ':' + lnMatch[0];
-                                const info = data.blame[key];
-                                if (info && !lnEl.querySelector('.card-author')) {
-                                    const badge = document.createElement('span');
-                                    badge.className = 'card-author';
-                                    badge.textContent = ` — ${info.author}`;
-                                    badge.title = info.date;
-                                    badge.style.cssText = 'font-size:0.85em; color:#888; font-style:italic';
-                                    lnEl.appendChild(badge);
-                                }
-                            });
-                        }
+                        const bar = document.getElementById('rescan-bar');
+                        if (bar) bar.style.display = 'flex';
+                        if (data.repo_name) startLive(data.repo_name);
                         break;
 
                     case 'error':
-                        // Display error message
                         loadingEl.style.display = 'none';
                         todoCountEl.textContent = `Error: ${data.message}`;
                         evtSource.close();
                         break;
                 }
-            };
-            
-            // Handle connection error
+            }
+
+            // --- Initial scan stream ---
+            const evtSource = new EventSource("{{ url_for('stream_data', repo_url=repo_url, shallow=shallow) }}");
+            evtSource.onmessage = e => handleEvent(JSON.parse(e.data));
             evtSource.onerror = function() {
                 loadingEl.style.display = 'none';
                 todoCountEl.textContent = "Error connecting to server stream";
                 evtSource.close();
             };
 
-            // Poll the repo fingerprint — live-refresh TODO.md on change,
-            // prompt full rescan only when commits change
-            function watchForChanges(repoName, source) {
-            let baseline = null;
-            const rescanMsg = document.getElementById('rescan-msg');
-            const rescanBtn = document.getElementById('rescan-btn');
-            const interval = setInterval(async () => {
-                try {
-                    const resp = await fetch(`/api/repo_fingerprint/${encodeURIComponent(repoName)}`);
-                    const data = await resp.json();
-                    if (baseline === null) {
-                        baseline = data;
-                        return;
-                    }
-                    const headChanged = data.fingerprint !== baseline.fingerprint;
-                    const todoChanged = data.todo_hash !== baseline.todo_hash;
-
-                    if (todoChanged) {
-                        // TODO.md changed — live refresh just that section
-                        baseline = data;
-                        const todoResp = await fetch(`/api/todo_files/${encodeURIComponent(repoName)}`);
-                        const todoData = await todoResp.json();
-                        const container = document.getElementById('todo-md-files');
-                        const outer = document.getElementById('todo-md-files-container');
-                        if (container && todoData.files && todoData.files.length > 0) {
-                            // Build off-screen, then swap atomically — avoids blank flash on empty response
-                            const frag = document.createDocumentFragment();
-                            const p = document.createElement('p');
-                            p.textContent = `The repository contains ${todoData.files.length} TODO.md file(s):`;
-                            frag.appendChild(p);
-                            todoData.files.forEach(f => frag.appendChild(createTodoMarkdownElement(f)));
-                            container.innerHTML = '';
-                            container.appendChild(frag);
-                            outer.style.display = 'block';
-                        }
-                        // If API returned empty, keep existing content — don't wipe
-                    }
-                    if (headChanged) {
-                        // Commit changed — prompt full rescan (independent of TODO refresh)
-                        rescanMsg.textContent = 'New changes detected in repository.';
-                        rescanBtn.style.backgroundColor = '#ff9800';
-                        rescanBtn.textContent = 'Rescan now';
-                        clearInterval(interval);
-                    }
-                } catch (e) { /* Silently ignore poll errors */ }
-            }, 3000);  // 3s for snappy local feedback
+            // --- Persistent live channel ---
+            // The server watches the repo (filesystem events for local repos,
+            // git poll for clones) and pushes fresh fragments; we morph them in.
+            // EventSource reconnects automatically after network hiccups.
+            function startLive(repo) {
+                const live = new EventSource(`/events/${encodeURIComponent(repo)}`);
+                live.onmessage = e => handleEvent(JSON.parse(e.data));
+                const msg = document.getElementById('rescan-msg');
+                if (msg) msg.textContent = 'Live — the board updates as files change.';
             }
         });
     </script>

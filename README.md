@@ -34,6 +34,20 @@ TodoScope implements the [Model Context Protocol](https://modelcontextprotocol.i
 | `GET /api/mpco/openapi.json` | Live OpenAPI 3.0 spec |
 | `POST /api/mpco/scan_repository` | Scan a repo, return all TODOs as JSON |
 
+### The todo-scope Skill
+
+TodoScope reads a simple TODO.md convention: sections map to kanban columns, bold checkbox items become cards, indented checkboxes become each card's checklist. The `todo-scope` Claude Code skill gets any repo's TODO.md into that shape — it bootstraps a missing TODO.md, restructures a messy one, groups stray one-liners into proper cards, and sets up `.todoscope-exclude.csv`.
+
+The skill ships in this repo at [.claude/skills/todo-scope/SKILL.md](.claude/skills/todo-scope/SKILL.md) and loads automatically for Claude Code sessions here. To use it in your own repos, install it globally:
+
+```bash
+mkdir -p ~/.claude/skills/todo-scope
+curl -o ~/.claude/skills/todo-scope/SKILL.md \
+  https://raw.githubusercontent.com/Startr/TodoScope/master/.claude/skills/todo-scope/SKILL.md
+```
+
+Then run `/todo-scope` in any project.
+
 ## What It Does
 
 TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten across repos. TodoScope finds them all:
@@ -54,6 +68,24 @@ TODOs pile up. They hide in comments, sit in TODO.md files, and get forgotten ac
 
 ## Installation
 
+### macOS app via Homebrew (recommended)
+
+```bash
+brew install --cask sage-is/apps/todoscope
+```
+
+A native desktop app: real window, Dock icon, menu-bar icon with Open and Quit.
+Releases are unsigned until our Apple Developer ID lands; the cask removes the
+quarantine bit at install so the app opens on first double-click. Data lives in
+`~/.todoscope/`.
+
+### macOS .app via DMG
+
+Download `TodoScope-<version>.dmg` from [Releases](https://github.com/Startr/TodoScope/releases), drag to Applications.
+The DMG is unsigned for now — macOS will refuse to open it until you clear
+quarantine: `xattr -dr com.apple.quarantine /Applications/TodoScope.app`.
+Prefer the Homebrew cask, which does this for you.
+
 ### Standalone binary (no Python required)
 
 Download from [GitHub Releases](https://github.com/Startr/TodoScope/releases) and run:
@@ -63,18 +95,6 @@ Download from [GitHub Releases](https://github.com/Startr/TodoScope/releases) an
 ```
 
 Opens your browser to `http://localhost:5000`. Data stored in `~/.todoscope/`.
-
-### macOS .app
-
-Download `TodoScope.dmg` from [Releases](https://github.com/Startr/TodoScope/releases), drag to Applications.
-Double-click → 🔭 appears in your menu bar → browser opens. Menu bar icon has Open Browser, Show Log, and Quit.
-
-### pip / uv
-
-```bash
-pip install todoscope    # or: uv tool install todoscope
-todoscope
-```
 
 ### Local development
 

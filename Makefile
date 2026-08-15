@@ -64,7 +64,8 @@ endef
         release things_clean \
         binary binary_dir binary_linux binary_windows \
         app dmg pypi_build pypi_publish clean_dist \
-        release_all docker_push
+        release_all docker_push \
+        tauri_cli sidecar_dir tauri_dev tauri_build tauri_dmg
 
 # --- Info Targets ---
 help:
@@ -268,6 +269,9 @@ binary:
 		--hidden-import=yaml \
 		--hidden-import=pystray \
 		--hidden-import=PIL \
+		--hidden-import=watchdog.observers \
+		--hidden-import=markdown_it \
+		--hidden-import=mdit_py_plugins.tasklists \
 		cli.py --distpath ../dist --workpath ../build
 	@echo "Binary at: dist/todoscope"
 
@@ -278,6 +282,9 @@ binary_dir:
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
 		--hidden-import=yaml \
+		--hidden-import=watchdog.observers \
+		--hidden-import=markdown_it \
+		--hidden-import=mdit_py_plugins.tasklists \
 		cli.py --distpath ../dist --workpath ../build
 	@echo "App directory at: dist/todoscope/"
 
@@ -360,6 +367,32 @@ dmg: app
 		"dist/TodoScope-$$(git describe --always --tag).dmg" \
 		"dist/TodoScope.app"
 	@echo "DMG created: dist/TodoScope-$$(git describe --always --tag).dmg"
+
+# --- Tauri Desktop Shell ---
+# The .app version comes from scanner/__init__.py, injected via --config;
+# nothing rewrites tauri.conf.json.
+APP_VERSION := $(shell sed -n "s/^__version__ = '\(.*\)'/\1/p" scanner/__init__.py)
+
+tauri_cli:
+	@command -v cargo-tauri >/dev/null 2>&1 || \
+		(echo "Installing tauri-cli..." && cargo install tauri-cli --version '^2' --locked)
+
+# Serve-mode sidecar: binary_dir is sufficient (tray/pystray never imported when args are passed)
+sidecar_dir: binary_dir
+
+tauri_dev: tauri_cli
+	@test -x dist/todoscope/todoscope || [ -n "$$TODOSCOPE_DEV_PORT" ] || $(MAKE) sidecar_dir
+	cd src-tauri && cargo tauri dev
+
+tauri_build: tauri_cli sidecar_dir
+	cd src-tauri && cargo tauri build --bundles app,dmg \
+		--config '{"version":"$(APP_VERSION)"}'
+
+tauri_dmg: tauri_build
+	@mkdir -p dist
+	@cp "$$(ls -t src-tauri/target/release/bundle/dmg/TodoScope_*.dmg | head -1)" \
+		"dist/TodoScope-$(TAG).dmg"
+	@echo "Desktop DMG at: dist/TodoScope-$(TAG).dmg"
 
 pypi_build:
 	@cd scanner && pipenv run python -m build --outdir $(PWD)/dist $(PWD)
