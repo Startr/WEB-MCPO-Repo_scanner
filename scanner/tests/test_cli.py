@@ -69,7 +69,9 @@ class TestCLIVersionAndHelp:
         )
         assert result.returncode == 0
         assert "todoscope" in result.stdout
-        assert "1.0.0" in result.stdout
+        # Read the version rather than pinning it — a release bump is not a test failure.
+        from scanner import __version__
+        assert __version__ in result.stdout
 
     def test_help_output(self):
         result = subprocess.run(

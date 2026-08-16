@@ -1,404 +1,220 @@
 # Contributor Guide
 
-Welcome to the TODO Scanner project! This guide will help you get started contributing to our codebase.
+How to set up, test, and land changes in TodoScope.
 
 ## Getting Started
 
 ### Prerequisites
-- Python 3.12 or higher
+
+- Python 3.12 (the Pipfile pins 3.12; the package itself requires >=3.11)
 - Git
-- pipenv (install with `pip install pipenv`)
+- pipenv (`pip install pipenv`)
 
-### Development Setup
+### Setup
 
-1. **Fork and Clone**
-   ```bash
-   git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
-   cd GIT-TodoScope
-   ```
-
-2. **Set up Development Environment**
-   ```bash
-   cd scanner
-   pipenv install --dev
-   pipenv shell
-   ```
-
-3. **Verify Setup**
-   ```bash
-   make test
-   make run
-   ```
-
-4. **Visit Application**
-   Open http://localhost:5000 to verify the application is running
-
-## Development Workflow
-
-We follow the **Plan-Document-Execute-Verify** cycle outlined in [CONVENTION.instructions.md](../CONVENTION.instructions.md).
-
-### Before Starting Work
-
-**ALWAYS** add your task to [TODO.md](../TODO.md) first:
-
-```markdown
-## [Category] TODOs
-- [ ] **[Your Task Name]**: Brief description #relevant #tags
-  - [ ] Subtask 1
-  - [ ] Subtask 2
-  - [ ] Write tests
-  - [ ] Update documentation
+```bash
+git clone https://github.com/Startr/TodoScope.git GIT-TodoScope
+cd GIT-TodoScope
+cd scanner && pipenv install --dev && cd ..
+make test            # verify the suite passes
+make install_hooks   # optional: installs scripts/hooks (post-checkout)
 ```
 
-### Making Changes
+### Run the app
 
-1. **Create a Branch**
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Follow Code Standards** (see below)
-
-3. **Write Tests**
-   - Add unit tests in `scanner/tests/`
-   - Test your changes: `make test`
-
-4. **Update Documentation**
-   - Update docstrings
-   - Update relevant markdown files
-   - Update API documentation if needed
-
-5. **Commit Changes**
-   ```bash
-   git add .
-   git commit -m "feat: add your feature description"
-   ```
-
-## Code Standards
-
-### Python Style Guide
-
-We follow PEP 8 with these specific guidelines:
-
-#### Imports
-```python
-# Standard library imports first
-import os
-import sys
-from typing import List, Dict, Optional
-
-# Third-party imports
-import flask
-from git import Repo
-
-# Local imports
-from .error_handling import safe_operation, RepositoryError
+```bash
+make dev_run
 ```
 
-#### Function Documentation
-```python
-def scan_repository(repo_url: str, patterns: Optional[List[str]] = None) -> Dict:
-    """
-    Scan a repository for TODO comments and return structured results.
-    
-    Args:
-        repo_url: URL of the git repository to scan
-        patterns: Optional list of patterns to search for (defaults to TODO, FIXME, BUG, NOTE)
-        
-    Returns:
-        Dictionary containing repository info and found TODOs
-        
-    Raises:
-        RepositoryError: If repository cannot be cloned or accessed
-        ValueError: If repo_url is invalid or empty
-        
-    Example:
-        >>> results = scan_repository("https://github.com/user/repo.git")
-        >>> print(f"Found {len(results['todos'])} TODOs")
-    """
-    # Implementation here
+Starts the Flask dev server (reloader on) at `http://localhost:5000`. With no
+`scanner/access_keys.csv` present, auth is disabled — open access for local dev.
+
+To run the CLI instead (what the packaged `todoscope` command executes):
+
+```bash
+PIPENV_PIPFILE=scanner/Pipfile pipenv run python -m scanner.cli --no-browser
 ```
 
-#### Class Documentation
-```python
-class TodoItem:
-    """
-    Represents a TODO item found in a source code file.
-    
-    Attributes:
-        file_path: Relative path to the file containing the TODO
-        line_num: Line number where the TODO was found (1-indexed)
-        todo_text: The actual TODO comment text
-        next_line: Optional context line following the TODO
-        
-    Example:
-        >>> todo = TodoItem("src/main.py", 42, "TODO: Fix this bug", "def broken_function():")
-        >>> print(f"TODO at {todo.file_path}:{todo.line_num}")
-    """
-    
-    def __init__(self, file_path: str, line_num: int, todo_text: str, next_line: Optional[str] = None):
-        self.file_path = file_path
-        self.line_num = line_num
-        self.todo_text = todo_text
-        self.next_line = next_line
+## Repo Layout
+
+All Python lives in the `scanner/` package. The root `app.py` is a thin shim
+that re-exports `scanner.app` for Flask and WSGI hosts.
+
+```text
+app.py                  # shim: `from scanner.app import app`
+pyproject.toml          # packaging; version from scanner.__version__;
+                        # entry point: todoscope = scanner.cli:main
+Makefile                # test, dev_run, docker (it_*), binaries, tauri_*, release
+scanner/
+  app.py                # Flask app: routes, auth, scan engine, SSE, tool API
+  cli.py                # `todoscope` CLI: serve, --tray, tunnels
+  error_handling.py     # error classes + decorators (safe_operation, ...)
+  kanban.py             # TODO.md -> kanban parsing; source of truth for the board convention
+  fragments.py          # server-rendered board fragments for live updates
+  live.py               # per-repo filesystem watchdog feeding SSE
+  templates/            # Jinja templates; partials/ holds live-board fragments
+  static/
+  tests/                # pytest suite
+  Pipfile               # runtime + dev deps (pipenv)
+  scan_state/           # per-repo incremental scan cache (JSON)
+  repositories/         # cloned repos during local dev
+tools/run_tests.sh      # test runner invoked by `make test`
+scripts/                # build/release scripts, `todoscope` Docker wrapper, git hooks
+src-tauri/              # Tauri v2 desktop shell
+docs/
 ```
 
-#### Error Handling
-Always use our error handling decorators:
+## Before Starting Work
+
+Add your task to [TODO.md](../TODO.md) first. The board format is documented
+in [TODO_CONVENTION.md](TODO_CONVENTION.md): sections map to kanban columns,
+bold checkbox items are cards, indented checkboxes are the card's checklist.
+Do not invent variations; `scanner/kanban.py` is the parser and the authority.
+
+The wider Plan-Document-Execute-Verify cycle is in
+[CONVENTION.instructions.md](../CONVENTION.instructions.md).
+
+## Code Style
+
+Match the surrounding code. In practice:
+
+- PEP-8-ish: 4-space indent, `snake_case`, `CapWords` classes.
+- Terse comments and one-line docstrings. Say what, skip the essay. Example
+  from the codebase: `"""Return set of valid keys from access_keys.csv. Empty set = auth disabled."""`
+- Import order: stdlib, third-party, local — separated by blank lines.
+- Type hints where they clarify, not everywhere.
+
+### Error handling
+
+Use the decorators from `scanner/error_handling.py`. `safe_operation` is a
+decorator factory — call it:
 
 ```python
-from .error_handling import safe_operation, mpco_response
+from scanner.error_handling import safe_operation
 
-@safe_operation
+@safe_operation(default_return=None)
 def risky_operation():
-    """Operation that might fail."""
-    # This will automatically handle exceptions and provide user-friendly errors
-    pass
-
-@app.route('/api/mpco/endpoint', methods=['POST'])
-@mpco_response
-def api_endpoint():
-    """API endpoint with standardized response format."""
-    # This will format responses according to MCP standards
-    return {"result": "success"}
+    ...
 ```
 
-### HTML/CSS Standards
+JSON tool-API action endpoints in `scanner/app.py` (`scan_repository`,
+`list_repositories`, `pull_repository`) wrap responses with the `mcpo_response`
+decorator (defined in `scanner/app.py`, not `error_handling.py`). The manifest,
+spec, and streaming endpoints return their responses directly — a NDJSON stream
+can't be wrapped by a jsonify-style decorator.
 
-#### Template Structure
-```html
-{% extends "base.html" %}
+### Naming: the tool API is not MCP
 
-{% block title %}Page Title{% endblock %}
-
-{% block content %}
-<main class="container">
-    <section class="section">
-        <h1>Semantic Heading</h1>
-        <!-- Content here -->
-    </section>
-</main>
-{% endblock %}
-
-{% block scripts %}
-<script>
-    // Page-specific JavaScript
-</script>
-{% endblock %}
-```
-
-#### CSS Organization
-- Use semantic class names: `.todo-list`, `.scan-results`
-- Follow BEM methodology where appropriate: `.block__element--modifier`
-- Use CSS custom properties for theming: `var(--primary-color)`
-- Mobile-first responsive design
-
-### Testing Standards
-
-#### Unit Tests
-```python
-import pytest
-from scanner.app import TodoItem, find_todos
-
-class TestTodoItem:
-    """Test TodoItem class functionality."""
-    
-    def test_todo_item_creation(self):
-        """Test creating a TodoItem with all parameters."""
-        todo = TodoItem("test.py", 1, "TODO: Test", "next line")
-        assert todo.file_path == "test.py"
-        assert todo.line_num == 1
-        assert todo.todo_text == "TODO: Test"
-        assert todo.next_line == "next line"
-    
-    def test_todo_item_without_next_line(self):
-        """Test creating a TodoItem without next_line parameter."""
-        todo = TodoItem("test.py", 1, "TODO: Test")
-        assert todo.next_line is None
-
-class TestFindTodos:
-    """Test TODO finding functionality."""
-    
-    def test_find_todos_in_file(self, tmp_path):
-        """Test finding TODOs in a sample file."""
-        # Create temporary file with TODOs
-        test_file = tmp_path / "test.py"
-        test_file.write_text("# TODO: This is a test\nprint('hello')")
-        
-        todos = find_todos(str(tmp_path))
-        assert len(todos) == 1
-        assert "TODO: This is a test" in todos[0].todo_text
-```
-
-#### Integration Tests
-```python
-def test_api_scan_repository(client):
-    """Test the scan repository API endpoint."""
-    response = client.post('/api/mpco/scan_repository', 
-                          json={'repo_url': 'https://github.com/test/repo.git'})
-    assert response.status_code == 200
-    data = response.get_json()
-    assert 'content' in data
-```
-
-## Pull Request Process
-
-### Before Submitting
-
-1. **Update TODO.md**
-   - Mark completed items as done: `- [x]`
-   - Add any new tasks discovered during development
-
-2. **Run Full Test Suite**
-   ```bash
-   make test
-   make lint  # If linting is available
-   ```
-
-3. **Update Documentation**
-   - API changes: Update `docs/API_REFERENCE.md`
-   - Architecture changes: Update `docs/ARCHITECTURE.md`
-   - New features: Update `README.md`
-
-4. **Self-Review**
-   - Check that all TODO items in your branch are completed
-   - Verify code follows style guidelines
-   - Ensure all tests pass
-
-### Pull Request Template
-
-When creating a pull request, include:
-
-```markdown
-## Description
-Brief description of what this PR accomplishes.
-
-## Changes Made
-- [ ] Feature/fix implemented
-- [ ] Tests added/updated
-- [ ] Documentation updated
-- [ ] TODO.md updated
+The `/api/mcpo/*` surface is a plugin-style manifest + OpenAPI REST API. It is
+**not** the Model Context Protocol. Never call it MCP in code, comments, docs,
+or UI copy — say "tool API" or "manifest + OpenAPI". The route namespace is
+`mcpo` — renamed 2026-08-15 from the founding-commit typo `mpco`.
 
 ## Testing
-- [ ] All existing tests pass
-- [ ] New tests added for new functionality
-- [ ] Manual testing completed
 
-## TODO Items Completed
-Link to the TODO items this PR addresses:
-- Closes #123 (if using GitHub issues)
-- Completes TODO item: "Implement XYZ feature"
-
-## Screenshots (if applicable)
-Include screenshots for UI changes.
-```
-
-### Review Process
-
-1. **Automated Checks**
-   - Tests must pass
-   - Code style checks (if implemented)
-
-2. **Code Review**
-   - At least one maintainer review required
-   - Address all feedback before merging
-
-3. **Final Verification**
-   - Verify TODO.md is updated
-   - Confirm documentation is current
-   - Check that the change follows our conventions
-
-## Commit Message Guidelines
-
-We use Conventional Commits:
-
-- `feat: add new TODO pattern recognition`
-- `fix: resolve repository cloning timeout`
-- `docs: update API documentation`
-- `test: add unit tests for error handling`
-- `refactor: simplify scanner logic`
-- `style: fix PEP 8 violations`
-- `chore: update dependencies`
-
-### Commit Message Format
-```
-type(scope): description
-
-Optional longer description explaining the change.
-
-Closes #123
-```
-
-## Issue Reporting
-
-### Bug Reports
-Include:
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment details (Python version, OS)
-- Error messages and stack traces
-- Relevant TODO.md items if applicable
-
-### Feature Requests
-Include:
-- Clear description of desired functionality
-- Use cases and benefits
-- Proposed implementation approach
-- Willingness to contribute the implementation
-
-## Getting Help
-
-### Resources
-- [Development Workflow](DEVELOPMENT_WORKFLOW.md)
-- [Architecture Overview](ARCHITECTURE.md)
-- [API Reference](API_REFERENCE.md)
-- [Project README](../README.md)
-
-### Communication
-- Check existing [TODO.md](../TODO.md) for known issues
-- Review closed pull requests for similar changes
-- Open an issue for questions or clarifications
-
-### Common Development Tasks
-
-#### Running Tests
 ```bash
-# Run all tests
-make test
-
-# Run specific test file
-python -m pytest scanner/tests/test_error_handling.py
-
-# Run with coverage
-python -m pytest --cov=scanner
+make test            # full suite
+make test-error      # error handling tests only
+make test-unit       # everything else
+make test-coverage   # with coverage report
+make test-verbose    # -v
 ```
 
-#### Adding New Dependencies
+`make test` runs `tools/run_tests.sh`, which cds to the repo root, sets
+`PIPENV_PIPFILE=scanner/Pipfile`, and runs pytest via pipenv. To run one file:
+
 ```bash
-# Add runtime dependency
-pipenv install package_name
+PIPENV_PIPFILE=scanner/Pipfile pipenv run pytest scanner/tests/test_health.py
+```
 
-# Add development dependency  
-pipenv install --dev package_name
+### Adding tests
 
-# Update lock file
+Put `test_*.py` files under `scanner/tests/`. The runner picks them up
+automatically.
+
+Import convention: tests run from the repo root and import the app as
+`scanner.app`. Import it *inside* the fixture or test, after any
+monkeypatching, so module-level state (like `ACCESS_KEYS_FILE`) can be
+redirected first:
+
+```python
+import pytest
+
+@pytest.fixture
+def client():
+    from scanner.app import app
+    app.config['TESTING'] = True
+    with app.test_client() as c:
+        yield c
+
+def test_health_ok(client):
+    resp = client.get('/health')
+    assert resp.status_code == 200
+```
+
+See `scanner/tests/test_login_remember.py` for the monkeypatch-then-import
+pattern.
+
+## Branches and Pull Requests
+
+- `develop` is the working branch. Branch from it, PR back into it.
+- `master` is the release branch. Only release merges land there.
+
+```bash
+git checkout develop
+git pull
+git checkout -b feature/your-feature-name
+```
+
+Before opening a PR:
+
+1. `make test` passes.
+2. TODO.md updated — completed items marked `- [x]`, new tasks added.
+3. Docs updated where your change touches them: `docs/API_REFERENCE.md` for
+   API changes, `docs/ARCHITECTURE.md` for structural ones, `README.md` for
+   user-facing features.
+
+PR description: what it does, what changed, how it was tested, which TODO.md
+items it completes. Include screenshots for UI changes. At least one
+maintainer review before merge.
+
+## Commit Messages
+
+Conventional Commits, as in the existing history:
+
+```text
+feat(cli): add session lock file and update settings for version check
+fix(release): repair v1.0.0 release pipeline
+docs: update README + TODO.md for v1.0 release readiness
+test: add unit tests for error handling
+chore: update dependencies
+```
+
+Format: `type(scope): description`, optional body, `Closes #123` where an
+issue exists.
+
+## Dependencies
+
+Deps live in `scanner/Pipfile`:
+
+```bash
+cd scanner
+pipenv install package_name          # runtime
+pipenv install --dev package_name    # dev-only
 pipenv lock
 ```
 
-#### Database Migrations (Future)
-```bash
-# When database is added
-flask db init
-flask db migrate -m "Description"
-flask db upgrade
-```
+Commit both `Pipfile` and `Pipfile.lock`.
 
-## Code of Conduct
+## Issue Reporting
 
-- Be respectful and inclusive
-- Follow the established conventions
-- Help maintain code quality
-- Document your changes thoroughly
-- Test your code before submitting
+Bugs: steps to reproduce, expected vs actual, Python version and OS, stack
+traces. Features: what and why, proposed approach, whether you'll build it.
 
-Thank you for contributing to TODO Scanner! 🚀
+## Resources
+
+- [Development Workflow](DEVELOPMENT_WORKFLOW.md)
+- [Architecture Overview](ARCHITECTURE.md)
+- [API Reference](API_REFERENCE.md)
+- [TODO.md Convention](TODO_CONVENTION.md)
+- [Project README](../README.md)

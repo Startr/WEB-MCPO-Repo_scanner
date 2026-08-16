@@ -1,0 +1,22 @@
+{#- Rendered server-side; the client morphs this into #kanban-live. -#}
+{% if stale %}<div class="kanban-stale-banner">Showing last known board — scan in progress…</div>{% endif %}
+<div id="kanban-board" class="kanban-board{% if stale %} kanban-stale{% endif %}">
+    {% for col in columns %}
+    <div class="kanban-column {{ col.color_class }}">
+        <div class="kanban-column-header">{{ col.label }} <span class="kanban-column-count">{{ col.cards|length }}</span></div>
+        {% for card in col.cards %}
+        <div class="kanban-card{% if card.inline %} kanban-card-inline{% endif %}" id="card-{{ card.id }}">
+            {{ card.html }}
+            {% if card.file_path and card.line_num %}
+            <span class="card-location">
+                <a data-editor-link="1" data-file-path="{{ card.file_path }}" data-line-num="{{ card.line_num }}"
+                   target="_blank" rel="noopener noreferrer"
+                   style="--c:#0066cc; --td:none; display:none">{% if card.inline %}{{ card.file_path }}:{{ card.line_num }}{% else %}{{ card.file_path }}:L{{ card.line_num }}{% endif %}</a>
+                {%- if card.author %} <span class="card-author" title="{{ card.author.date }}">{{ card.author.author }}</span>{% endif %}
+            </span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>

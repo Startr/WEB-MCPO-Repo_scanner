@@ -6,8 +6,8 @@ set -euo pipefail
 #   - macOS binary:  native PyInstaller
 #   - Linux binary:  Docker (cdrx/pyinstaller-linux)
 #   - Windows .exe:  Docker (cdrx/pyinstaller-windows + Wine)
-#   - macOS .app:    PyInstaller --windowed
-#   - DMG:           create-dmg with styled background
+#   - macOS .app:    Tauri shell + PyInstaller onedir sidecar
+#   - DMG:           Tauri bundler with styled background
 #   - Docker image:  docker build + push to GHCR
 #   - PyPI wheel:    python -m build + twine upload
 #
@@ -32,7 +32,7 @@ echo ""
 echo "→ Pre-flight checks..."
 command -v gh >/dev/null || { echo "Error: gh CLI not found. Install: brew install gh"; exit 1; }
 command -v docker >/dev/null || { echo "Error: Docker not found."; exit 1; }
-command -v create-dmg >/dev/null || { echo "Error: create-dmg not found. Install: brew install create-dmg"; exit 1; }
+command -v cargo >/dev/null || { echo "Error: cargo not found. Install: brew install rust"; exit 1; }
 gh auth status >/dev/null 2>&1 || { echo "Error: gh not authenticated. Run: gh auth login"; exit 1; }
 echo "  ✓ All tools available"
 
@@ -56,10 +56,10 @@ echo "→ Building macOS ARM64 binary..."
 make binary
 echo "  ✓ dist/todoscope"
 
-# --- Build macOS .app + DMG ---
+# --- Build macOS .app + DMG (Tauri shell, onedir sidecar) ---
 echo ""
-echo "→ Building macOS .app + DMG..."
-make dmg
+echo "→ Building Tauri desktop .app + DMG..."
+make tauri_dmg
 echo "  ✓ dist/TodoScope-${VERSION}.dmg"
 
 # --- Build Linux binary (Docker) ---
@@ -69,10 +69,18 @@ make binary_linux
 echo "  ✓ dist/linux/todoscope"
 
 # --- Build Windows binary (Docker + Wine) ---
+# Wine in cdrx/pyinstaller-windows breaks under both Rosetta and QEMU on
+# Apple Silicon hosts (Wine + Linux 6.12 kernel + amd64-on-arm64 emulation).
+# Don't fail the whole release if Windows can't build — ship the rest and
+# the upload step will skip Windows artifacts that don't exist.
 echo ""
 echo "→ Building Windows x86_64 .exe (Docker + Wine)..."
-make binary_windows
-echo "  ✓ dist/windows/todoscope.exe"
+if make binary_windows; then
+    echo "  ✓ dist/windows/todoscope.exe"
+else
+    echo "  ⚠  Windows build failed — continuing without Windows artifact."
+    echo "     (Wine + Apple Silicon emulator issue; revisit in v1.0.1.)"
+fi
 
 # --- Build + push Docker image ---
 echo ""
@@ -96,12 +104,27 @@ fi
 
 # --- Create or update GitHub Release (idempotent — safe to re-run) ---
 echo ""
-ARTIFACTS=(
-    "dist/todoscope#todoscope-macos-arm64"
-    "dist/linux/todoscope#todoscope-linux-x86_64"
-    "dist/windows/todoscope.exe#todoscope-windows-x86_64.exe"
-    "dist/TodoScope-${VERSION}.dmg#TodoScope-${VERSION}.dmg"
-)
+# Stage artifacts in a temp dir with distinct filenames. The macOS and Linux
+# binaries both have basename "todoscope" — uploading both as "todoscope"
+# causes a 404 from GitHub's asset endpoint on the second upload.
+STAGE=$(mktemp -d)
+trap 'rm -rf "$STAGE"' EXIT
+
+stage() {
+    local src="$1" dst_name="$2"
+    if [[ -f "$src" ]]; then
+        cp "$src" "$STAGE/$dst_name"
+        ARTIFACTS+=("$STAGE/$dst_name")
+    else
+        echo "  ⏭  Skipping missing artifact: $src"
+    fi
+}
+
+ARTIFACTS=()
+stage "dist/todoscope"                       "todoscope-macos-arm64"
+stage "dist/linux/todoscope"                 "todoscope-linux-x86_64"
+stage "dist/windows/todoscope.exe"           "todoscope-windows-x86_64.exe"
+stage "dist/TodoScope-${VERSION}.dmg"        "TodoScope-${VERSION}.dmg"
 
 if gh release view "$TAG" >/dev/null 2>&1; then
     echo "→ Release $TAG exists — uploading/replacing artifacts..."
@@ -117,13 +140,25 @@ else
 fi
 echo "  https://github.com/Startr/TodoScope/releases/tag/$TAG"
 
-# --- Update Homebrew tap ---
+# --- Update Homebrew tap (Sage-is/homebrew-apps) ---
 echo ""
-read -rp "  Update homebrew-apps Formula + Cask? [y/N] " brew_answer
+read -rp "  Update homebrew-apps cask? [y/N] " brew_answer
 if [[ "${brew_answer:-n}" =~ ^[Yy]$ ]]; then
-    echo "  → Updating homebrew-apps SHA256..."
-    # This will be implemented when the Homebrew tap exists
-    echo "  ⚠  homebrew-apps update not yet implemented (Phase 7)"
+    echo "  → Updating Casks/todoscope.rb in Sage-is/homebrew-apps..."
+    TAP_DIR=$(mktemp -d)
+    gh repo clone Sage-is/homebrew-apps "$TAP_DIR" -- --depth 1
+    DMG="dist/TodoScope-${VERSION}.dmg"
+    SHA=$(shasum -a 256 "$DMG" | awk '{print $1}')
+    CASK_VERSION="${TAG#v}"
+    sed -i '' \
+        -e "s|^  version .*|  version \"$CASK_VERSION\"|" \
+        -e "s|^  sha256 .*|  sha256 \"$SHA\"|" \
+        "$TAP_DIR/Casks/todoscope.rb"
+    git -C "$TAP_DIR" add Casks/todoscope.rb
+    git -C "$TAP_DIR" commit -m "todoscope: update to $TAG"
+    git -C "$TAP_DIR" push
+    rm -rf "$TAP_DIR"
+    echo "  ✓ Cask updated: brew install --cask sage-is/apps/todoscope"
 else
     echo "  ⏭  Skipped Homebrew update"
 fi
@@ -137,5 +172,5 @@ echo ""
 echo "  GitHub:  https://github.com/Startr/TodoScope/releases/tag/$TAG"
 echo "  PyPI:    https://pypi.org/project/todoscope/"
 echo "  Docker:  docker pull ghcr.io/startr/todoscope:$TAG"
-echo "  Brew:    brew install startr/apps/todoscope"
+echo "  Brew:    brew install --cask sage-is/apps/todoscope"
 echo ""

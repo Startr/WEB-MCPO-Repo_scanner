@@ -1,0 +1,17 @@
+{#- TODO.md file sections. Morphed into #todo-md-files. -#}
+{% if files %}
+<p>The repository contains {{ files|length }} TODO.md file(s):</p>
+{% for f in files %}
+<div class="todo-md-file" id="md-{{ f.tid }}" style="--bgc:#f0f8ff; --p:15px; --mb:15px; --radius:5px; --bl:4px solid #007bff; --shadow:6">
+    <div class="file-path" style="--weight:bold; --c:#333; --mb:10px">{{ f.file_path }}<a
+            data-editor-link="1" data-file-path="{{ f.file_path }}" data-line-num=""
+            target="_blank" rel="noopener noreferrer"
+            style="--c:#0066cc; --td:none; --fs:0.8em; --ml:10px; --weight:normal; display:none">Open in editor</a></div>
+    {% if f.html %}
+    <div class="markdown-content">{{ f.html }}</div>
+    {% else %}
+    <div style="--c:#999; --p:10px;">Couldn't read this file.</div>
+    {% endif %}
+</div>
+{% endfor %}
+{% endif %}

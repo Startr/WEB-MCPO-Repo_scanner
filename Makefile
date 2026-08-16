@@ -64,7 +64,8 @@ endef
         release things_clean \
         binary binary_dir binary_linux binary_windows \
         app dmg pypi_build pypi_publish clean_dist \
-        release_all docker_push
+        release_all docker_push \
+        tauri_cli sidecar_dir tauri_dev tauri_build tauri_dmg
 
 # --- Info Targets ---
 help:
@@ -268,6 +269,9 @@ binary:
 		--hidden-import=yaml \
 		--hidden-import=pystray \
 		--hidden-import=PIL \
+		--hidden-import=watchdog.observers \
+		--hidden-import=markdown_it \
+		--hidden-import=mdit_py_plugins.tasklists \
 		cli.py --distpath ../dist --workpath ../build
 	@echo "Binary at: dist/todoscope"
 
@@ -278,6 +282,9 @@ binary_dir:
 		--add-data "../scanner/templates:scanner/templates" \
 		--add-data "../scanner/static:scanner/static" \
 		--hidden-import=yaml \
+		--hidden-import=watchdog.observers \
+		--hidden-import=markdown_it \
+		--hidden-import=mdit_py_plugins.tasklists \
 		cli.py --distpath ../dist --workpath ../build
 	@echo "App directory at: dist/todoscope/"
 
@@ -287,19 +294,24 @@ binary_dir:
 
 binary_linux:
 	@echo "Building Linux x86_64 binary via Docker..."
+	@mkdir -p dist/linux
 	docker run --rm -v "$(PWD):/src" cdrx/pyinstaller-linux \
 		"pyinstaller --onefile --name todoscope \
+		--distpath /src/dist/linux \
+		--workpath /src/build/linux \
 		--add-data 'scanner/templates:scanner/templates' \
 		--add-data 'scanner/static:scanner/static' \
 		--hidden-import=yaml \
 		scanner/cli.py"
-	@mkdir -p dist/linux
-	@mv dist/todoscope dist/linux/todoscope 2>/dev/null || true
 	@echo "Linux binary at: dist/linux/todoscope"
 
 binary_windows:
-	@echo "Building Windows x86_64 .exe via Docker (Wine)..."
-	docker run --rm -v "$(PWD):/src" cdrx/pyinstaller-windows \
+	@echo "Building Windows x86_64 .exe via Docker (Wine on QEMU)..."
+	@echo "  Switching amd64 emulator: Rosetta -> QEMU (Wine incompatible with Rosetta)"
+	@docker run --privileged --rm tonistiigi/binfmt --uninstall rosetta,rosetta-wrapper >/dev/null 2>&1 || true
+	@docker run --privileged --rm tonistiigi/binfmt --install amd64 >/dev/null 2>&1 || true
+	@trap 'echo "  Restoring Rosetta amd64 emulation..."; docker run --privileged --rm tonistiigi/binfmt --install all >/dev/null 2>&1 || true' EXIT; \
+	docker run --rm --platform linux/amd64 -v "$(PWD):/src" cdrx/pyinstaller-windows \
 		"pyinstaller --onefile --name todoscope \
 		--add-data 'scanner/templates;scanner/templates' \
 		--add-data 'scanner/static;scanner/static' \
@@ -356,11 +368,37 @@ dmg: app
 		"dist/TodoScope.app"
 	@echo "DMG created: dist/TodoScope-$$(git describe --always --tag).dmg"
 
+# --- Tauri Desktop Shell ---
+# The .app version comes from scanner/__init__.py, injected via --config;
+# nothing rewrites tauri.conf.json.
+APP_VERSION := $(shell sed -n "s/^__version__ = '\(.*\)'/\1/p" scanner/__init__.py)
+
+tauri_cli:
+	@command -v cargo-tauri >/dev/null 2>&1 || \
+		(echo "Installing tauri-cli..." && cargo install tauri-cli --version '^2' --locked)
+
+# Serve-mode sidecar: binary_dir is sufficient (tray/pystray never imported when args are passed)
+sidecar_dir: binary_dir
+
+tauri_dev: tauri_cli
+	@test -x dist/todoscope/todoscope || [ -n "$$TODOSCOPE_DEV_PORT" ] || $(MAKE) sidecar_dir
+	cd src-tauri && cargo tauri dev
+
+tauri_build: tauri_cli sidecar_dir
+	cd src-tauri && cargo tauri build --bundles app,dmg \
+		--config '{"version":"$(APP_VERSION)"}'
+
+tauri_dmg: tauri_build
+	@mkdir -p dist
+	@cp "$$(ls -t src-tauri/target/release/bundle/dmg/TodoScope_*.dmg | head -1)" \
+		"dist/TodoScope-$(TAG).dmg"
+	@echo "Desktop DMG at: dist/TodoScope-$(TAG).dmg"
+
 pypi_build:
-	@cd scanner && pipenv run python -m build --outdir ../dist
+	@cd scanner && pipenv run python -m build --outdir $(PWD)/dist $(PWD)
 
 pypi_publish: pypi_build
-	@cd scanner && pipenv run twine upload ../dist/*.whl ../dist/*.tar.gz
+	@cd scanner && pipenv run twine upload $(PWD)/dist/*.whl $(PWD)/dist/*.tar.gz
 
 clean_dist:
 	rm -rf dist/ build/

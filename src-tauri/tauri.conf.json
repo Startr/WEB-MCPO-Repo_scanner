@@ -1,0 +1,29 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "TodoScope",
+  "version": "1.1.0",
+  "identifier": "com.startr.todoscope",
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["app", "dmg"],
+    "icon": ["icons/icon.png", "icons/icon.icns"],
+    "macOS": {
+      "minimumSystemVersion": "12.0",
+      "files": {
+        "MacOS/todoscope-server": "../dist/todoscope"
+      },
+      "dmg": {
+        "background": "../assets/dmg_background.png",
+        "windowSize": { "width": 660, "height": 400 },
+        "appPosition": { "x": 165, "y": 190 },
+        "applicationFolderPosition": { "x": 495, "y": 190 }
+      }
+    }
+  }
+}

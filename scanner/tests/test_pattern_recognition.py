@@ -2,7 +2,7 @@ import unittest
 import os
 import tempfile
 import shutil
-from app import TodoItem, find_todos
+from scanner.app import TodoItem, find_todos
 from unittest.mock import patch
 
 class TestTodoPatternRecognition(unittest.TestCase):
@@ -20,8 +20,8 @@ class TestTodoPatternRecognition(unittest.TestCase):
             f.write(content)
         return file_path
         
-    @patch('app.is_git_ignored')
-    @patch('app.is_text_file')
+    @patch('scanner.app.is_git_ignored')
+    @patch('scanner.app.is_text_file')
     def test_basic_todo_patterns(self, mock_is_text_file, mock_is_git_ignored):
         # Make sure our file is treated as a text file and not git ignored
         mock_is_text_file.return_value = True

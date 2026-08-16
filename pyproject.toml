@@ -8,6 +8,9 @@ requires-python = ">=3.11"
 dependencies = [
     "flask>=3.1.0",
     "pyyaml",
+    "markdown-it-py",
+    "mdit-py-plugins",
+    "watchdog",
 ]
 
 [project.scripts]

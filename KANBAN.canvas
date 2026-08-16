@@ -3,7 +3,7 @@
   "nodes": [
     {
       "color": "4",
-      "height": 2410,
+      "height": 1600,
       "id": "col-backlog",
       "label": "Backlog",
       "type": "group",
@@ -12,16 +12,37 @@
       "y": 0
     },
     {
+      "children": [
+        {
+          "checked": true,
+          "line_num": 62,
+          "tags": [],
+          "text": "The intended name is MCPO (old repo `Startr/WEB-MCPO-Repo_scanner`, \"MCPo API\" in Completed and README); routes shipped letter-swapped as `/api/mpco/*` in the founding commit `eb67dac` (2025-05-22) \u2014 census in [board-dossiers](docs/board-dossiers.md)"
+        },
+        {
+          "checked": true,
+          "line_num": 63,
+          "tags": [],
+          "text": "Rename routes to `/api/mcpo/*` \u2014 done 2026-08-15 as a clean break (decided: no redirects, old paths dead); code + templates by hand, six docs via opencode delegate-edit (78s, diff verified), screenshots retaken, suite green"
+        },
+        {
+          "checked": false,
+          "line_num": 64,
+          "tags": [],
+          "text": "Decide the fork: real MCP server endpoint (JSON-RPC `tools/list` + `tools/call`) or retire the MCP term project-wide \u2014 deferred 2026-08-15; UI copy says \"tool API\" either way"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "80e73b06bd5dfc18",
-      "line_num": 121,
+      "id": "840a7f213631ea33",
+      "line_num": 61,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#kanban"
+        "#ai",
+        "#mcp",
+        "#decision"
       ],
-      "text": "**Inline TODO completion tracking: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent \u2014 works on shallow clones.**\n`#feature` `#kanban`\n`TODO.md:L121`",
+      "text": "**MCPO: settle the MCP story (rename shipped)**\n- [x] The intended name is MCPO (old repo `Startr/WEB-MCPO-Repo_scanner`, \"MCPo API\" in Completed and README); routes shipped letter-swapped as `/api/mpco/*` in the founding commit `eb67dac` (2025-05-22) \u2014 census in [board-dossiers](docs/board-dossiers.md)\n- [x] Rename routes to `/api/mcpo/*` \u2014 done 2026-08-15 as a clean break (decided: no redirects, old paths dead); code + templates by hand, six docs via opencode delegate-edit (78s, diff verified), screenshots retaken, suite green\n- [ ] Decide the fork: real MCP server endpoint (JSON-RPC `tools/list` + `tools/call`) or retire the MCP term project-wide \u2014 deferred 2026-08-15; UI copy says \"tool API\" either way\n\n`#ai` `#mcp` `#decision`\n`TODO.md:L61`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -30,15 +51,15 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "89cc685d1e69ef29",
-      "line_num": 122,
+      "id": "d7b08e470917a5f0",
+      "line_num": 65,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#editor",
-        "#kanban"
+        "#macos",
+        "#app",
+        "#network"
       ],
-      "text": "**TODO editor + checkbox write-back: Interactive checkboxes on kanban cards that write back to TODO.md. Includes atomic mutations, optimistic concurrency, advisory file locking, add-TODO form, and merge conflict detection.**\n`#feature` `#editor` `#kanban`\n`TODO.md:L122`",
+      "text": "**Share-on-Network firewall test: verify the desktop app's tray share toggle across the macOS application firewall \u2014 accept the incoming-connections prompt, reach the LAN URL from a second device, sign in with an access key. Local curl-to-own-LAN-IP is filtered on the dev Mac, so this needs a real second device.**\n`#macos` `#app` `#network`\n`TODO.md:L65`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -47,14 +68,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "494017592bd559d0",
-      "line_num": 123,
+      "id": "f9aa159cdc33f104",
+      "line_num": 66,
       "source": "todo_md",
       "tags": [
-        "#deployment",
-        "#caprover"
+        "#feature",
+        "#kanban"
       ],
-      "text": "**Publish CapRover one-click app source: Add `caprover-one-click.yml` to the Sage-is one-click repo**\n`#deployment` `#caprover`\n`TODO.md:L123`",
+      "text": "**Inline TODO completion tracking: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent \u2014 works on shallow clones.**\n`#feature` `#kanban`\n`TODO.md:L66`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -63,14 +84,15 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "b56ff412115af5bc",
-      "line_num": 124,
+      "id": "7ca241c431bd765b",
+      "line_num": 67,
       "source": "todo_md",
       "tags": [
-        "#core",
-        "#parser"
+        "#feature",
+        "#editor",
+        "#kanban"
       ],
-      "text": "**Priority inference from TODO comments**\n`#core` `#parser`\n`TODO.md:L124`",
+      "text": "**TODO editor \u2014 remaining scope: add-TODO form, edit card text, and drag-between-columns write-back. Checkbox toggling shipped (see Phase 2 live board).**\n`#feature` `#editor` `#kanban`\n`TODO.md:L67`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -79,45 +101,88 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "17c9fa1184cdd208",
-      "line_num": 125,
+      "id": "6ec20e2190435aff",
+      "line_num": 68,
       "source": "todo_md",
       "tags": [
-        "#architecture",
-        "#extensibility"
+        "#deployment",
+        "#caprover"
       ],
-      "text": "**Plugin system to extend scanner functionality**\n`#architecture` `#extensibility`\n`TODO.md:L125`",
+      "text": "**Publish CapRover one-click app source: Add `caprover-one-click.yml` to the Sage-is one-click repo**\n`#deployment` `#caprover`\n`TODO.md:L68`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 420
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 70,
+          "tags": [
+            "#core",
+            "#parser"
+          ],
+          "text": "Priority inference from TODO comments"
+        },
+        {
+          "checked": false,
+          "line_num": 71,
+          "tags": [
+            "#extensibility"
+          ],
+          "text": "Plugin system to extend scanner functionality"
+        },
+        {
+          "checked": false,
+          "line_num": 72,
+          "tags": [
+            "#external"
+          ],
+          "text": "Task manager integration (Jira, Asana, Trello)"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "9ed673fa8a14d09e",
-      "line_num": 126,
+      "id": "5ee02b5bb6e7956a",
+      "line_num": 69,
       "source": "todo_md",
       "tags": [
-        "#integration",
-        "#external"
+        "#architecture",
+        "#integration"
       ],
-      "text": "**Task manager integration (Jira, Asana, Trello)**\n`#integration` `#external`\n`TODO.md:L126`",
+      "text": "**Scanner extensibility: smarter parsing, plugins, external integrations**\n- [ ] Priority inference from TODO comments #core #parser\n- [ ] Plugin system to extend scanner functionality #extensibility\n- [ ] Task manager integration (Jira, Asana, Trello) #external\n\n`#architecture` `#integration`\n`TODO.md:L69`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 510
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 74,
+          "tags": [],
+          "text": "Each pass: pick the next unfinished item, work it, check it off, commit"
+        },
+        {
+          "checked": false,
+          "line_num": 75,
+          "tags": [],
+          "text": "Fresh context per pass: `claude -p` in a bash loop (true Ralph), or `/loop` with `CLAUDE_CODE_AUTO_COMPACT_WINDOW` lowered (approximation)"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "c052c3cd812348c1",
-      "line_num": 141,
+      "id": "c3a013c521740885",
+      "line_num": 73,
       "source": "todo_md",
       "tags": [
-        "#testing"
+        "#ai",
+        "#agent",
+        "#automation"
       ],
-      "text": "**Verify end-to-end: `scripts/todoscope start` \u2192 open \u2192 dev \u2192 tunnel (needs Docker image built)**\n`#testing`\n`TODO.md:L141`",
+      "text": "**Ralph-loop agent mode: agent loop with TODO.md as the state file**\n- [ ] Each pass: pick the next unfinished item, work it, check it off, commit\n- [ ] Fresh context per pass: `claude -p` in a bash loop (true Ralph), or `/loop` with `CLAUDE_CODE_AUTO_COMPACT_WINDOW` lowered (approximation)\n\n`#ai` `#agent` `#automation`\n`TODO.md:L73`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -126,41 +191,114 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "627bbb8e8a765262",
-      "line_num": 149,
+      "id": "d9978b94d38495c9",
+      "line_num": 90,
       "source": "todo_md",
       "tags": [
-        "#linux"
+        "#testing"
       ],
-      "text": "**Linux binary: PyInstaller on ubuntu (x86_64) \u2014 works in tmux/SSH**\n`#linux`\n`TODO.md:L149`",
+      "text": "**Verify end-to-end: `scripts/todoscope start` \u2192 open \u2192 dev \u2192 tunnel (needs Docker image built)**\n`#testing`\n`TODO.md:L90`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 690
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 99,
+          "tags": [
+            "#linux"
+          ],
+          "text": "Linux binary: PyInstaller on ubuntu (x86_64) \u2014 works in tmux/SSH"
+        },
+        {
+          "checked": false,
+          "line_num": 100,
+          "tags": [
+            "#windows"
+          ],
+          "text": "Windows binary: PyInstaller on windows (.exe)"
+        },
+        {
+          "checked": false,
+          "line_num": 101,
+          "tags": [],
+          "text": "Verify macOS: `make binary` \u2192 `./dist/todoscope --port 5001` \u2192 browser opens, SSE works"
+        },
+        {
+          "checked": false,
+          "line_num": 102,
+          "tags": [],
+          "text": "Verify Linux (headless): `./todoscope --no-browser --port 5001` \u2192 access via tunnel or LAN"
+        },
+        {
+          "checked": false,
+          "line_num": 103,
+          "tags": [],
+          "text": "Verify Windows: `todoscope.exe` \u2192 browser opens, SSE works"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "ab9434029342df75",
-      "line_num": 150,
+      "id": "9b2e6223c766bbec",
+      "line_num": 98,
       "source": "todo_md",
       "tags": [
-        "#windows"
+        "#linux",
+        "#windows",
+        "#testing"
       ],
-      "text": "**Windows binary: PyInstaller on windows (.exe)**\n`#windows`\n`TODO.md:L150`",
+      "text": "**Cross-platform binaries \u2014 build & verify**\n- [ ] Linux binary: PyInstaller on ubuntu (x86_64) \u2014 works in tmux/SSH #linux\n- [ ] Windows binary: PyInstaller on windows (.exe) #windows\n- [ ] Verify macOS: `make binary` \u2192 `./dist/todoscope --port 5001` \u2192 browser opens, SSE works\n- [ ] Verify Linux (headless): `./todoscope --no-browser --port 5001` \u2192 access via tunnel or LAN\n- [ ] Verify Windows: `todoscope.exe` \u2192 browser opens, SSE works\n\n`#linux` `#windows` `#testing`\n`TODO.md:L98`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 780
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 129,
+          "tags": [],
+          "text": "[MANUALLY] D-U-N-S check for Startr LLC via Apple's lookup (developer.apple.com/enroll/duns-lookup) \u2014 use the exact legal name + address from formation docs; request free number if absent (~5 business days). Public D&B directory shows no listing as of 2026-08-01."
+        },
+        {
+          "checked": false,
+          "line_num": 130,
+          "tags": [],
+          "text": "[MANUALLY] Pick/confirm the team Apple ID for enrollment; enroll Startr LLC in Apple Developer Program (US$99/yr, org enrollment needs the D-U-N-S)"
+        },
+        {
+          "checked": false,
+          "line_num": 131,
+          "tags": [],
+          "text": "[MANUALLY] Create Developer ID Application certificate in the developer portal"
+        },
+        {
+          "checked": false,
+          "line_num": 132,
+          "tags": [],
+          "text": "Superseded by the Tauri verdict: the manual codesign/notarytool Makefile pipeline will not be built \u2014 Tauri's bundler automates signing, notarization, stapling, and sidecar signing"
+        },
+        {
+          "checked": true,
+          "line_num": 133,
+          "tags": [],
+          "text": "Meanwhile: unsigned Tauri .app ships via cask with a dequarantine postflight (decided 2026-08-15, [shell build choices](docs/efforts/app-shell-v2/decisions/shell-build-choices.md)) \u2014 the postflight is deleted once releases are signed. PyPI leg blocked: the name `todoscope` is taken by an unrelated package."
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "884ddf4b7ba91d86",
-      "line_num": 151,
+      "id": "a7ffa43dd8151313",
+      "line_num": 128,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verify macOS: `make binary` \u2192 `./dist/todoscope --port 5001` \u2192 browser opens, SSE works**\n`TODO.md:L151`",
+      "tags": [
+        "#macos",
+        "#security"
+      ],
+      "text": "**Code signing: Developer ID credentials \u2014 consumed by the Tauri shell's bundler, per [the verdict](docs/efforts/app-shell-v2/decisions/the-verdict.md)**\n- [ ] [MANUALLY] D-U-N-S check for Startr LLC via Apple's lookup (developer.apple.com/enroll/duns-lookup) \u2014 use the exact legal name + address from formation docs; request free number if absent (~5 business days). Public D&B directory shows no listing as of 2026-08-01.\n- [ ] [MANUALLY] Pick/confirm the team Apple ID for enrollment; enroll Startr LLC in Apple Developer Program (US$99/yr, org enrollment needs the D-U-N-S)\n- [ ] [MANUALLY] Create Developer ID Application certificate in the developer portal\n- [ ] Superseded by the Tauri verdict: the manual codesign/notarytool Makefile pipeline will not be built \u2014 Tauri's bundler automates signing, notarization, stapling, and sidecar signing\n- [x] Meanwhile: unsigned Tauri .app ships via cask with a dequarantine postflight (decided 2026-08-15, [shell build choices](docs/efforts/app-shell-v2/decisions/shell-build-choices.md)) \u2014 the postflight is deleted once releases are signed. PyPI leg blocked: the name `todoscope` is taken by an unrelated package.\n\n`#macos` `#security`\n`TODO.md:L128`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -169,53 +307,141 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "aa457127e98328c7",
-      "line_num": 152,
+      "id": "512ecbe7b2c883ba",
+      "line_num": 134,
       "source": "todo_md",
       "tags": [],
-      "text": "**Verify Linux (headless): `./todoscope --no-browser --port 5001` \u2192 access via tunnel or LAN**\n`TODO.md:L152`",
+      "text": "**Verify full release: `make release_all` \u2192 all artifacts built + uploaded**\n`TODO.md:L134`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 960
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 139,
+          "tags": [],
+          "text": "Add `Formula/todoscope.rb` to homebrew-apps: Docker CLI formula \u2014 depends_on docker, git, cloudflared (optional), tailscale (optional); installs scripts/todoscope to bin"
+        },
+        {
+          "checked": true,
+          "line_num": 140,
+          "tags": [],
+          "text": "Add `Casks/todoscope.rb` to `Sage-is/homebrew-apps`: Tauri .app via DMG with dequarantine postflight; version/sha256 maintained by the tap-update step in `scripts/release_all.sh`"
+        },
+        {
+          "checked": false,
+          "line_num": 141,
+          "tags": [],
+          "text": "Update `nuke-sage`: add todoscope to KNOWN_PROJECTS"
+        },
+        {
+          "checked": false,
+          "line_num": 142,
+          "tags": [],
+          "text": "Verify: `brew install --build-from-source Formula/todoscope.rb` works"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "be48bf4b2e5a1264",
-      "line_num": 153,
+      "id": "7c5b351a38b04141",
+      "line_num": 138,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verify Windows: `todoscope.exe` \u2192 browser opens, SSE works**\n`TODO.md:L153`",
+      "tags": [
+        "#homebrew"
+      ],
+      "text": "**Homebrew tap: formula, cask, ecosystem updates**\n- [ ] Add `Formula/todoscope.rb` to homebrew-apps: Docker CLI formula \u2014 depends_on docker, git, cloudflared (optional), tailscale (optional); installs scripts/todoscope to bin\n- [x] Add `Casks/todoscope.rb` to `Sage-is/homebrew-apps`: Tauri .app via DMG with dequarantine postflight; version/sha256 maintained by the tap-update step in `scripts/release_all.sh`\n- [ ] Update `nuke-sage`: add todoscope to KNOWN_PROJECTS\n- [ ] Verify: `brew install --build-from-source Formula/todoscope.rb` works\n\n`#homebrew`\n`TODO.md:L138`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 1050
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 147,
+          "tags": [],
+          "text": "Auto-bump version in `scanner/__init__.py` to match tag"
+        },
+        {
+          "checked": false,
+          "line_num": 148,
+          "tags": [],
+          "text": "Run tests before finishing"
+        },
+        {
+          "checked": false,
+          "line_num": 149,
+          "tags": [],
+          "text": "Tag push \u2192 CI builds all artifacts automatically"
+        },
+        {
+          "checked": false,
+          "line_num": 150,
+          "tags": [],
+          "text": "Post-release summary: GitHub Release link, PyPI link, brew install command"
+        },
+        {
+          "checked": false,
+          "line_num": 151,
+          "tags": [],
+          "text": "Verify: `make patch_release` \u2192 `make release_finish` \u2192 all CI green, all channels updated"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "c5b4caeef47564cc",
-      "line_num": 178,
+      "id": "9c656396ccf2e82b",
+      "line_num": 146,
       "source": "todo_md",
       "tags": [
-        "#macos",
-        "#security"
+        "#automation",
+        "#ci"
       ],
-      "text": "**Code signing: codesign + notarytool (when Developer ID ready)**\n`#macos` `#security`\n`TODO.md:L178`",
+      "text": "**One-command release: `make patch_release` + `make release_finish` triggers everything**\n- [ ] Auto-bump version in `scanner/__init__.py` to match tag\n- [ ] Run tests before finishing\n- [ ] Tag push \u2192 CI builds all artifacts automatically\n- [ ] Post-release summary: GitHub Release link, PyPI link, brew install command\n- [ ] Verify: `make patch_release` \u2192 `make release_finish` \u2192 all CI green, all channels updated\n\n`#automation` `#ci`\n`TODO.md:L146`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 1140
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 153,
+          "tags": [],
+          "text": "`pyproject.toml` reads version dynamically"
+        },
+        {
+          "checked": false,
+          "line_num": 154,
+          "tags": [],
+          "text": "PyInstaller embeds it in the binary"
+        },
+        {
+          "checked": false,
+          "line_num": 155,
+          "tags": [],
+          "text": "`scripts/todoscope` VERSION synced by release script"
+        },
+        {
+          "checked": false,
+          "line_num": 156,
+          "tags": [],
+          "text": "Homebrew formula URL/SHA256 updated by CI"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "5adcd68abc685c09",
-      "line_num": 179,
+      "id": "85de9dd99763be03",
+      "line_num": 152,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verify full release: `make release_all` \u2192 all artifacts built + uploaded**\n`TODO.md:L179`",
+      "tags": [
+        "#packaging"
+      ],
+      "text": "**Version single-source-of-truth: `scanner/__init__.py` drives everything**\n- [ ] `pyproject.toml` reads version dynamically\n- [ ] PyInstaller embeds it in the binary\n- [ ] `scripts/todoscope` VERSION synced by release script\n- [ ] Homebrew formula URL/SHA256 updated by CI\n\n`#packaging`\n`TODO.md:L152`",
       "type": "text",
       "width": 280,
       "x": 10,
@@ -225,265 +451,134 @@
       "children": [
         {
           "checked": false,
-          "line_num": 184,
-          "tags": [],
-          "text": "depends_on: docker, git, cloudflared (optional), tailscale (optional)"
+          "line_num": 161,
+          "tags": [
+            "#ux"
+          ],
+          "text": "Dock icon click \u2192 Open Browser: respond to `applicationShouldHandleReopen:` via PyObjC NSApplication delegate so clicking the running Dock icon opens the browser"
         },
         {
           "checked": false,
-          "line_num": 185,
+          "line_num": 162,
           "tags": [],
-          "text": "Installs scripts/todoscope to bin"
+          "text": "Menu bar icon dark/light mode: research macOS template images for auto-inverting icon on light menu bar"
+        },
+        {
+          "checked": false,
+          "line_num": 163,
+          "tags": [],
+          "text": "Linux/Windows tray icon colors: research platform-appropriate pystray styling on Linux (GNOME/KDE) and Windows"
         }
       ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "b0df803ac95c12ee",
-      "line_num": 183,
+      "id": "f43c2da2c144ae09",
+      "line_num": 160,
       "source": "todo_md",
       "tags": [
-        "#homebrew"
+        "#macos",
+        "#cross-platform",
+        "#design"
       ],
-      "text": "**Add `Formula/todoscope.rb` to homebrew-apps: Docker CLI formula**\n- [ ] depends_on: docker, git, cloudflared (optional), tailscale (optional)\n- [ ] Installs scripts/todoscope to bin\n\n`#homebrew`\n`TODO.md:L183`",
+      "text": "**Tray & Dock polish: platform icon behavior across macOS, Linux, Windows**\n- [ ] Dock icon click \u2192 Open Browser: respond to `applicationShouldHandleReopen:` via PyObjC NSApplication delegate so clicking the running Dock icon opens the browser #ux\n- [ ] Menu bar icon dark/light mode: research macOS template images for auto-inverting icon on light menu bar\n- [ ] Linux/Windows tray icon colors: research platform-appropriate pystray styling on Linux (GNOME/KDE) and Windows\n\n`#macos` `#cross-platform` `#design`\n`TODO.md:L160`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 1320
     },
     {
+      "children": [
+        {
+          "checked": true,
+          "line_num": 165,
+          "tags": [],
+          "text": "Sidecar on PyInstaller `--onedir` (`make sidecar_dir`), bundled whole via `bundle.macOS.files` \u2014 no externalBin, real pid, tauri#11992 sidestepped"
+        },
+        {
+          "checked": true,
+          "line_num": 166,
+          "tags": [],
+          "text": "Rust surface thin: spawn sidecar, SIGTERM kill on quit, sticky OS-assigned port + `--exact-port` handshake, `/health` readiness poll \u2014 one main.rs"
+        },
+        {
+          "checked": true,
+          "line_num": 167,
+          "tags": [],
+          "text": "Window opens on `http://127.0.0.1:PORT` programmatically after readiness \u2014 web UI ships unchanged, same-origin, no CORS"
+        },
+        {
+          "checked": true,
+          "line_num": 168,
+          "tags": [],
+          "text": "Menu bar (App/Edit/View) with Cmd+= / Cmd+\u2212 / Cmd+0 zoom, factor persisted; remember-me login (30-day session); tray \"Share on Network\" toggle \u2014 auth-gated, rebinds `0.0.0.0`, LAN URL dialog"
+        },
+        {
+          "checked": true,
+          "line_num": 169,
+          "tags": [],
+          "text": "pywebview path retired \u2014 researched and declined, [reality check](docs/efforts/app-shell-v2/decisions/pywebview-reality-check.md)"
+        },
+        {
+          "checked": false,
+          "line_num": 170,
+          "tags": [],
+          "text": "Signing era: wire APPLE_* env vars into `tauri build`, re-test tauri#11992 on the pinned version, drop the cask's dequarantine postflight"
+        },
+        {
+          "checked": false,
+          "line_num": 171,
+          "tags": [],
+          "text": "`kill -9` of the shell orphans the sidecar \u2014 consider a parent-pid poll in cli.py"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "cd7830f358b9697e",
-      "line_num": 186,
+      "id": "dcb3436e6e1f53d6",
+      "line_num": 164,
       "source": "todo_md",
       "tags": [
-        "#homebrew"
+        "#macos",
+        "#app",
+        "#tauri"
       ],
-      "text": "**Add `Casks/todoscope.rb` to homebrew-apps: .app via DMG**\n`#homebrew`\n`TODO.md:L186`",
+      "text": "**Tauri shell (v2.0): built 2026-08-15 \u2014 `src-tauri/` shell, `make tauri_dev`/`tauri_build`/`tauri_dmg`, cask route; settled points in [shell build choices](docs/efforts/app-shell-v2/decisions/shell-build-choices.md)**\n- [x] Sidecar on PyInstaller `--onedir` (`make sidecar_dir`), bundled whole via `bundle.macOS.files` \u2014 no externalBin, real pid, tauri#11992 sidestepped\n- [x] Rust surface thin: spawn sidecar, SIGTERM kill on quit, sticky OS-assigned port + `--exact-port` handshake, `/health` readiness poll \u2014 one main.rs\n- [x] Window opens on `http://127.0.0.1:PORT` programmatically after readiness \u2014 web UI ships unchanged, same-origin, no CORS\n- [x] Menu bar (App/Edit/View) with Cmd+= / Cmd+\u2212 / Cmd+0 zoom, factor persisted; remember-me login (30-day session); tray \"Share on Network\" toggle \u2014 auth-gated, rebinds `0.0.0.0`, LAN URL dialog\n- [x] pywebview path retired \u2014 researched and declined, [reality check](docs/efforts/app-shell-v2/decisions/pywebview-reality-check.md)\n- [ ] Signing era: wire APPLE_* env vars into `tauri build`, re-test tauri#11992 on the pinned version, drop the cask's dequarantine postflight\n- [ ] `kill -9` of the shell orphans the sidecar \u2014 consider a parent-pid poll in cli.py\n\n`#macos` `#app` `#tauri`\n`TODO.md:L164`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 1410
     },
     {
+      "children": [
+        {
+          "checked": true,
+          "line_num": 173,
+          "tags": [],
+          "text": "Copy + error-message leg shipped 2026-08-15 via the brand voice audit (see Completed)"
+        },
+        {
+          "checked": false,
+          "line_num": 174,
+          "tags": [],
+          "text": "Mistake-proofing pass over flows: poka-yoke devices for destructive and confusing paths"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "9f12b2478011862d",
-      "line_num": 187,
+      "id": "570fd087de8bb73a",
+      "line_num": 172,
       "source": "todo_md",
       "tags": [
-        "#homebrew"
+        "#brand",
+        "#ux"
       ],
-      "text": "**Update `nuke-sage`: add todoscope to KNOWN_PROJECTS**\n`#homebrew`\n`TODO.md:L187`",
+      "text": "**Branding & Poka-Yoke audit: ensure all user-facing text, errors, and flows are clear and mistake-proof for v1**\n- [x] Copy + error-message leg shipped 2026-08-15 via the brand voice audit (see Completed)\n- [ ] Mistake-proofing pass over flows: poka-yoke devices for destructive and confusing paths\n\n`#brand` `#ux`\n`TODO.md:L172`",
       "type": "text",
       "width": 280,
       "x": 10,
       "y": 1500
     },
     {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "7e25d760c246a145",
-      "line_num": 188,
-      "source": "todo_md",
-      "tags": [],
-      "text": "**Verify: `brew install --build-from-source Formula/todoscope.rb` works**\n`TODO.md:L188`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 1590
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 193,
-          "tags": [],
-          "text": "Auto-bump version in `scanner/__init__.py` to match tag"
-        },
-        {
-          "checked": false,
-          "line_num": 194,
-          "tags": [],
-          "text": "Run tests before finishing"
-        },
-        {
-          "checked": false,
-          "line_num": 195,
-          "tags": [],
-          "text": "Tag push \u2192 CI builds all artifacts automatically"
-        },
-        {
-          "checked": false,
-          "line_num": 196,
-          "tags": [],
-          "text": "Post-release summary: GitHub Release link, PyPI link, brew install command"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "639c728dffca348e",
-      "line_num": 192,
-      "source": "todo_md",
-      "tags": [
-        "#automation",
-        "#ci"
-      ],
-      "text": "**One-command release: `make patch_release` + `make release_finish` triggers everything**\n- [ ] Auto-bump version in `scanner/__init__.py` to match tag\n- [ ] Run tests before finishing\n- [ ] Tag push \u2192 CI builds all artifacts automatically\n- [ ] Post-release summary: GitHub Release link, PyPI link, brew install command\n\n`#automation` `#ci`\n`TODO.md:L192`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 1680
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 198,
-          "tags": [],
-          "text": "`pyproject.toml` reads version dynamically"
-        },
-        {
-          "checked": false,
-          "line_num": 199,
-          "tags": [],
-          "text": "PyInstaller embeds it in the binary"
-        },
-        {
-          "checked": false,
-          "line_num": 200,
-          "tags": [],
-          "text": "`scripts/todoscope` VERSION synced by release script"
-        },
-        {
-          "checked": false,
-          "line_num": 201,
-          "tags": [],
-          "text": "Homebrew formula URL/SHA256 updated by CI"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "309ba357c2a3d306",
-      "line_num": 197,
-      "source": "todo_md",
-      "tags": [
-        "#packaging"
-      ],
-      "text": "**Version single-source-of-truth: `scanner/__init__.py` drives everything**\n- [ ] `pyproject.toml` reads version dynamically\n- [ ] PyInstaller embeds it in the binary\n- [ ] `scripts/todoscope` VERSION synced by release script\n- [ ] Homebrew formula URL/SHA256 updated by CI\n\n`#packaging`\n`TODO.md:L197`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 1770
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "408f94107e3a043d",
-      "line_num": 202,
-      "source": "todo_md",
-      "tags": [],
-      "text": "**Verify: `make patch_release` \u2192 `make release_finish` \u2192 all CI green, all channels updated**\n`TODO.md:L202`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 1860
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "73b420c1513eff6e",
-      "line_num": 206,
-      "source": "todo_md",
-      "tags": [
-        "#macos",
-        "#ux"
-      ],
-      "text": "**Dock icon click \u2192 Open Browser: respond to `applicationShouldHandleReopen:` via PyObjC NSApplication delegate so clicking the running Dock icon opens the browser (like clicking \"Open Browser\" in menu bar)**\n`#macos` `#ux`\n`TODO.md:L206`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 1950
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "2a98367062502a34",
-      "line_num": 207,
-      "source": "todo_md",
-      "tags": [
-        "#macos",
-        "#design"
-      ],
-      "text": "**Menu bar icon dark/light mode: research macOS template images for auto-inverting icon on light menu bar**\n`#macos` `#design`\n`TODO.md:L207`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 2040
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "cda7888ed5d61ad9",
-      "line_num": 208,
-      "source": "todo_md",
-      "tags": [
-        "#cross-platform",
-        "#design"
-      ],
-      "text": "**Linux/Windows tray icon colors: research platform-appropriate icon styling for pystray on Linux (GNOME/KDE) and Windows**\n`#cross-platform` `#design`\n`TODO.md:L208`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 2130
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 210,
-          "tags": [],
-          "text": "Validate SSE streaming through WKWebView before committing"
-        },
-        {
-          "checked": false,
-          "line_num": 211,
-          "tags": [],
-          "text": "Validate threading model: Flask thread + pystray detached + pywebview main thread"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "8ada259ddb962a35",
-      "line_num": 209,
-      "source": "todo_md",
-      "tags": [
-        "#macos"
-      ],
-      "text": "**pywebview embedded WKWebView (v2.0): native window + status bar; deps: pywebview**\n- [ ] Validate SSE streaming through WKWebView before committing\n- [ ] Validate threading model: Flask thread + pystray detached + pywebview main thread\n\n`#macos`\n`TODO.md:L209`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 2220
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "9af31b24216d082e",
-      "line_num": 212,
-      "source": "todo_md",
-      "tags": [
-        "#brand",
-        "#ux"
-      ],
-      "text": "**Branding & Poka-Yoke audit: ensure all user-facing text, errors, and flows are clear and mistake-proof for v1**\n`#brand` `#ux`\n`TODO.md:L212`",
-      "type": "text",
-      "width": 280,
-      "x": 10,
-      "y": 2310
-    },
-    {
-      "height": 2680,
+      "height": 1060,
       "id": "col-todo",
       "label": "TODO",
       "type": "group",
@@ -492,561 +587,275 @@
       "y": 0
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 27,
+          "tags": [],
+          "text": "First-run wizard: after setting the first access key, walk through registering a repo and connecting an AI agent"
+        },
+        {
+          "checked": false,
+          "line_num": 28,
+          "tags": [
+            "#demo"
+          ],
+          "text": "Include a demo/sample repo option on first visit"
+        },
+        {
+          "checked": false,
+          "line_num": 29,
+          "tags": [
+            "#landing"
+          ],
+          "text": "Add a \"Try it live\" section to the logged-out landing"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "a1ae83913917abee",
-      "line_num": 59,
+      "id": "d39733fd45cc6912",
+      "line_num": 26,
       "source": "todo_md",
       "tags": [
-        "#ux",
-        "#brand"
+        "#onboarding",
+        "#ux"
       ],
-      "text": "**Add a dashboard header: restate the one-line pitch, orient the user**\n`#ux` `#brand`\n`TODO.md:L59`",
+      "text": "**First-run onboarding: wizard, demo repo, try-it-live**\n- [ ] First-run wizard: after setting the first access key, walk through registering a repo and connecting an AI agent\n- [ ] Include a demo/sample repo option on first visit #demo\n- [ ] Add a \"Try it live\" section to the logged-out landing #landing\n\n`#onboarding` `#ux`\n`TODO.md:L26`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 60
     },
     {
+      "children": [
+        {
+          "checked": true,
+          "line_num": 36,
+          "tags": [],
+          "text": "Vendor `SKILL.md` into `.claude/skills/todo-scope/` \u2014 auto-loads for Claude Code users working in this repo"
+        },
+        {
+          "checked": true,
+          "line_num": 37,
+          "tags": [],
+          "text": "Generalize personal paths and fix the repo URL in the published copy"
+        },
+        {
+          "checked": true,
+          "line_num": 38,
+          "tags": [],
+          "text": "Document manual install in README: curl into `~/.claude/skills/todo-scope/`"
+        },
+        {
+          "checked": false,
+          "line_num": 39,
+          "tags": [],
+          "text": "Package as a Claude Code plugin for one-command install"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "67a7df21a7df9f79",
-      "line_num": 60,
+      "id": "499d753cab81d03e",
+      "line_num": 35,
       "source": "todo_md",
       "tags": [
-        "#ux",
-        "#simplify"
+        "#skill",
+        "#packaging"
       ],
-      "text": "**Unify repo entry: one input that accepts a git URL *or* a local path, with smart detection**\n`#ux` `#simplify`\n`TODO.md:L60`",
+      "text": "**Publish the todo-scope skill: ship with the repo, package, document install**\n- [x] Vendor `SKILL.md` into `.claude/skills/todo-scope/` \u2014 auto-loads for Claude Code users working in this repo\n- [x] Generalize personal paths and fix the repo URL in the published copy\n- [x] Document manual install in README: curl into `~/.claude/skills/todo-scope/`\n- [ ] Package as a Claude Code plugin for one-command install\n\n`#skill` `#packaging`\n`TODO.md:L35`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 150
     },
     {
+      "children": [
+        {
+          "checked": true,
+          "line_num": 41,
+          "tags": [],
+          "text": "README section: convention explainer + install snippet under AI & Agent Integration (heading renamed 2026-08-15)"
+        },
+        {
+          "checked": true,
+          "line_num": 42,
+          "tags": [],
+          "text": "Landing page: mention the skill in the \"Connect your AI agent\" section (2026-08-15)"
+        },
+        {
+          "checked": true,
+          "line_num": 43,
+          "tags": [],
+          "text": "`/connect` page: skill install step alongside MCP setup (step 4, with copy button \u2014 2026-08-15)"
+        },
+        {
+          "checked": false,
+          "line_num": 44,
+          "tags": [],
+          "text": "Scanner nudge: when a board is mostly bare single-line cards, suggest running the skill"
+        },
+        {
+          "checked": false,
+          "line_num": 45,
+          "tags": [],
+          "text": "Cross-post via sage.is and startr.style channels"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "a8d90365a3c23bd0",
-      "line_num": 61,
+      "id": "dd94912cb6737f20",
+      "line_num": 40,
       "source": "todo_md",
       "tags": [
-        "#ux",
-        "#onboarding"
+        "#brand",
+        "#ux"
       ],
-      "text": "**Empty state for Repositories: onboarding card with quick-start actions**\n`#ux` `#onboarding`\n`TODO.md:L61`",
+      "text": "**Promote the skill: in-app nudges and outreach**\n- [x] README section: convention explainer + install snippet under AI & Agent Integration (heading renamed 2026-08-15)\n- [x] Landing page: mention the skill in the \"Connect your AI agent\" section (2026-08-15)\n- [x] `/connect` page: skill install step alongside MCP setup (step 4, with copy button \u2014 2026-08-15)\n- [ ] Scanner nudge: when a board is mostly bare single-line cards, suggest running the skill\n- [ ] Cross-post via sage.is and startr.style channels\n\n`#brand` `#ux`\n`TODO.md:L40`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 240
     },
     {
+      "children": [
+        {
+          "checked": false,
+          "line_num": 50,
+          "tags": [
+            "#frontend"
+          ],
+          "text": "Add README summary to scan results: show the top of each repo's README in the web interface"
+        },
+        {
+          "checked": false,
+          "line_num": 51,
+          "tags": [
+            "#search"
+          ],
+          "text": "Search: implement a search feature for TODO comments"
+        },
+        {
+          "checked": false,
+          "line_num": 52,
+          "tags": [],
+          "text": "Metrics dashboard: visualize TODO metrics across projects"
+        },
+        {
+          "checked": false,
+          "line_num": 53,
+          "tags": [],
+          "text": "Report downloads: offer CSV, JSON, PDF export of scan results"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "2d44f55f8e00c746",
-      "line_num": 62,
+      "id": "aa6329666449572b",
+      "line_num": 49,
       "source": "todo_md",
       "tags": [
-        "#ai",
-        "#mcp",
-        "#ux"
+        "#ux",
+        "#reporting"
       ],
-      "text": "**Surface MCP endpoints on the dashboard: copy-to-clipboard for manifest URL and sample cURL**\n`#ai` `#mcp` `#ux`\n`TODO.md:L62`",
+      "text": "**Explore scan results: search, README context, metrics, exports**\n- [ ] Add README summary to scan results: show the top of each repo's README in the web interface #frontend\n- [ ] Search: implement a search feature for TODO comments #search\n- [ ] Metrics dashboard: visualize TODO metrics across projects\n- [ ] Report downloads: offer CSV, JSON, PDF export of scan results\n\n`#ux` `#reporting`\n`TODO.md:L49`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 330
     },
     {
-      "file_path": "TODO.md",
+      "file_path": "README.md",
       "height": 80,
-      "id": "39f1f57431cb6910",
-      "line_num": 63,
-      "source": "todo_md",
-      "tags": [
-        "#ux",
-        "#search"
-      ],
-      "text": "**Add search/filter to the Repositories table**\n`#ux` `#search`\n`TODO.md:L63`",
+      "id": "ab60bb05e810aeac",
+      "line_num": 169,
+      "source": "inline",
+      "tags": [],
+      "text": "\"todo_text\": \"# TODO: Fix this hack when we have time\",\n`README.md:169`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 420
     },
     {
-      "file_path": "TODO.md",
+      "file_path": "README.md",
       "height": 80,
-      "id": "87b9d3bc36b2fd62",
-      "line_num": 64,
-      "source": "todo_md",
-      "tags": [
-        "#ux"
-      ],
-      "text": "**Add a visible \"last scanned\" timestamp + manual refresh control per repo row**\n`#ux`\n`TODO.md:L64`",
+      "id": "5b53ff140c1dae36",
+      "line_num": 186,
+      "source": "inline",
+      "tags": [],
+      "text": "## TODO\n`README.md:186`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 510
     },
     {
-      "file_path": "TODO.md",
+      "file_path": ".claude/skills/todo-scope/SKILL.md",
       "height": 80,
-      "id": "3c88473f20231b19",
-      "line_num": 65,
-      "source": "todo_md",
-      "tags": [
-        "#ux",
-        "#hierarchy"
-      ],
-      "text": "**Move the GitHub contribute banner to the footer**\n`#ux` `#hierarchy`\n`TODO.md:L65`",
+      "id": "499f17d0fb89ef0c",
+      "line_num": 206,
+      "source": "inline",
+      "tags": [],
+      "text": "> | TODO        | `## TODO`         | `# TODO:`   |\n`.claude/skills/todo-scope/SKILL.md:206`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 600
     },
     {
-      "file_path": "TODO.md",
+      "file_path": ".claude/skills/todo-scope/SKILL.md",
       "height": 80,
-      "id": "00bf67157920d05d",
-      "line_num": 66,
-      "source": "todo_md",
-      "tags": [
-        "#ux",
-        "#copy"
-      ],
-      "text": "**Clarify the \"shallow clone\" checkbox: tooltip or inline help**\n`#ux` `#copy`\n`TODO.md:L66`",
+      "id": "aa072cefae25ea38",
+      "line_num": 224,
+      "source": "inline",
+      "tags": [],
+      "text": "# TODO - Project Development Tasks\n`.claude/skills/todo-scope/SKILL.md:224`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 690
     },
     {
-      "file_path": "TODO.md",
+      "file_path": ".claude/skills/todo-scope/SKILL.md",
       "height": 80,
-      "id": "1b38764f0ae23a26",
-      "line_num": 70,
-      "source": "todo_md",
-      "tags": [
-        "#mcp",
-        "#docs"
-      ],
-      "text": "**Create a dedicated `/connect` or `/mcp` page with step-by-step instructions**\n`#mcp` `#docs`\n`TODO.md:L70`",
+      "id": "ea50ab3456d10bb1",
+      "line_num": 289,
+      "source": "inline",
+      "tags": [],
+      "text": "## TODO\n`.claude/skills/todo-scope/SKILL.md:289`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 780
     },
     {
-      "file_path": "TODO.md",
+      "file_path": "scanner/templates/stream_results.html",
       "height": 80,
-      "id": "3fa6cb72981dd266",
-      "line_num": 71,
-      "source": "todo_md",
-      "tags": [
-        "#mcp",
-        "#ux"
-      ],
-      "text": "**Add a \"Copy MCP manifest URL\" button on the dashboard**\n`#mcp` `#ux`\n`TODO.md:L71`",
+      "id": "b36b6d0a75008704",
+      "line_num": 234,
+      "source": "inline",
+      "tags": [],
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>TODO</strong></td><td style=\"--p:4px 8px\"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>\n`scanner/templates/stream_results.html:234`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 870
     },
     {
-      "file_path": "TODO.md",
+      "file_path": "scanner/templates/stream_results.html",
       "height": 80,
-      "id": "1493ef9e1a6e454f",
-      "line_num": 72,
-      "source": "todo_md",
-      "tags": [
-        "#docs",
-        "#mcp"
-      ],
-      "text": "**Write a short guide \u2014 `docs/connect-sage.md` \u2014 with screenshots**\n`#docs` `#mcp`\n`TODO.md:L72`",
+      "id": "ed344d83013f6d7d",
+      "line_num": 240,
+      "source": "inline",
+      "tags": [],
+      "text": "<p style=\"--mb:8px\">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>\n`scanner/templates/stream_results.html:240`",
       "type": "text",
       "width": 280,
       "x": 360,
       "y": 960
     },
     {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "2549243d36911454",
-      "line_num": 73,
-      "source": "todo_md",
-      "tags": [
-        "#observability",
-        "#mcp"
-      ],
-      "text": "**Add an MCP health indicator to the dashboard**\n`#observability` `#mcp`\n`TODO.md:L73`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1050
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "b70e182d343656d1",
-      "line_num": 77,
-      "source": "todo_md",
-      "tags": [
-        "#copy",
-        "#brand"
-      ],
-      "text": "**Audit all user-facing copy against the brand interview voice**\n`#copy` `#brand`\n`TODO.md:L77`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1140
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "97a50c9338ed3dbb",
-      "line_num": 78,
-      "source": "todo_md",
-      "tags": [
-        "#copy",
-        "#ux"
-      ],
-      "text": "**Error messages: review for tone \u2014 honest founder voice, not generic Flask errors**\n`#copy` `#ux`\n`TODO.md:L78`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1230
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "14cc4a252d5333fc",
-      "line_num": 82,
-      "source": "todo_md",
-      "tags": [
-        "#onboarding",
-        "#ux"
-      ],
-      "text": "**First-run wizard: after setting the first access key, walk through registering a repo and connecting an AI agent**\n`#onboarding` `#ux`\n`TODO.md:L82`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1320
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "436cc35043661c77",
-      "line_num": 83,
-      "source": "todo_md",
-      "tags": [
-        "#onboarding",
-        "#demo"
-      ],
-      "text": "**Include a demo/sample repo option on first visit**\n`#onboarding` `#demo`\n`TODO.md:L83`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1410
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "d1a75faee5ee9a14",
-      "line_num": 84,
-      "source": "todo_md",
-      "tags": [
-        "#onboarding",
-        "#landing"
-      ],
-      "text": "**Add a \"Try it live\" section to the logged-out landing**\n`#onboarding` `#landing`\n`TODO.md:L84`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1500
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 89,
-          "tags": [],
-          "text": "Document all endpoints with request/response examples"
-        },
-        {
-          "checked": false,
-          "line_num": 90,
-          "tags": [],
-          "text": "Add error code reference"
-        },
-        {
-          "checked": false,
-          "line_num": 91,
-          "tags": [],
-          "text": "Include authentication documentation"
-        },
-        {
-          "checked": false,
-          "line_num": 92,
-          "tags": [],
-          "text": "Test API documentation completeness"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "15ecb9027e55b61b",
-      "line_num": 88,
-      "source": "todo_md",
-      "tags": [
-        "#documentation",
-        "#api"
-      ],
-      "text": "**Create comprehensive API documentation: Standalone API reference guide**\n- [ ] Document all endpoints with request/response examples\n- [ ] Add error code reference\n- [ ] Include authentication documentation\n- [ ] Test API documentation completeness\n\n`#documentation` `#api`\n`TODO.md:L88`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1590
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 94,
-          "tags": [],
-          "text": "Create component diagram"
-        },
-        {
-          "checked": false,
-          "line_num": 95,
-          "tags": [],
-          "text": "Document data flow"
-        },
-        {
-          "checked": false,
-          "line_num": 96,
-          "tags": [],
-          "text": "Document deployment options"
-        },
-        {
-          "checked": false,
-          "line_num": 97,
-          "tags": [],
-          "text": "Verify architecture docs match current implementation"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "78acb955f33340b6",
-      "line_num": 93,
-      "source": "todo_md",
-      "tags": [
-        "#documentation",
-        "#architecture"
-      ],
-      "text": "**Add architecture documentation: System design and component overview**\n- [ ] Create component diagram\n- [ ] Document data flow\n- [ ] Document deployment options\n- [ ] Verify architecture docs match current implementation\n\n`#documentation` `#architecture`\n`TODO.md:L93`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1680
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 99,
-          "tags": [],
-          "text": "Define code style guide"
-        },
-        {
-          "checked": false,
-          "line_num": 100,
-          "tags": [],
-          "text": "Document testing requirements"
-        },
-        {
-          "checked": false,
-          "line_num": 101,
-          "tags": [],
-          "text": "Define pull request process"
-        },
-        {
-          "checked": false,
-          "line_num": 102,
-          "tags": [],
-          "text": "Test contributor onboarding process"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "194c7fa5ca37e475",
-      "line_num": 98,
-      "source": "todo_md",
-      "tags": [
-        "#documentation",
-        "#community"
-      ],
-      "text": "**Create contributor guide: Detailed guide for new contributors**\n- [ ] Define code style guide\n- [ ] Document testing requirements\n- [ ] Define pull request process\n- [ ] Test contributor onboarding process\n\n`#documentation` `#community`\n`TODO.md:L98`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1770
-    },
-    {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 104,
-          "tags": [],
-          "text": "Document setup process"
-        },
-        {
-          "checked": false,
-          "line_num": 105,
-          "tags": [],
-          "text": "Document feature development cycle"
-        },
-        {
-          "checked": false,
-          "line_num": 106,
-          "tags": [],
-          "text": "Document testing procedures"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "d4f813ed5ff8a32a",
-      "line_num": 103,
-      "source": "todo_md",
-      "tags": [
-        "#documentation",
-        "#development"
-      ],
-      "text": "**Create development workflow documentation**\n- [ ] Document setup process\n- [ ] Document feature development cycle\n- [ ] Document testing procedures\n\n`#documentation` `#development`\n`TODO.md:L103`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1860
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "4ff249a5a91ad87c",
-      "line_num": 110,
-      "source": "todo_md",
-      "tags": [
-        "#ux",
-        "#frontend"
-      ],
-      "text": "**Add README summary to scan results: Show the top of each repo's README in the web interface**\n`#ux` `#frontend`\n`TODO.md:L110`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 1950
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "565577efc710cbce",
-      "line_num": 111,
-      "source": "todo_md",
-      "tags": [
-        "#search",
-        "#ux"
-      ],
-      "text": "**Search: Implement a search feature for TODO comments**\n`#search` `#ux`\n`TODO.md:L111`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2040
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "99dc78b52ba16748",
-      "line_num": 112,
-      "source": "todo_md",
-      "tags": [
-        "#reporting",
-        "#ux"
-      ],
-      "text": "**Metrics dashboard: Visualize TODO metrics across projects**\n`#reporting` `#ux`\n`TODO.md:L112`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2130
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "bc4f45bce47f4cbf",
-      "line_num": 113,
-      "source": "todo_md",
-      "tags": [
-        "#reporting",
-        "#feature"
-      ],
-      "text": "**Report downloads: Offer CSV, JSON, PDF export of scan results**\n`#reporting` `#feature`\n`TODO.md:L113`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2220
-    },
-    {
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "c2e7d8f292b1580b",
-      "line_num": 117,
-      "source": "todo_md",
-      "tags": [
-        "#frontend",
-        "#dry"
-      ],
-      "text": "**Refactor `stream_results.html` JS: `createTodoElement()` and `createTodoMarkdownElement()` build DOM by hand with duplicated Startr.style strings. Extract shared styles into named constants or use server-rendered partials.**\n`#frontend` `#dry`\n`TODO.md:L117`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2310
-    },
-    {
-      "file_path": "README.md",
-      "height": 80,
-      "id": "87c02d540865f985",
-      "line_num": 149,
-      "source": "inline",
-      "tags": [],
-      "text": "\"todo_text\": \"# TODO: Fix this hack when we have time\",\n`README.md:149`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2400
-    },
-    {
-      "file_path": "scanner/templates/stream_results.html",
-      "height": 80,
-      "id": "31df30a044f864b4",
-      "line_num": 231,
-      "source": "inline",
-      "tags": [],
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>TODO</strong></td><td style=\"--p:4px 8px\"><code>## Medium Priority</code> or any unlisted section &middot; inline <code># TODO:</code></td></tr>\n`scanner/templates/stream_results.html:231`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2490
-    },
-    {
-      "file_path": "scanner/templates/stream_results.html",
-      "height": 80,
-      "id": "70da130b08a3bdd6",
-      "line_num": 237,
-      "source": "inline",
-      "tags": [],
-      "text": "<p style=\"--mb:8px\">To move an item to <strong>In Progress</strong>: move it under a <code>## In Progress</code> section in your TODO.md, or change the inline comment to <code># FIXME:</code>.</p>\n`scanner/templates/stream_results.html:237`",
-      "type": "text",
-      "width": 280,
-      "x": 360,
-      "y": 2580
-    },
-    {
       "color": "5",
-      "height": 430,
+      "height": 250,
       "id": "col-in_progress",
       "label": "In Progress",
       "type": "group",
@@ -1055,182 +864,66 @@
       "y": 0
     },
     {
-      "children": [
-        {
-          "checked": true,
-          "line_num": 24,
-          "tags": [],
-          "text": "Add brand hero: headline, subhead, and a short \"what it is\" paragraph"
-        },
-        {
-          "checked": true,
-          "line_num": 25,
-          "tags": [],
-          "text": "Add a 3-bullet \"what makes it different\" strip (the inversion, MCP-native, open-source)"
-        },
-        {
-          "checked": true,
-          "line_num": 26,
-          "tags": [],
-          "text": "Embed screenshot above the fold"
-        },
-        {
-          "checked": true,
-          "line_num": 27,
-          "tags": [],
-          "text": "Move the sign-in form into a secondary section below the hero"
-        },
-        {
-          "checked": false,
-          "line_num": 28,
-          "tags": [],
-          "text": "Add \"New to TodoScope?\" copy with link to README / GitHub"
-        },
-        {
-          "checked": false,
-          "line_num": 29,
-          "tags": [],
-          "text": "Add social proof / cross-links to sage.is and startr.style"
-        },
-        {
-          "checked": false,
-          "line_num": 30,
-          "tags": [],
-          "text": "Add OG meta tags (`og:title`, `og:description`, `og:image`)"
-        }
-      ],
-      "file_path": "TODO.md",
+      "file_path": ".claude/skills/todo-scope/SKILL.md",
       "height": 80,
-      "id": "4694b156e0975c15",
-      "line_num": 23,
-      "source": "todo_md",
-      "tags": [
-        "#brand",
-        "#landing",
-        "#critical"
-      ],
-      "text": "**Promote login.html into a real landing page: hero, pitch, features, sign-in**\n- [x] Add brand hero: headline, subhead, and a short \"what it is\" paragraph\n- [x] Add a 3-bullet \"what makes it different\" strip (the inversion, MCP-native, open-source)\n- [x] Embed screenshot above the fold\n- [x] Move the sign-in form into a secondary section below the hero\n- [ ] Add \"New to TodoScope?\" copy with link to README / GitHub\n- [ ] Add social proof / cross-links to sage.is and startr.style\n- [ ] Add OG meta tags (`og:title`, `og:description`, `og:image`)\n\n`#brand` `#landing` `#critical`\n`TODO.md:L23`",
+      "id": "58e18d7a64f36cd2",
+      "line_num": 207,
+      "source": "inline",
+      "tags": [],
+      "text": "> | In Progress | `## In Progress`  | `# FIXME:`  |\n`.claude/skills/todo-scope/SKILL.md:207`",
       "type": "text",
       "width": 280,
       "x": 710,
       "y": 60
     },
     {
-      "children": [
-        {
-          "checked": false,
-          "line_num": 32,
-          "tags": [],
-          "text": "Add a \"Connect your AI agent\" section"
-        },
-        {
-          "checked": false,
-          "line_num": 33,
-          "tags": [],
-          "text": "Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`"
-        },
-        {
-          "checked": false,
-          "line_num": 34,
-          "tags": [],
-          "text": "Include a one-paragraph framing: \"AI agents are part of your team\""
-        }
-      ],
-      "file_path": "TODO.md",
+      "file_path": "scanner/templates/stream_results.html",
       "height": 80,
-      "id": "53e86f49b84b4836",
-      "line_num": 31,
-      "source": "todo_md",
-      "tags": [
-        "#brand",
-        "#ai",
-        "#mcp"
-      ],
-      "text": "**Surface the MCP / AI agent story on the landing page**\n- [ ] Add a \"Connect your AI agent\" section\n- [ ] Link directly to `/api/mpco/manifest` and `/api/mpco/openapi.json`\n- [ ] Include a one-paragraph framing: \"AI agents are part of your team\"\n\n`#brand` `#ai` `#mcp`\n`TODO.md:L31`",
+      "id": "003a628f28e6eb4b",
+      "line_num": 235,
+      "source": "inline",
+      "tags": [],
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>In Progress</strong></td><td style=\"--p:4px 8px\"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>\n`scanner/templates/stream_results.html:235`",
       "type": "text",
       "width": 280,
       "x": 710,
       "y": 150
     },
     {
-      "children": [
-        {
-          "checked": true,
-          "line_num": 47,
-          "tags": [],
-          "text": "Create scanner subdirectory"
-        },
-        {
-          "checked": true,
-          "line_num": 48,
-          "tags": [],
-          "text": "Implement `__init__.py`"
-        },
-        {
-          "checked": true,
-          "line_num": 49,
-          "tags": [],
-          "text": "Move `error_handling.py` to scanner subdirectory"
-        },
-        {
-          "checked": true,
-          "line_num": 50,
-          "tags": [],
-          "text": "Update imports in `app.py`"
-        },
-        {
-          "checked": true,
-          "line_num": 51,
-          "tags": [],
-          "text": "Move remaining Python files (test files) to `scanner/tests`"
-        },
-        {
-          "checked": true,
-          "line_num": 52,
-          "tags": [],
-          "text": "Move Pipfile and Pipfile.lock to scanner subdirectory"
-        },
-        {
-          "checked": false,
-          "line_num": 53,
-          "tags": [],
-          "text": "Test and update the Makefile accordingly"
-        }
-      ],
-      "file_path": "TODO.md",
-      "height": 80,
-      "id": "9f9fe02b48178830",
-      "line_num": 46,
-      "source": "todo_md",
-      "tags": [],
-      "text": "**Migrate Python files and dependencies to subdirectory structure**\n- [x] Create scanner subdirectory\n- [x] Implement `__init__.py`\n- [x] Move `error_handling.py` to scanner subdirectory\n- [x] Update imports in `app.py`\n- [x] Move remaining Python files (test files) to `scanner/tests`\n- [x] Move Pipfile and Pipfile.lock to scanner subdirectory\n- [ ] Test and update the Makefile accordingly\n\n`TODO.md:L46`",
-      "type": "text",
-      "width": 280,
-      "x": 710,
-      "y": 240
-    },
-    {
-      "file_path": "scanner/templates/stream_results.html",
-      "height": 80,
-      "id": "e1da0d5203637987",
-      "line_num": 232,
-      "source": "inline",
-      "tags": [],
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>In Progress</strong></td><td style=\"--p:4px 8px\"><code>## In Progress</code>, <code>## Doing</code>, or <code>## High Priority</code> &middot; inline <code># FIXME:</code></td></tr>\n`scanner/templates/stream_results.html:232`",
-      "type": "text",
-      "width": 280,
-      "x": 710,
-      "y": 330
-    },
-    {
       "color": "1",
-      "height": 340,
+      "height": 520,
       "id": "col-bugs",
       "label": "Bugs",
       "type": "group",
       "width": 300,
       "x": 1050,
       "y": 0
+    },
+    {
+      "file_path": ".claude/skills/todo-scope/SKILL.md",
+      "height": 80,
+      "id": "4bacd0eda380b021",
+      "line_num": 208,
+      "source": "inline",
+      "tags": [],
+      "text": "> | Bugs        | `## Bugs`         | `# BUG:`    |\n`.claude/skills/todo-scope/SKILL.md:208`",
+      "type": "text",
+      "width": 280,
+      "x": 1060,
+      "y": 60
+    },
+    {
+      "file_path": ".claude/skills/todo-scope/SKILL.md",
+      "height": 80,
+      "id": "dba2fdb0d80a335e",
+      "line_num": 338,
+      "source": "inline",
+      "tags": [],
+      "text": "_No known bugs. Use `# BUG:` inline tags to flag defects in source._\n`.claude/skills/todo-scope/SKILL.md:338`",
+      "type": "text",
+      "width": 280,
+      "x": 1060,
+      "y": 150
     },
     {
       "file_path": "scanner/kanban.py",
@@ -1243,7 +936,7 @@
       "type": "text",
       "width": 280,
       "x": 1060,
-      "y": 60
+      "y": 240
     },
     {
       "file_path": "scanner/kanban.py",
@@ -1256,24 +949,24 @@
       "type": "text",
       "width": 280,
       "x": 1060,
-      "y": 150
+      "y": 330
     },
     {
       "file_path": "scanner/templates/stream_results.html",
       "height": 80,
-      "id": "74c74c194351ecc9",
-      "line_num": 233,
+      "id": "f950ef9aad66a0ff",
+      "line_num": 236,
       "source": "inline",
       "tags": [],
-      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Bugs</strong></td><td style=\"--p:4px 8px\"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>\n`scanner/templates/stream_results.html:233`",
+      "text": "<tr style=\"--bb:1px solid #eee\"><td style=\"--p:4px 8px\"><strong>Bugs</strong></td><td style=\"--p:4px 8px\"><code>## Bugs</code> section &middot; inline <code># BUG:</code></td></tr>\n`scanner/templates/stream_results.html:236`",
       "type": "text",
       "width": 280,
       "x": 1060,
-      "y": 240
+      "y": 420
     },
     {
       "color": "6",
-      "height": 5830,
+      "height": 6460,
       "id": "col-done",
       "label": "Done",
       "type": "group",
@@ -1284,14 +977,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "03d28b6d26424fa7",
-      "line_num": 236,
+      "id": "83d3283502a961ee",
+      "line_num": 209,
       "source": "todo_md",
       "tags": [
         "#critical",
         "#backend"
       ],
-      "text": "**Fix server hanging after completing scans**\n`#critical` `#backend`\n`TODO.md:L236`",
+      "text": "**Fix server hanging after completing scans**\n`#critical` `#backend`\n`TODO.md:L209`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1300,13 +993,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "8d500907da5c42c3",
-      "line_num": 38,
+      "id": "8155f57232a85864",
+      "line_num": 57,
       "source": "todo_md",
       "tags": [
-        "#packaging"
+        "#frontend",
+        "#dry"
       ],
-      "text": "**Create `pyproject.toml`: package metadata, entry point, setuptools build**\n`#packaging`\n`TODO.md:L38`",
+      "text": "**Refactor `stream_results.html` JS: superseded \u2014 the hand-built DOM builders are deleted; the server renders partials and the client morphs them (see Phase 2 live board).**\n`#frontend` `#dry`\n`TODO.md:L57`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1315,14 +1009,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "50d1cc32f7e7e1a9",
-      "line_num": 39,
+      "id": "34e19af3842dbf43",
+      "line_num": 79,
       "source": "todo_md",
       "tags": [
-        "#cli",
-        "#packaging"
+        "#brand"
       ],
-      "text": "**Create `scanner/cli.py`: CLI entry point**\n`#cli` `#packaging`\n`TODO.md:L39`",
+      "text": "**Rename GitHub repo: `Startr/WEB-MCPO-Repo_scanner` \u2192 `Startr/TodoScope`**\n`#brand`\n`TODO.md:L79`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1331,14 +1024,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "05eede83d6dbdb2b",
-      "line_num": 40,
+      "id": "da1dbb9b0f4aca06",
+      "line_num": 80,
       "source": "todo_md",
       "tags": [
-        "#packaging",
-        "#core"
+        "#docker",
+        "#brand"
       ],
-      "text": "**Update `scanner/app.py`: frozen app + data dir + auto-migrate support**\n`#packaging` `#core`\n`TODO.md:L40`",
+      "text": "**Update Docker image: `ghcr.io/startr/todoscope`**\n`#docker` `#brand`\n`TODO.md:L80`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1347,13 +1040,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "bfe27ec58e488d1d",
-      "line_num": 41,
+      "id": "0102ef61dd8b5b36",
+      "line_num": 81,
       "source": "todo_md",
       "tags": [
-        "#packaging"
+        "#brand"
       ],
-      "text": "**`__version__` already in `scanner/__init__.py` at 1.0.0**\n`#packaging`\n`TODO.md:L41`",
+      "text": "**Update all internal references: pyproject.toml, scripts, templates, docs, README, CapRover**\n`#brand`\n`TODO.md:L81`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1362,11 +1055,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "ef42d8d48012c60f",
-      "line_num": 42,
+      "id": "1c872566152fdbf9",
+      "line_num": 82,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verified: `pip install -e .` \u2192 `todoscope` command starts server, auto-migrates repos to `~/.todoscope/`**\n`TODO.md:L42`",
+      "tags": [
+        "#brand"
+      ],
+      "text": "**Convention: clone to `GIT-TodoScope/` locally for dev clarity**\n`#brand`\n`TODO.md:L82`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1375,13 +1070,11 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "4bbdc64194b76c5a",
-      "line_num": 130,
+      "id": "476f3f37423498f8",
+      "line_num": 83,
       "source": "todo_md",
-      "tags": [
-        "#brand"
-      ],
-      "text": "**Rename GitHub repo: `Startr/WEB-MCPO-Repo_scanner` \u2192 `Startr/TodoScope`**\n`#brand`\n`TODO.md:L130`",
+      "tags": [],
+      "text": "**Verified: 45 tests passing, all links updated**\n`TODO.md:L83`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1390,14 +1083,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "3d5a5b65a8d74635",
-      "line_num": 131,
+      "id": "a904077ef97a7ceb",
+      "line_num": 87,
       "source": "todo_md",
       "tags": [
-        "#docker",
-        "#brand"
+        "#cli",
+        "#docker"
       ],
-      "text": "**Update Docker image: `ghcr.io/startr/todoscope`**\n`#docker` `#brand`\n`TODO.md:L131`",
+      "text": "**Create `scripts/todoscope`: bash CLI wrapper (11 commands, dev mode, tunnels)**\n`#cli` `#docker`\n`TODO.md:L87`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1406,13 +1099,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "33aad52d0f947759",
-      "line_num": 132,
+      "id": "1a7ec68eb1880b6a",
+      "line_num": 88,
       "source": "todo_md",
       "tags": [
-        "#brand"
+        "#developer-experience"
       ],
-      "text": "**Update all internal references: pyproject.toml, scripts, templates, docs, README, CapRover**\n`#brand`\n`TODO.md:L132`",
+      "text": "**Dev mode: smart repo discovery, source mounting, hot reload**\n`#developer-experience`\n`TODO.md:L88`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1421,13 +1114,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "98e5856400303d9c",
-      "line_num": 133,
+      "id": "6a4049ddab9fe7a2",
+      "line_num": 89,
       "source": "todo_md",
       "tags": [
-        "#brand"
+        "#networking"
       ],
-      "text": "**Convention: clone to `GIT-TodoScope/` locally for dev clarity**\n`#brand`\n`TODO.md:L133`",
+      "text": "**Tunnel commands: `todoscope tunnel` + `todoscope tailscale`**\n`#networking`\n`TODO.md:L89`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1436,11 +1129,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "ff22551f2dc150e9",
-      "line_num": 134,
+      "id": "3d7a5aa8109335f2",
+      "line_num": 94,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verified: 45 tests passing, all links updated**\n`TODO.md:L134`",
+      "tags": [
+        "#packaging"
+      ],
+      "text": "**Create `todoscope.spec`: PyInstaller spec file (two targets: CLI onefile + .app windowed)**\n`#packaging`\n`TODO.md:L94`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1449,14 +1144,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "fd8c1ef1ccac2f94",
-      "line_num": 138,
+      "id": "f1e625e8f8592a8e",
+      "line_num": 95,
       "source": "todo_md",
       "tags": [
-        "#cli",
-        "#docker"
+        "#packaging"
       ],
-      "text": "**Create `scripts/todoscope`: bash CLI wrapper (11 commands, dev mode, tunnels)**\n`#cli` `#docker`\n`TODO.md:L138`",
+      "text": "**Add dev deps to Pipfile: pyinstaller, build, twine**\n`#packaging`\n`TODO.md:L95`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1465,13 +1159,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "79ee1c32bda0502b",
-      "line_num": 139,
+      "id": "c5df8932f80b42ec",
+      "line_num": 96,
       "source": "todo_md",
       "tags": [
-        "#developer-experience"
+        "#build"
       ],
-      "text": "**Dev mode: smart repo discovery, source mounting, hot reload**\n`#developer-experience`\n`TODO.md:L139`",
+      "text": "**Makefile targets: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist**\n`#build`\n`TODO.md:L96`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1480,13 +1174,11 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "64997a6fd9d8c612",
-      "line_num": 140,
+      "id": "9c8963707a00853f",
+      "line_num": 97,
       "source": "todo_md",
-      "tags": [
-        "#networking"
-      ],
-      "text": "**Tunnel commands: `todoscope tunnel` + `todoscope tailscale`**\n`#networking`\n`TODO.md:L140`",
+      "tags": [],
+      "text": "**Verified: `make binary` \u2192 `dist/todoscope` (11MB ARM64) \u2192 `./dist/todoscope --version` \u2192 `1.0.0`**\n`TODO.md:L97`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1495,13 +1187,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "99cecf1ccf3d682e",
-      "line_num": 145,
+      "id": "2f5ccef5b6d2ac99",
+      "line_num": 107,
       "source": "todo_md",
       "tags": [
-        "#packaging"
+        "#macos"
       ],
-      "text": "**Create `todoscope.spec`: PyInstaller spec file (two targets: CLI onefile + .app windowed)**\n`#packaging`\n`TODO.md:L145`",
+      "text": "**Build .app: `make app` \u2192 TodoScope.app wrapper around PyInstaller binary**\n`#macos`\n`TODO.md:L107`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1510,13 +1202,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "0940a93b2d941006",
-      "line_num": 146,
+      "id": "941c2a65e81a2fdf",
+      "line_num": 108,
       "source": "todo_md",
       "tags": [
-        "#packaging"
+        "#macos"
       ],
-      "text": "**Add dev deps to Pipfile: pyinstaller, build, twine**\n`#packaging`\n`TODO.md:L146`",
+      "text": "**Create DMG: `make dmg` \u2192 styled DMG via `create-dmg` with background + Applications link**\n`#macos`\n`TODO.md:L108`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1525,13 +1217,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "684e86764ae26a29",
-      "line_num": 147,
+      "id": "8b39f054d126e16b",
+      "line_num": 109,
       "source": "todo_md",
       "tags": [
-        "#build"
+        "#design"
       ],
-      "text": "**Makefile targets: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist**\n`#build`\n`TODO.md:L147`",
+      "text": "**App icon: real \ud83d\udd2d Apple Color Emoji via canvas+receiver (`scripts/generate_emoji_icon.sh`)**\n`#design`\n`TODO.md:L109`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1540,11 +1232,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "942a05db3ee61ab8",
-      "line_num": 148,
+      "id": "00ad0071454616bf",
+      "line_num": 110,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verified: `make binary` \u2192 `dist/todoscope` (11MB ARM64) \u2192 `./dist/todoscope --version` \u2192 `1.0.0`**\n`TODO.md:L148`",
+      "tags": [
+        "#design"
+      ],
+      "text": "**Menu bar icon: \ud83d\udd2d on transparent background via canvas+receiver (`scripts/generate_menu_icon.sh`)**\n`#design`\n`TODO.md:L110`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1553,13 +1247,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "2d0a209add778910",
-      "line_num": 157,
+      "id": "e44c6f252b6de91c",
+      "line_num": 111,
       "source": "todo_md",
       "tags": [
         "#macos"
       ],
-      "text": "**Build .app: `make app` \u2192 TodoScope.app wrapper around PyInstaller binary**\n`#macos`\n`TODO.md:L157`",
+      "text": "**pystray menu bar app: \ud83d\udd2d in menu bar with Open Browser, Show Log, Quit**\n`#macos`\n`TODO.md:L111`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1568,13 +1262,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "af6519db96aaca35",
-      "line_num": 158,
+      "id": "cba6e60f7188528b",
+      "line_num": 112,
       "source": "todo_md",
       "tags": [
         "#macos"
       ],
-      "text": "**Create DMG: `make dmg` \u2192 styled DMG via `create-dmg` with background + Applications link**\n`#macos`\n`TODO.md:L158`",
+      "text": "**Dock icon toggle: Hide/Show Dock Icon menu item via NSApp.setActivationPolicy ctypes**\n`#macos`\n`TODO.md:L112`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1583,13 +1277,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "cb553dc5de7f8c30",
-      "line_num": 159,
+      "id": "9ebf11bbad234f65",
+      "line_num": 113,
       "source": "todo_md",
       "tags": [
-        "#design"
+        "#reliability"
       ],
-      "text": "**App icon: real \ud83d\udd2d Apple Color Emoji via canvas+receiver (`scripts/generate_emoji_icon.sh`)**\n`#design`\n`TODO.md:L159`",
+      "text": "**Duplicate instance prevention: detects running server, opens browser instead**\n`#reliability`\n`TODO.md:L113`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1598,13 +1292,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "31bc837abffd5d47",
-      "line_num": 160,
+      "id": "5d2fad63a43cf4cb",
+      "line_num": 114,
       "source": "todo_md",
       "tags": [
-        "#design"
+        "#data"
       ],
-      "text": "**Menu bar icon: \ud83d\udd2d on transparent background via canvas+receiver (`scripts/generate_menu_icon.sh`)**\n`#design`\n`TODO.md:L160`",
+      "text": "**Data persistence: local_repos.yaml, access_keys.csv, repositories all in `~/.todoscope/`**\n`#data`\n`TODO.md:L114`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1613,13 +1307,11 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "7826c8f03625e8aa",
-      "line_num": 161,
+      "id": "c0cbc9241ba54f8f",
+      "line_num": 115,
       "source": "todo_md",
-      "tags": [
-        "#macos"
-      ],
-      "text": "**pystray menu bar app: \ud83d\udd2d in menu bar with Open Browser, Show Log, Quit**\n`#macos`\n`TODO.md:L161`",
+      "tags": [],
+      "text": "**Verified: .app launches \u2192 Dock icon bounces \u2192 \ud83d\udd2d in menu bar \u2192 browser opens \u2192 all menu items work**\n`TODO.md:L115`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1628,13 +1320,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "4945507f8fe00dd6",
-      "line_num": 162,
+      "id": "55319439ad62f862",
+      "line_num": 119,
       "source": "todo_md",
       "tags": [
-        "#macos"
+        "#build"
       ],
-      "text": "**Dock icon toggle: Hide/Show Dock Icon menu item via NSApp.setActivationPolicy ctypes**\n`#macos`\n`TODO.md:L162`",
+      "text": "**Makefile targets: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist**\n`#build`\n`TODO.md:L119`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1643,13 +1335,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "499991be484d4dbd",
-      "line_num": 163,
+      "id": "ae14389035b281bf",
+      "line_num": 120,
       "source": "todo_md",
       "tags": [
-        "#reliability"
+        "#design"
       ],
-      "text": "**Duplicate instance prevention: detects running server, opens browser instead**\n`#reliability`\n`TODO.md:L163`",
+      "text": "**Icon wired: `--icon assets/todoscope.icns` in app target**\n`#design`\n`TODO.md:L120`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1658,26 +1350,48 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "668afa9bddf07473",
-      "line_num": 164,
+      "id": "93402a9d576c592d",
+      "line_num": 121,
       "source": "todo_md",
       "tags": [
-        "#data"
+        "#design"
       ],
-      "text": "**Data persistence: local_repos.yaml, access_keys.csv, repositories all in `~/.todoscope/`**\n`#data`\n`TODO.md:L164`",
+      "text": "**Styled DMG: `create-dmg` with background, icon positions, Applications drop link**\n`#design`\n`TODO.md:L121`",
       "type": "text",
       "width": 280,
       "x": 1410,
       "y": 2310
     },
     {
+      "children": [
+        {
+          "checked": true,
+          "line_num": 123,
+          "tags": [],
+          "text": "`binary_linux`: `cdrx/pyinstaller-linux` Docker container"
+        },
+        {
+          "checked": true,
+          "line_num": 124,
+          "tags": [],
+          "text": "`binary_windows`: `cdrx/pyinstaller-windows` Docker + Wine"
+        },
+        {
+          "checked": true,
+          "line_num": 125,
+          "tags": [],
+          "text": "`docker_push`: push to `ghcr.io/startr/todoscope`"
+        }
+      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "975e666ee3c5a58f",
-      "line_num": 165,
+      "id": "38deff919f1db9ec",
+      "line_num": 122,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Verified: .app launches \u2192 Dock icon bounces \u2192 \ud83d\udd2d in menu bar \u2192 browser opens \u2192 all menu items work**\n`TODO.md:L165`",
+      "tags": [
+        "#build"
+      ],
+      "text": "**Cross-platform builds (Docker, zero cloud CI):**\n- [x] `binary_linux`: `cdrx/pyinstaller-linux` Docker container\n- [x] `binary_windows`: `cdrx/pyinstaller-windows` Docker + Wine\n- [x] `docker_push`: push to `ghcr.io/startr/todoscope`\n\n`#build`\n`TODO.md:L122`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1686,13 +1400,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "488d3306cab7b873",
-      "line_num": 169,
+      "id": "5167639a03fb6c4d",
+      "line_num": 126,
       "source": "todo_md",
       "tags": [
-        "#build"
+        "#automation"
       ],
-      "text": "**Makefile targets: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist**\n`#build`\n`TODO.md:L169`",
+      "text": "**`scripts/release_all.sh`: one command builds ALL artifacts + uploads via `gh` CLI**\n`#automation`\n`TODO.md:L126`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1701,13 +1415,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "9a41c3e6ab4f8b9d",
-      "line_num": 170,
+      "id": "fece37ffc2002ba1",
+      "line_num": 127,
       "source": "todo_md",
       "tags": [
-        "#design"
+        "#build"
       ],
-      "text": "**Icon wired: `--icon assets/todoscope.icns` in app target**\n`#design`\n`TODO.md:L170`",
+      "text": "**`make release_all` target: calls release_all.sh**\n`#build`\n`TODO.md:L127`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1716,48 +1430,30 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "5747a62364542973",
-      "line_num": 171,
+      "id": "15d76c5014131a99",
+      "line_num": 182,
       "source": "todo_md",
       "tags": [
-        "#design"
+        "#security",
+        "#privacy"
       ],
-      "text": "**Styled DMG: `create-dmg` with background, icon positions, Applications drop link**\n`#design`\n`TODO.md:L171`",
+      "text": "**Fix `local_path` leak: scan-stream `init` now includes the filesystem path for authed viewers only (no-keys instances unaffected); locked by 2 tests in `test_public_repo_privacy.py` \u2014 2026-08-15**\n`#security` `#privacy`\n`TODO.md:L182`",
       "type": "text",
       "width": 280,
       "x": 1410,
       "y": 2670
     },
     {
-      "children": [
-        {
-          "checked": true,
-          "line_num": 173,
-          "tags": [],
-          "text": "`binary_linux`: `cdrx/pyinstaller-linux` Docker container"
-        },
-        {
-          "checked": true,
-          "line_num": 174,
-          "tags": [],
-          "text": "`binary_windows`: `cdrx/pyinstaller-windows` Docker + Wine"
-        },
-        {
-          "checked": true,
-          "line_num": 175,
-          "tags": [],
-          "text": "`docker_push`: push to `ghcr.io/startr/todoscope`"
-        }
-      ],
       "file_path": "TODO.md",
       "height": 80,
-      "id": "c7b23eb6ab033cf5",
-      "line_num": 172,
+      "id": "61d0c8763b5a627b",
+      "line_num": 183,
       "source": "todo_md",
       "tags": [
-        "#build"
+        "#performance",
+        "#testing"
       ],
-      "text": "**Cross-platform builds (Docker, zero cloud CI):**\n- [x] `binary_linux`: `cdrx/pyinstaller-linux` Docker container\n- [x] `binary_windows`: `cdrx/pyinstaller-windows` Docker + Wine\n- [x] `docker_push`: push to `ghcr.io/startr/todoscope`\n\n`#build`\n`TODO.md:L172`",
+      "text": "**Incremental-scan benchmark: `test_incremental_scan_perf.py`, 400-file fixture timed with timeit \u2014 full 6.21s, incremental 0.58s (10.7x), cached 0.09s (65.8x); 2x floor asserted in CI \u2014 2026-08-15**\n`#performance` `#testing`\n`TODO.md:L183`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1766,13 +1462,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "bab1f029fe85857b",
-      "line_num": 176,
+      "id": "7db1a03731e9af6f",
+      "line_num": 184,
       "source": "todo_md",
       "tags": [
-        "#automation"
+        "#documentation"
       ],
-      "text": "**`scripts/release_all.sh`: one command builds ALL artifacts + uploads via `gh` CLI**\n`#automation`\n`TODO.md:L176`",
+      "text": "**Documentation refresh: all four docs rewritten against current code and fresh-eyes verified; 6 verifier findings fixed, incl. `pipenv run todoscope` now working from a fresh clone (editable install in scanner/Pipfile) \u2014 2026-08-15, full records in [completed-todos](docs/completed-todos.md)**\n`#documentation`\n`TODO.md:L184`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1781,13 +1477,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "6489c03a7111a24e",
-      "line_num": 177,
+      "id": "ac125fb0225aec13",
+      "line_num": 185,
       "source": "todo_md",
       "tags": [
-        "#build"
+        "#brand",
+        "#copy"
       ],
-      "text": "**`make release_all` target: calls release_all.sh**\n`#build`\n`TODO.md:L177`",
+      "text": "**Brand & Landing \u2014 Scope D (Brand Consistency): 24-finding voice audit applied; false MCP claim relabeled \"tool API\"; error messages moved to founder voice \u2014 2026-08-15**\n`#brand` `#copy`\n`TODO.md:L185`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1796,14 +1493,15 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "ed592ed516f65972",
-      "line_num": 220,
+      "id": "073a07ad77316834",
+      "line_num": 186,
       "source": "todo_md",
       "tags": [
-        "#performance",
-        "#ux"
+        "#ai",
+        "#mcp",
+        "#integration"
       ],
-      "text": "**Speed up scan: cached KANBAN board loads instantly on page load while full scan runs in background**\n`#performance` `#ux`\n`TODO.md:L220`",
+      "text": "**Brand & Landing \u2014 Scope C (MCP / Sage.is Integration): `/connect` page, dashboard tool-API strip with live status dot, `docs/connect-sage.md` with screenshots \u2014 2026-08-15**\n`#ai` `#mcp` `#integration`\n`TODO.md:L186`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1812,11 +1510,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "4ea1b14f1f83af74",
-      "line_num": 221,
+      "id": "e743a4e72178827c",
+      "line_num": 187,
       "source": "todo_md",
-      "tags": [],
-      "text": "**Fix existing repositories not working**\n`TODO.md:L221`",
+      "tags": [
+        "#ux",
+        "#dashboard"
+      ],
+      "text": "**Brand & Landing \u2014 Scope B (Dashboard): header + pitch, unified smart repo input with live hint, empty state, table filter, Last Scanned + force-rescan \u2014 2026-08-15**\n`#ux` `#dashboard`\n`TODO.md:L187`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1825,14 +1526,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "0322d3dfd2f337ea",
-      "line_num": 222,
+      "id": "06139852dda44f13",
+      "line_num": 188,
       "source": "todo_md",
       "tags": [
-        "#core",
-        "#error-handling"
+        "#brand",
+        "#landing"
       ],
-      "text": "**Robust error handling: custom exceptions, retries, and recovery strategies**\n`#core` `#error-handling`\n`TODO.md:L222`",
+      "text": "**Brand & Landing \u2014 Scope A (Logged-Out Landing): hero, features strip, screenshot, agent section, OG meta \u2014 2026-08-15**\n`#brand` `#landing`\n`TODO.md:L188`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1841,14 +1542,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "c1692e7a6484ae7c",
-      "line_num": 223,
+      "id": "8f89adf62fddb248",
+      "line_num": 189,
       "source": "todo_md",
       "tags": [
         "#core",
-        "#parser"
+        "#frontend"
       ],
-      "text": "**Broaden TODO pattern recognition: FIXME, BUG, NOTE in various comment formats**\n`#core` `#parser`\n`TODO.md:L223`",
+      "text": "**Multi-host repo support: GitHub / GitLab / Codeberg / Bitbucket / sourcehut + pure-local; five verification lanes pass; no-origin stream bug fixed \u2014 2026-08-15**\n`#core` `#frontend`\n`TODO.md:L189`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1857,14 +1558,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "7703235461545a1d",
-      "line_num": 224,
+      "id": "3e3c2ebe249deaf6",
+      "line_num": 190,
       "source": "todo_md",
       "tags": [
-        "#development",
-        "#testing"
+        "#performance",
+        "#core"
       ],
-      "text": "**DRY Makefile targets**\n`#development` `#testing`\n`TODO.md:L224`",
+      "text": "**Incremental scans + live board (Phase 2): git-diff incremental with scan_state (six-scenario verify), server-rendered fragments, `/events` SSE, watchdog, checkbox write-back \u2014 2026-08-15**\n`#performance` `#core`\n`TODO.md:L190`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1873,14 +1574,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "4ee4d0897c3a1628",
-      "line_num": 225,
+      "id": "6b9b69fdb7ac5ac9",
+      "line_num": 191,
       "source": "todo_md",
       "tags": [
-        "#api",
-        "#performance"
+        "#release",
+        "#packaging"
       ],
-      "text": "**Enable streaming of API results**\n`#api` `#performance`\n`TODO.md:L225`",
+      "text": "**Release Pipeline \u2014 Package Foundation: pyproject.toml, scanner/cli.py entry point, frozen-app + data-dir support in app.py, `__version__` single source; verified via `pip install -e .`**\n`#release` `#packaging`\n`TODO.md:L191`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1889,14 +1590,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "bd74b0591bba5d71",
-      "line_num": 226,
+      "id": "bbf9b20797128064",
+      "line_num": 192,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#core"
+        "#development",
+        "#structure"
       ],
-      "text": "**TODO.md and TODO.txt file detection**\n`#feature` `#core`\n`TODO.md:L226`",
+      "text": "**Subdirectory Migration: Python files, tests, and Pipfiles under scanner/; imports and Makefile updated, exercised end-to-end 2026-08-15**\n`#development` `#structure`\n`TODO.md:L192`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1905,14 +1606,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "719d2b9b23ea4e52",
-      "line_num": 227,
+      "id": "be04c50488a004fc",
+      "line_num": 193,
       "source": "todo_md",
       "tags": [
-        "#ux",
-        "#frontend"
+        "#performance",
+        "#ux"
       ],
-      "text": "**Web interface for displaying TODO files**\n`#ux` `#frontend`\n`TODO.md:L227`",
+      "text": "**Speed up scan: cached KANBAN board loads instantly on page load while full scan runs in background**\n`#performance` `#ux`\n`TODO.md:L193`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1921,14 +1622,11 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "21f9147b90fd2f32",
-      "line_num": 228,
+      "id": "bb0078d165265e7e",
+      "line_num": 194,
       "source": "todo_md",
-      "tags": [
-        "#api",
-        "#integration"
-      ],
-      "text": "**MCPo API for TODO files**\n`#api` `#integration`\n`TODO.md:L228`",
+      "tags": [],
+      "text": "**Fix existing repositories not working**\n`TODO.md:L194`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1937,14 +1635,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "704c66e4c74b6a38",
-      "line_num": 229,
+      "id": "2b06045c3ee155cb",
+      "line_num": 195,
       "source": "todo_md",
       "tags": [
-        "#integration",
-        "#automation"
+        "#core",
+        "#error-handling"
       ],
-      "text": "**GitHub webhook integration for automated repository scanning**\n`#integration` `#automation`\n`TODO.md:L229`",
+      "text": "**Robust error handling: custom exceptions, retries, and recovery strategies**\n`#core` `#error-handling`\n`TODO.md:L195`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1953,14 +1651,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "2cb0c4cbbbaede7a",
-      "line_num": 230,
+      "id": "338845cb0fa7dbea",
+      "line_num": 196,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#core"
+        "#core",
+        "#parser"
       ],
-      "text": "**TODO file processing: diverse filenames, root and subdirectory scanning, content display**\n`#feature` `#core`\n`TODO.md:L230`",
+      "text": "**Broaden TODO pattern recognition: FIXME, BUG, NOTE in various comment formats**\n`#core` `#parser`\n`TODO.md:L196`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1969,14 +1667,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "91fb2dc1f9f1ae78",
-      "line_num": 231,
+      "id": "19ed69ef705fba56",
+      "line_num": 197,
       "source": "todo_md",
       "tags": [
-        "#core",
+        "#development",
         "#testing"
       ],
-      "text": "**Testing infrastructure: unit and integration tests**\n`#core` `#testing`\n`TODO.md:L231`",
+      "text": "**DRY Makefile targets**\n`#development` `#testing`\n`TODO.md:L197`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -1985,14 +1683,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "3a70db11b1898776",
-      "line_num": 232,
+      "id": "36df2716a30c6945",
+      "line_num": 198,
       "source": "todo_md",
       "tags": [
-        "#development",
-        "#testing"
+        "#api",
+        "#performance"
       ],
-      "text": "**Makefile targets and test runner**\n`#development` `#testing`\n`TODO.md:L232`",
+      "text": "**Enable streaming of API results**\n`#api` `#performance`\n`TODO.md:L198`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2001,13 +1699,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "a5d4732791966af0",
-      "line_num": 233,
+      "id": "a8a6532e565865d8",
+      "line_num": 199,
       "source": "todo_md",
       "tags": [
+        "#feature",
         "#core"
       ],
-      "text": "**Honor .gitignore patterns during repository scans**\n`#core`\n`TODO.md:L233`",
+      "text": "**TODO.md and TODO.txt file detection**\n`#feature` `#core`\n`TODO.md:L199`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2016,14 +1715,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "448283310530c437",
-      "line_num": 234,
+      "id": "8f62455f727adaf8",
+      "line_num": 200,
       "source": "todo_md",
       "tags": [
         "#ux",
         "#frontend"
       ],
-      "text": "**Stream scan results in the web UI**\n`#ux` `#frontend`\n`TODO.md:L234`",
+      "text": "**Web interface for displaying TODO files**\n`#ux` `#frontend`\n`TODO.md:L200`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2032,14 +1731,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "3a0eed92f188d163",
-      "line_num": 235,
+      "id": "d7f3a5ebf6b52e0e",
+      "line_num": 201,
       "source": "todo_md",
       "tags": [
-        "#security",
-        "#rendering"
+        "#api",
+        "#integration"
       ],
-      "text": "**HTML escaping for multi-line display**\n`#security` `#rendering`\n`TODO.md:L235`",
+      "text": "**MCPo API for TODO files**\n`#api` `#integration`\n`TODO.md:L201`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2048,14 +1747,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "5c5e3f7ca7f812d3",
-      "line_num": 237,
+      "id": "b12f895abd9cabef",
+      "line_num": 202,
       "source": "todo_md",
       "tags": [
-        "#core",
-        "#backend"
+        "#integration",
+        "#automation"
       ],
-      "text": "**Skip `scanner/repositories/` when scanning this project as a local repo**\n`#core` `#backend`\n`TODO.md:L237`",
+      "text": "**GitHub webhook integration for automated repository scanning**\n`#integration` `#automation`\n`TODO.md:L202`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2064,14 +1763,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "0a4cc156978c897a",
-      "line_num": 238,
+      "id": "183cc6984bb72081",
+      "line_num": 203,
       "source": "todo_md",
       "tags": [
-        "#security",
-        "#auth"
+        "#feature",
+        "#core"
       ],
-      "text": "**User authentication: access_keys.csv with session and Bearer token auth**\n`#security` `#auth`\n`TODO.md:L238`",
+      "text": "**TODO file processing: diverse filenames, root and subdirectory scanning, content display**\n`#feature` `#core`\n`TODO.md:L203`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2080,14 +1779,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "8954ec34d8f0086b",
-      "line_num": 239,
+      "id": "4749780518a6e911",
+      "line_num": 204,
       "source": "todo_md",
       "tags": [
-        "#brand",
-        "#footer"
+        "#core",
+        "#testing"
       ],
-      "text": "**Footer update: cross-links to sage.is and startr.style**\n`#brand` `#footer`\n`TODO.md:L239`",
+      "text": "**Testing infrastructure: unit and integration tests**\n`#core` `#testing`\n`TODO.md:L204`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2096,14 +1795,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "43f048ad45c20371",
-      "line_num": 240,
+      "id": "8fb4bca523bfef6e",
+      "line_num": 205,
       "source": "todo_md",
       "tags": [
-        "#brand",
-        "#consistency"
+        "#development",
+        "#testing"
       ],
-      "text": "**Rename \"Todoscope\" to \"TodoScope\" consistently**\n`#brand` `#consistency`\n`TODO.md:L240`",
+      "text": "**Makefile targets and test runner**\n`#development` `#testing`\n`TODO.md:L205`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2112,14 +1811,13 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "1e8328226ef7451f",
-      "line_num": 241,
+      "id": "c7c6f2a73dd18943",
+      "line_num": 206,
       "source": "todo_md",
       "tags": [
-        "#brand",
-        "#visual"
+        "#core"
       ],
-      "text": "**Favicon: telescope emoji**\n`#brand` `#visual`\n`TODO.md:L241`",
+      "text": "**Honor .gitignore patterns during repository scans**\n`#core`\n`TODO.md:L206`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2128,14 +1826,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "9defbd2942f8535b",
-      "line_num": 242,
+      "id": "b7d35a12808a9f21",
+      "line_num": 207,
       "source": "todo_md",
       "tags": [
-        "#brand",
-        "#seo"
+        "#ux",
+        "#frontend"
       ],
-      "text": "**Page titles: descriptive, brand-consistent `<title>` tags**\n`#brand` `#seo`\n`TODO.md:L242`",
+      "text": "**Stream scan results in the web UI**\n`#ux` `#frontend`\n`TODO.md:L207`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2144,14 +1842,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "3cdd4c8f665ec91f",
-      "line_num": 243,
+      "id": "e7a1482d6e4db6ed",
+      "line_num": 208,
       "source": "todo_md",
       "tags": [
-        "#seo",
-        "#privacy"
+        "#security",
+        "#rendering"
       ],
-      "text": "**Noindex on login page**\n`#seo` `#privacy`\n`TODO.md:L243`",
+      "text": "**HTML escaping for multi-line display**\n`#security` `#rendering`\n`TODO.md:L208`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2160,14 +1858,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "d859ed9ed31b6dee",
-      "line_num": 244,
+      "id": "de3179edcbfcd181",
+      "line_num": 210,
       "source": "todo_md",
       "tags": [
-        "#brand",
-        "#seo"
+        "#core",
+        "#backend"
       ],
-      "text": "**Meta description: one-line pitch as default meta description**\n`#brand` `#seo`\n`TODO.md:L244`",
+      "text": "**Skip `scanner/repositories/` when scanning this project as a local repo**\n`#core` `#backend`\n`TODO.md:L210`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2176,14 +1874,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "28944c8458e23930",
-      "line_num": 245,
+      "id": "640036b3e7f36212",
+      "line_num": 211,
       "source": "todo_md",
       "tags": [
-        "#core",
-        "#config"
+        "#security",
+        "#auth"
       ],
-      "text": "**YAML config migration: `local_repos.yaml` with public/webhook metadata**\n`#core` `#config`\n`TODO.md:L245`",
+      "text": "**User authentication: access_keys.csv with session and Bearer token auth**\n`#security` `#auth`\n`TODO.md:L211`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2192,14 +1890,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "73810d76107f947a",
-      "line_num": 246,
+      "id": "313210eb83d2c584",
+      "line_num": 212,
       "source": "todo_md",
       "tags": [
-        "#core",
-        "#kanban"
+        "#brand",
+        "#footer"
       ],
-      "text": "**Line-number tracking in `parse_todo_md()` for all cards and children**\n`#core` `#kanban`\n`TODO.md:L246`",
+      "text": "**Footer update: cross-links to sage.is and startr.style**\n`#brand` `#footer`\n`TODO.md:L212`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2208,14 +1906,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "9b05b07bd02c3417",
-      "line_num": 247,
+      "id": "e85a56ece48540b5",
+      "line_num": 213,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#kanban"
+        "#brand",
+        "#consistency"
       ],
-      "text": "**Kanban resource links: board guide, `/resources` page, footer link**\n`#feature` `#kanban`\n`TODO.md:L247`",
+      "text": "**Rename \"Todoscope\" to \"TodoScope\" consistently**\n`#brand` `#consistency`\n`TODO.md:L213`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2224,14 +1922,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "0acdd492a80d0d10",
-      "line_num": 248,
+      "id": "58c74cb0c43b6add",
+      "line_num": 214,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#editor"
+        "#brand",
+        "#visual"
       ],
-      "text": "**Configurable editor link targets: vscode.dev, VS Code, Cursor, JetBrains, custom URI templates**\n`#feature` `#editor`\n`TODO.md:L248`",
+      "text": "**Favicon: telescope emoji**\n`#brand` `#visual`\n`TODO.md:L214`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2240,14 +1938,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "178b176e3cdaccbc",
-      "line_num": 249,
+      "id": "7db58a6ac37bb1bb",
+      "line_num": 215,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#sharing"
+        "#brand",
+        "#seo"
       ],
-      "text": "**Public repo views: per-repo public flag, auth bypass for read-only routes**\n`#feature` `#sharing`\n`TODO.md:L249`",
+      "text": "**Page titles: descriptive, brand-consistent `<title>` tags**\n`#brand` `#seo`\n`TODO.md:L215`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2256,14 +1954,14 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "cfdc48d7774024ad",
-      "line_num": 250,
+      "id": "413fe1b868a4ce5e",
+      "line_num": 216,
       "source": "todo_md",
       "tags": [
-        "#feature",
-        "#automation"
+        "#seo",
+        "#privacy"
       ],
-      "text": "**Webhook refresh: HMAC-SHA256 verification, rate limiting, pull + kanban rebuild**\n`#feature` `#automation`\n`TODO.md:L250`",
+      "text": "**Noindex on login page**\n`#seo` `#privacy`\n`TODO.md:L216`",
       "type": "text",
       "width": 280,
       "x": 1410,
@@ -2272,18 +1970,130 @@
     {
       "file_path": "TODO.md",
       "height": 80,
-      "id": "73ae7dccbc3a6f5b",
-      "line_num": 251,
+      "id": "20920deec20a4e7e",
+      "line_num": 217,
+      "source": "todo_md",
+      "tags": [
+        "#brand",
+        "#seo"
+      ],
+      "text": "**Meta description: one-line pitch as default meta description**\n`#brand` `#seo`\n`TODO.md:L217`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 5730
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "c64df069011ca447",
+      "line_num": 218,
+      "source": "todo_md",
+      "tags": [
+        "#core",
+        "#config"
+      ],
+      "text": "**YAML config migration: `local_repos.yaml` with public/webhook metadata**\n`#core` `#config`\n`TODO.md:L218`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 5820
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "15f459ef7356501a",
+      "line_num": 219,
+      "source": "todo_md",
+      "tags": [
+        "#core",
+        "#kanban"
+      ],
+      "text": "**Line-number tracking in `parse_todo_md()` for all cards and children**\n`#core` `#kanban`\n`TODO.md:L219`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 5910
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "d84bdc6b69e282bf",
+      "line_num": 220,
       "source": "todo_md",
       "tags": [
         "#feature",
         "#kanban"
       ],
-      "text": "**Git author visualization: blame enrichment, author badges on kanban cards**\n`#feature` `#kanban`\n`TODO.md:L251`",
+      "text": "**Kanban resource links: board guide, `/resources` page, footer link**\n`#feature` `#kanban`\n`TODO.md:L220`",
       "type": "text",
       "width": 280,
       "x": 1410,
-      "y": 5730
+      "y": 6000
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "8049d974b7e985b9",
+      "line_num": 221,
+      "source": "todo_md",
+      "tags": [
+        "#feature",
+        "#editor"
+      ],
+      "text": "**Configurable editor link targets: vscode.dev, VS Code, Cursor, JetBrains, custom URI templates**\n`#feature` `#editor`\n`TODO.md:L221`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 6090
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "c7c1f916c853a5ba",
+      "line_num": 222,
+      "source": "todo_md",
+      "tags": [
+        "#feature",
+        "#sharing"
+      ],
+      "text": "**Public repo views: per-repo public flag, auth bypass for read-only routes**\n`#feature` `#sharing`\n`TODO.md:L222`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 6180
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "8669b018056a202d",
+      "line_num": 223,
+      "source": "todo_md",
+      "tags": [
+        "#feature",
+        "#automation"
+      ],
+      "text": "**Webhook refresh: HMAC-SHA256 verification, rate limiting, pull + kanban rebuild**\n`#feature` `#automation`\n`TODO.md:L223`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 6270
+    },
+    {
+      "file_path": "TODO.md",
+      "height": 80,
+      "id": "f8903a7176dcb8fc",
+      "line_num": 224,
+      "source": "todo_md",
+      "tags": [
+        "#feature",
+        "#kanban"
+      ],
+      "text": "**Git author visualization: blame enrichment, author badges on kanban cards**\n`#feature` `#kanban`\n`TODO.md:L224`",
+      "type": "text",
+      "width": 280,
+      "x": 1410,
+      "y": 6360
     }
   ]
 }

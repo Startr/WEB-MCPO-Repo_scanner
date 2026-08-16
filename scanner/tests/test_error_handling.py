@@ -299,7 +299,7 @@ class TestIntegration:
         mock_app.error_handler = handler
         
         # Use monkeypatch instead of patching the import
-        import error_handling
+        from scanner import error_handling
         original_current_app = error_handling.current_app
         try:
             error_handling.current_app = mock_app

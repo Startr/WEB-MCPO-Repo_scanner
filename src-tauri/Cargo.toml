@@ -1,0 +1,18 @@
+[package]
+name = "todoscope-shell"
+version = "0.0.0"
+description = "Desktop shell for TodoScope. Real version injected at build time."
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = ["tray-icon", "image-png"] }
+tauri-plugin-dialog = "2"
+libc = "0.2"
+
+# strip = true breaks the webview: the window never appears (Obj-C metadata
+# stripped from tao/wry). Verified empirically 2026-08-15 — do not re-add.
+[profile.release]
+lto = true

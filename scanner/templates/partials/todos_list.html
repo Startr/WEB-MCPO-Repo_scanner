@@ -1,0 +1,6 @@
+{#- Full inline-TODO list. Morphed into #todos-container on live updates and blame refresh. -#}
+{% for item in items %}
+{% with todo = item.todo, tid = item.tid, highlighted = item.highlighted, author = item.author %}
+{% include 'partials/todo_item.html' %}
+{% endwith %}
+{% endfor %}
