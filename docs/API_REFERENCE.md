@@ -10,9 +10,9 @@ http://localhost:5000
 
 Default port is 5000. The CLI (`todoscope`) auto-picks the next free port if 5000
 is taken; `--exact-port` makes it bind exactly `--port` or fail. Tool-API routes
-live under `/api/mpco/`.
+live under `/api/mcpo/`.
 
-Naming note: the `/api/mpco/*` surface is a plugin-style manifest + OpenAPI REST API. It is not the Model Context Protocol. Route paths keep the `mpco` name for compatibility; in prose call it the "tool API".
+Naming note: the `/api/mcpo/*` surface is a plugin-style manifest + OpenAPI REST API. It is not the Model Context Protocol. The namespace was renamed on 2026-08-15 from the founding-commit typo `mpco` — a clean break, the old paths are gone. In prose call it the "tool API".
 
 ## Authentication
 
@@ -40,7 +40,7 @@ browsers get a `302` redirect to `/login?next=<url>`.
 
 ### Always-public routes
 
-- `/health`, `/login`, `/resources`, `/api/mpco/manifest`, `/api/mpco/openapi.json`
+- `/health`, `/login`, `/resources`, `/api/mcpo/manifest`, `/api/mcpo/openapi.json`
 - `/static/*`
 - `/api/badge/todos/*` (count only, no code content)
 - `/api/webhook/*` (does its own HMAC verification instead)
@@ -246,7 +246,7 @@ curl -X POST http://localhost:5000/api/webhook/my-repo \
   -H "Content-Type: application/json" -d "$BODY"
 ```
 
-## Tool API (`/api/mpco/*`)
+## Tool API (`/api/mcpo/*`)
 
 Manifest + OpenAPI REST surface for AI agents. `manifest` and `openapi.json` are
 public so agents can discover the API; the tool endpoints themselves require a
@@ -264,7 +264,7 @@ Tool endpoints wrap responses:
 
 Errors return `500` with that shape.
 
-### `GET /api/mpco/manifest`
+### `GET /api/mcpo/manifest`
 
 Public. Plugin-style manifest.
 
@@ -276,16 +276,16 @@ Public. Plugin-style manifest.
   "description_for_human": "Scans git repositories for TODO comments in code",
   "description_for_model": "Use this tool to scan git repositories for TODO comments. ...",
   "authentication": {"type": "none"},
-  "api": {"type": "openapi", "url": "http://localhost:5000/api/mpco/openapi.json"}
+  "api": {"type": "openapi", "url": "http://localhost:5000/api/mcpo/openapi.json"}
 }
 ```
 
-### `GET /api/mpco/openapi.json`
+### `GET /api/mcpo/openapi.json`
 
 Public. OpenAPI 3.0.1 spec for the four tool endpoints, with request/response
 schemas. Server URL is derived from the request origin.
 
-### `POST /api/mpco/scan_repository`
+### `POST /api/mcpo/scan_repository`
 
 Clone (or reuse) a repo, scan it, build KANBAN.canvas, return everything.
 
@@ -318,7 +318,7 @@ Response `result`:
 }
 ```
 
-### `GET /api/mpco/list_repositories`
+### `GET /api/mcpo/list_repositories`
 
 All repos — registered local and cloned. Never exposes filesystem paths.
 
@@ -335,7 +335,7 @@ Response `result`:
 }
 ```
 
-### `POST /api/mpco/pull_repository`
+### `POST /api/mcpo/pull_repository`
 
 `git pull` a **cloned** repo by name (looked up under the clone directory, not
 the local-repo registry).
@@ -360,7 +360,7 @@ Response `result`:
 }
 ```
 
-### `POST /api/mpco/scan_repository_stream`
+### `POST /api/mcpo/scan_repository_stream`
 
 Streaming scan — newline-delimited JSON (`application/x-ndjson`), one object per
 line. Request body same as `scan_repository`. `400`
@@ -384,7 +384,7 @@ On failure the stream ends with
 | Status | Routes | Meaning |
 | --- | --- | --- |
 | 400 | `/api/todo_toggle` | Path escapes repo, or target is not a TODO file |
-| 400 | `/api/mpco/scan_repository_stream` | Missing `repo_url` |
+| 400 | `/api/mcpo/scan_repository_stream` | Missing `repo_url` |
 | 401 | Any protected route | No valid key (JSON clients). Browsers get 302 → `/login` |
 | 403 | `/api/webhook` | Signature/token failed verification |
 | 403 | `/api/todo_toggle` | Repo is not a registered local repo |
@@ -393,7 +393,7 @@ On failure the stream ends with
 | 404 | `/api/todo_toggle` | TODO file unreadable |
 | 409 | `/api/todo_toggle` | Stale line hash, line out of range, or not a task line |
 | 429 | `/api/webhook` | Rate limited — 30s per repo; body carries `retry_after` seconds |
-| 500 | `/api/mpco/*` | `{"status": "error", "error": "..."}` |
+| 500 | `/api/mcpo/*` | `{"status": "error", "error": "..."}` |
 | 500 | Other `/api/*` on internal `ScannerError` | `{"status": "error", "error_id", "message", "category", "recoverable"}` |
 
 `/api/badge/todos`, `/api/repo_fingerprint`, and `/api/todo_files` return `200`
@@ -403,14 +403,14 @@ with empty/placeholder payloads for unknown repos rather than erroring.
 
 ```bash
 # Scan a repository
-curl -X POST http://localhost:5000/api/mpco/scan_repository \
+curl -X POST http://localhost:5000/api/mcpo/scan_repository \
   -H "Authorization: Bearer $KEY" \
   -H "Content-Type: application/json" \
   -d '{"repo_url": "https://github.com/user/repo.git", "shallow": true}'
 
 # List repositories
 curl -H "Authorization: Bearer $KEY" \
-  http://localhost:5000/api/mpco/list_repositories
+  http://localhost:5000/api/mcpo/list_repositories
 
 # Toggle a checkbox
 curl -X POST http://localhost:5000/api/todo_toggle/my-repo \
@@ -423,7 +423,7 @@ curl -X POST http://localhost:5000/api/todo_toggle/my-repo \
 import requests
 
 r = requests.post(
-    "http://localhost:5000/api/mpco/scan_repository",
+    "http://localhost:5000/api/mcpo/scan_repository",
     headers={"Authorization": "Bearer YOUR_KEY"},
     json={"repo_url": "https://github.com/user/repo.git"},
 )

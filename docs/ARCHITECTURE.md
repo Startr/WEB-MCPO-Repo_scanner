@@ -35,7 +35,7 @@ Routes, auth, and the scan engine in one module.
 
 - **Dashboard** (`/`): unified repo input — a URL clones, a local path
   registers (`_classify_repo_input`). Repo table shows Last Scanned and a
-  force-rescan control. A tool-API strip probes `/api/mpco/manifest` and
+  force-rescan control. A tool-API strip probes `/api/mcpo/manifest` and
   offers copy shortcuts; the full guide lives at `/connect`.
 - **Scan pages**: `/scan_stream/<repo>` renders the page,
   `/stream_data/<repo>` streams the scan as SSE. `/scan/<repo>` redirects to
@@ -145,8 +145,8 @@ the session permanent — 30-day lifetime), `?key=` query parameter, or
 `Authorization: Bearer <key>`. Browsers without a key are redirected to
 `/login`; JSON clients get 401.
 
-Always public: `/health`, `/login`, `/resources`, `/api/mpco/manifest`,
-`/api/mpco/openapi.json`, plus `/static/*` and `/api/badge/*`. Webhook
+Always public: `/health`, `/login`, `/resources`, `/api/mcpo/manifest`,
+`/api/mcpo/openapi.json`, plus `/static/*` and `/api/badge/*`. Webhook
 routes skip session auth and verify their own HMAC. Repos flagged public
 expose read-only routes (`/scan_stream/`, `/stream_data/`, `/events/`,
 `/api/repo_fingerprint/`, `/api/todo_files/`) without a key.
@@ -206,14 +206,14 @@ the TODO file atomically; the file write trips the watchdog, which pushes
 the confirming fragments to every subscriber. A 409 means the line changed
 since render — the next morph shows reality.
 
-## Tool API (`/api/mpco/*`)
+## Tool API (`/api/mcpo/*`)
 
 A plugin-style REST surface for AI agents: a manifest plus a generated
-OpenAPI spec. It is not the Model Context Protocol — the route paths keep
-the historical `mpco` name, but call it the tool API.
+OpenAPI spec. It is not the Model Context Protocol — the `mcpo` namespace was renamed
+on 2026-08-15 from the founding-commit typo `mpco`; call it the tool API.
 
 ```text
-/api/mpco/
+/api/mcpo/
 ├── manifest                  GET   tool manifest (points at openapi.json)
 ├── openapi.json              GET   generated OpenAPI spec
 ├── scan_repository           POST  clone + scan, JSON results

@@ -30,9 +30,9 @@ TodoScope implements the [Model Context Protocol](https://modelcontextprotocol.i
 
 | Endpoint | Purpose |
 |---|---|
-| `GET /api/mpco/manifest` | Service discovery manifest |
-| `GET /api/mpco/openapi.json` | Live OpenAPI 3.0 spec |
-| `POST /api/mpco/scan_repository` | Scan a repo, return all TODOs as JSON |
+| `GET /api/mcpo/manifest` | Service discovery manifest |
+| `GET /api/mcpo/openapi.json` | Live OpenAPI 3.0 spec |
+| `POST /api/mcpo/scan_repository` | Scan a repo, return all TODOs as JSON |
 
 ### The todo-scope Skill
 
@@ -140,17 +140,17 @@ The scanner provides a RESTful API. Key endpoints include:
 
 *   **Scan Repository:**
     ```bash
-    curl -X POST http://localhost:5000/api/mpco/scan_repository \
+    curl -X POST http://localhost:5000/api/mcpo/scan_repository \
       -H "Content-Type: application/json" \
       -d '{"repo_url": "https://github.com/username/repository.git"}'
     ```
 *   **List Local Repositories:**
     ```bash
-    curl -X GET http://localhost:5000/api/mpco/list_repositories
+    curl -X GET http://localhost:5000/api/mcpo/list_repositories
     ```
 *   **Pull Repository Updates:**
     ```bash
-    curl -X POST http://localhost:5000/api/mpco/pull_repository \
+    curl -X POST http://localhost:5000/api/mcpo/pull_repository \
       -H "Content-Type: application/json" \
       -d '{"repo_name": "repository_name_from_list"}'
     ```
@@ -204,7 +204,7 @@ This project, while dedicated to finding TODOs, has its own list of desired enha
 
 ## Backlog
 
-- [ ] **MCPO: fix the transposed route name, then settle the MCP story**
+- [ ] **MCPO: settle the MCP story** (rename shipped)
 - [ ] **Share-on-Network firewall test**: verify the desktop app's tray share toggle across the macOS application firewall — accept the incoming-connections prompt, reach the LAN URL from a second device, sign in with an access key. Local curl-to-own-LAN-IP is filtered on the dev Mac, so this needs a real second device.
 - [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones.
 - [ ] **TODO editor — remaining scope**: add-TODO form, edit card text, and drag-between-columns write-back. Checkbox toggling shipped (see Phase 2 live board).
@@ -275,10 +275,10 @@ This project, while dedicated to finding TODOs, has its own list of desired enha
 
 ## Bugs
 
-- [ ] **Public local repos leak `local_path`**: the scan-stream `init` payload sends the registered filesystem path to every viewer
-
 ## Completed
 
+- [x] **Fix `local_path` leak**: scan-stream `init` now includes the filesystem path for authed viewers only (no-keys instances unaffected); locked by 2 tests in `test_public_repo_privacy.py` — 2026-08-15
+- [x] **Incremental-scan benchmark**: `test_incremental_scan_perf.py`, 400-file fixture timed with timeit — full 6.21s, incremental 0.58s (10.7x), cached 0.09s (65.8x); 2x floor asserted in CI — 2026-08-15
 - [x] **Documentation refresh**: all four docs rewritten against current code and fresh-eyes verified; 6 verifier findings fixed, incl. `pipenv run todoscope` now working from a fresh clone (editable install in scanner/Pipfile) — 2026-08-15, full records in [completed-todos](docs/completed-todos.md)
 - [x] **Brand & Landing — Scope D (Brand Consistency)**: 24-finding voice audit applied; false MCP claim relabeled "tool API"; error messages moved to founder voice — 2026-08-15
 - [x] **Brand & Landing — Scope C (MCP / Sage.is Integration)**: `/connect` page, dashboard tool-API strip with live status dot, `docs/connect-sage.md` with screenshots — 2026-08-15

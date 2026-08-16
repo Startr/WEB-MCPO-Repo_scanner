@@ -184,7 +184,7 @@
             <span style="--size:0.9em; --c:#333"><strong>AI agents:</strong> tool API <span id="mcp-status" style="--c:#888">checking…</span></span>
         </div>
         <div style="--d:flex; --ai:center; gap:8px; --fw:wrap">
-            <button type="button" id="copy-manifest" data-api-path="/api/mpco/manifest"
+            <button type="button" id="copy-manifest" data-api-path="/api/mcpo/manifest"
                     style="--bgc:transparent; --b:1px solid #99c2f0; --c:#1565c0; --radius:4px; --p:5px 12px; --cur:pointer; --size:0.85em">Copy manifest URL</button>
             <button type="button" id="copy-curl"
                     style="--bgc:transparent; --b:1px solid #99c2f0; --c:#1565c0; --radius:4px; --p:5px 12px; --cur:pointer; --size:0.85em">Copy sample cURL</button>
@@ -196,7 +196,7 @@
         (function () {
             var dot = document.getElementById('mcp-dot');
             var status = document.getElementById('mcp-status');
-            fetch('/api/mpco/manifest').then(function (r) {
+            fetch('/api/mcpo/manifest').then(function (r) {
                 if (!r.ok) throw new Error(r.status);
                 return r.json();
             }).then(function () {
@@ -220,7 +220,7 @@
             });
             var curlBtn = document.getElementById('copy-curl');
             curlBtn.addEventListener('click', function () {
-                flash(curlBtn, 'curl ' + window.location.origin + '/api/mpco/list_repositories \\\n  -H "Authorization: Bearer YOUR_KEY"');
+                flash(curlBtn, 'curl ' + window.location.origin + '/api/mcpo/list_repositories \\\n  -H "Authorization: Bearer YOUR_KEY"');
             });
         })();
     </script>

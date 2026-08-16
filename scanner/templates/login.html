@@ -115,7 +115,7 @@
       <div style="position: relative">
         <pre
           style="--bgc: #1e1e1e; --c: #d4d4d4; --p: 16px; --radius: 6px; --of-x: auto; --size: 0.85em; --lh: 1.6; --shadow-inset: 4"
-        ><code id="api-curl-example">curl -X POST <span _="init set my.textContent to window.location.origin">[origin]</span>/api/mpco/scan_repository \
+        ><code id="api-curl-example">curl -X POST <span _="init set my.textContent to window.location.origin">[origin]</span>/api/mcpo/scan_repository \
   -H "Content-Type: application/json" \
   -H "Authorization: Bearer YOUR_KEY" \
   -d '{"repo_url": "https://github.com/user/repo.git"}'</code></pre>
@@ -146,37 +146,37 @@
           </thead>
           <tbody style="--c: #555">
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><a href="/api/mpco/manifest" target="_blank" rel="noopener" style="--c: #0066cc; --td: none"><code data-api-path="/api/mpco/manifest" _="init set my.textContent to window.location.origin + @data-api-path"></code></a></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><a href="/api/mcpo/manifest" target="_blank" rel="noopener" style="--c: #0066cc; --td: none"><code data-api-path="/api/mcpo/manifest" _="init set my.textContent to window.location.origin + @data-api-path"></code></a></td>
               <td style="--p: 8px; --bb: 1px solid #eee">GET</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">No</td>
               <td style="--p: 8px; --bb: 1px solid #eee">Service discovery</td>
             </tr>
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><a href="/api/mpco/openapi.json" target="_blank" rel="noopener" style="--c: #0066cc; --td: none"><code data-api-path="/api/mpco/openapi.json" _="init set my.textContent to window.location.origin + @data-api-path"></code></a></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><a href="/api/mcpo/openapi.json" target="_blank" rel="noopener" style="--c: #0066cc; --td: none"><code data-api-path="/api/mcpo/openapi.json" _="init set my.textContent to window.location.origin + @data-api-path"></code></a></td>
               <td style="--p: 8px; --bb: 1px solid #eee">GET</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">No</td>
               <td style="--p: 8px; --bb: 1px solid #eee">OpenAPI 3.0 spec</td>
             </tr>
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mpco/scan_repository" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mcpo/scan_repository" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
               <td style="--p: 8px; --bb: 1px solid #eee">POST</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">Yes</td>
               <td style="--p: 8px; --bb: 1px solid #eee">Scan a repo, return TODOs</td>
             </tr>
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mpco/scan_repository_stream" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mcpo/scan_repository_stream" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
               <td style="--p: 8px; --bb: 1px solid #eee">POST</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">Yes</td>
               <td style="--p: 8px; --bb: 1px solid #eee">Stream TODOs (NDJSON)</td>
             </tr>
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mpco/list_repositories" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mcpo/list_repositories" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
               <td style="--p: 8px; --bb: 1px solid #eee">GET</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">Yes</td>
               <td style="--p: 8px; --bb: 1px solid #eee">List registered repos</td>
             </tr>
             <tr>
-              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mpco/pull_repository" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
+              <td style="--p: 8px; --bb: 1px solid #eee"><code data-api-path="/api/mcpo/pull_repository" _="init set my.textContent to window.location.origin + @data-api-path"></code></td>
               <td style="--p: 8px; --bb: 1px solid #eee">POST</td>
               <td style="--p: 8px; --bb: 1px solid #eee; --ta: center">Yes</td>
               <td style="--p: 8px; --bb: 1px solid #eee">Pull latest for a repo</td>

@@ -74,7 +74,7 @@ if _DATA_DIR:
 else:
     ACCESS_KEYS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "access_keys.csv")
 # Routes that must stay public for MCP discovery, auth itself, and shell readiness probes
-_PUBLIC_ROUTES = {'/api/mpco/manifest', '/api/mpco/openapi.json', '/login', '/resources', '/health'}
+_PUBLIC_ROUTES = {'/api/mcpo/manifest', '/api/mcpo/openapi.json', '/login', '/resources', '/health'}
 
 
 @app.route('/health')
@@ -1413,6 +1413,9 @@ def stream_data(repo_url):
     shallow = request.args.get('shallow') == '1'
     # refresh=1 → manual full rescan: ignore the incremental cache entirely.
     force_full = request.args.get('refresh') == '1'
+    # Captured here because the generator may outlive the request context.
+    # Anonymous viewers of public repos must not see server filesystem paths.
+    viewer_authed = _is_authenticated()
     def generate():
         try:
             # Flush padding — forces proxies (Cloudflare, nginx) to send the stream immediately
@@ -1452,8 +1455,10 @@ def stream_data(repo_url):
                     'repo':      parts['repo'] if parts else None,
                     'web_file_url_template': build_web_file_url_template(parts, branch or 'HEAD'),
                 }
-                # Local repos expose their path for local editor URIs (vscode://, cursor://)
-                if repo_url in load_local_repos():
+                # Local repos expose their path for local editor URIs (vscode://,
+                # cursor://) — authed viewers only. Public-repo anonymous viewers
+                # get no path: the files aren't on their machine anyway.
+                if repo_url in load_local_repos() and viewer_authed:
                     init_payload['local_path'] = existing_path
                 yield f"data: {json.dumps(init_payload)}\n\n"
                 # Instant-load: render the previous board (marked stale) while the scan runs
@@ -1835,7 +1840,7 @@ def resources():
 
 # ----- MPCO API Endpoints -----
 
-def mpco_response(f):
+def mcpo_response(f):
     """Decorator for MPCO tool endpoints."""
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -1853,8 +1858,8 @@ def mpco_response(f):
             }), 500
     return decorated_function
 
-@app.route('/api/mpco/manifest', methods=['GET'])
-def mpco_manifest():
+@app.route('/api/mcpo/manifest', methods=['GET'])
+def mcpo_manifest():
     """Return the MPCO tool manifest."""
     return jsonify({
         "schema_version": "v1",
@@ -1867,7 +1872,7 @@ def mpco_manifest():
         },
         "api": {
             "type": "openapi",
-            "url": f"{request.url_root}api/mpco/openapi.json"
+            "url": f"{request.url_root}api/mcpo/openapi.json"
         }
     })
 
@@ -2111,13 +2116,13 @@ def get_api_schema():
     
     return spec
 
-@app.route('/api/mpco/openapi.json', methods=['GET'])
-def mpco_openapi():
+@app.route('/api/mcpo/openapi.json', methods=['GET'])
+def mcpo_openapi():
     """Return the OpenAPI specification for the MPCO endpoints."""
     return jsonify(get_api_schema())
 
-@app.route('/api/mpco/scan_repository', methods=['POST'])
-@mpco_response
+@app.route('/api/mcpo/scan_repository', methods=['POST'])
+@mcpo_response
 def api_scan_repository():
     """API endpoint to scan a repository for TODOs."""
     data = request.json
@@ -2166,8 +2171,8 @@ def api_scan_repository():
         app.logger.error(f"Error in API scan: {str(e)}")
         raise
 
-@app.route('/api/mpco/list_repositories', methods=['GET'])
-@mpco_response
+@app.route('/api/mcpo/list_repositories', methods=['GET'])
+@mcpo_response
 def api_list_repositories():
     """API endpoint to list all local repositories."""
     repos = list_local_repositories()
@@ -2187,8 +2192,8 @@ def api_list_repositories():
         "count": len(repos)
     }
 
-@app.route('/api/mpco/pull_repository', methods=['POST'])
-@mpco_response
+@app.route('/api/mcpo/pull_repository', methods=['POST'])
+@mcpo_response
 def api_pull_repository():
     """API endpoint to pull the latest changes for a repository."""
     data = request.json
@@ -2217,7 +2222,7 @@ def api_pull_repository():
 
     return result
 
-@app.route('/api/mpco/scan_repository_stream', methods=['POST'])
+@app.route('/api/mcpo/scan_repository_stream', methods=['POST'])
 def api_scan_repository_stream():
     """Streaming API endpoint to scan a repository for TODOs.
     

@@ -34,12 +34,12 @@
                 both public, no key needed for discovery. Give your agent the manifest URL:
             </p>
             <div style="--d:flex; --ai:center; gap:8px; --fw:wrap; --mb:8px">
-                <code id="manifest-url" data-api-path="/api/mpco/manifest" style="--bgc:#1e1e1e; --c:#d4d4d4; --p:8px 12px; --radius:4px; --size:0.85em; --of-x:auto"></code>
+                <code id="manifest-url" data-api-path="/api/mcpo/manifest" style="--bgc:#1e1e1e; --c:#d4d4d4; --p:8px 12px; --radius:4px; --size:0.85em; --of-x:auto"></code>
                 <button type="button" data-copy-target="manifest-url"
                         style="--bgc:#333; --c:#ccc; --b:1px solid #555; --radius:4px; --p:6px 12px; --cur:pointer; --size:0.8em">Copy</button>
             </div>
             <p style="--c:#888; --size:0.85em; --m:0">
-                The OpenAPI spec lives at <a href="/api/mpco/openapi.json" target="_blank" rel="noopener" style="--c:#0066cc"><code>/api/mpco/openapi.json</code></a>
+                The OpenAPI spec lives at <a href="/api/mcpo/openapi.json" target="_blank" rel="noopener" style="--c:#0066cc"><code>/api/mcpo/openapi.json</code></a>
                 — the manifest links to it, so most clients only need the URL above.
             </p>
         </li>
@@ -48,7 +48,7 @@
             <h3 style="--mt:0; --mb:8px"><span style="--c:#4CAF50">3.</span> Prove it works</h3>
             <p style="--c:#555; --size:0.9em; --mb:12px">One request, straight from a terminal:</p>
             <div style="position:relative">
-                <pre style="--bgc:#1e1e1e; --c:#d4d4d4; --p:16px; --radius:6px; --of-x:auto; --size:0.85em; --lh:1.6; --m:0"><code id="connect-curl">curl <span class="js-origin">[origin]</span>/api/mpco/list_repositories \
+                <pre style="--bgc:#1e1e1e; --c:#d4d4d4; --p:16px; --radius:6px; --of-x:auto; --size:0.85em; --lh:1.6; --m:0"><code id="connect-curl">curl <span class="js-origin">[origin]</span>/api/mcpo/list_repositories \
   -H "Authorization: Bearer YOUR_KEY"</code></pre>
                 <button type="button" data-copy-target="connect-curl"
                         style="position:absolute; top:8px; right:8px; --bgc:#333; --c:#ccc; --b:1px solid #555; --radius:4px; --p:4px 10px; --cur:pointer; --size:0.75em">Copy</button>
@@ -94,37 +94,37 @@ curl -o ~/.claude/skills/todo-scope/SKILL.md \
                 </thead>
                 <tbody style="--c:#555">
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #eee"><a href="/api/mpco/manifest" target="_blank" rel="noopener" style="--c:#0066cc; --td:none"><code>/api/mpco/manifest</code></a></td>
+                        <td style="--p:8px; --bb:1px solid #eee"><a href="/api/mcpo/manifest" target="_blank" rel="noopener" style="--c:#0066cc; --td:none"><code>/api/mcpo/manifest</code></a></td>
                         <td style="--p:8px; --bb:1px solid #eee">GET</td>
                         <td style="--p:8px; --bb:1px solid #eee; --ta:center">No</td>
                         <td style="--p:8px; --bb:1px solid #eee">Service discovery</td>
                     </tr>
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #eee"><a href="/api/mpco/openapi.json" target="_blank" rel="noopener" style="--c:#0066cc; --td:none"><code>/api/mpco/openapi.json</code></a></td>
+                        <td style="--p:8px; --bb:1px solid #eee"><a href="/api/mcpo/openapi.json" target="_blank" rel="noopener" style="--c:#0066cc; --td:none"><code>/api/mcpo/openapi.json</code></a></td>
                         <td style="--p:8px; --bb:1px solid #eee">GET</td>
                         <td style="--p:8px; --bb:1px solid #eee; --ta:center">No</td>
                         <td style="--p:8px; --bb:1px solid #eee">OpenAPI 3.0 spec</td>
                     </tr>
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mpco/scan_repository</code></td>
+                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mcpo/scan_repository</code></td>
                         <td style="--p:8px; --bb:1px solid #eee">POST</td>
                         <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
                         <td style="--p:8px; --bb:1px solid #eee">Scan a repo, return TODOs</td>
                     </tr>
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mpco/scan_repository_stream</code></td>
+                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mcpo/scan_repository_stream</code></td>
                         <td style="--p:8px; --bb:1px solid #eee">POST</td>
                         <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
                         <td style="--p:8px; --bb:1px solid #eee">Stream TODOs (NDJSON)</td>
                     </tr>
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mpco/list_repositories</code></td>
+                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mcpo/list_repositories</code></td>
                         <td style="--p:8px; --bb:1px solid #eee">GET</td>
                         <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
                         <td style="--p:8px; --bb:1px solid #eee">List registered repos</td>
                     </tr>
                     <tr>
-                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mpco/pull_repository</code></td>
+                        <td style="--p:8px; --bb:1px solid #eee"><code>/api/mcpo/pull_repository</code></td>
                         <td style="--p:8px; --bb:1px solid #eee">POST</td>
                         <td style="--p:8px; --bb:1px solid #eee; --ta:center">Yes</td>
                         <td style="--p:8px; --bb:1px solid #eee">Pull latest for a repo</td>
@@ -163,7 +163,7 @@ curl -o ~/.claude/skills/todo-scope/SKILL.md \
             // Live MCP status — the manifest is public, so this probe needs no key.
             var dot = document.getElementById('mcp-dot');
             var status = document.getElementById('mcp-status');
-            fetch('/api/mpco/manifest').then(function (r) {
+            fetch('/api/mcpo/manifest').then(function (r) {
                 if (!r.ok) throw new Error(r.status);
                 return r.json();
             }).then(function () {

@@ -23,10 +23,10 @@ The agent sends it on every request as `Authorization: Bearer <key>`.
 TodoScope announces its tools through a public manifest:
 
 ```text
-https://your-server/api/mpco/manifest
+https://your-server/api/mcpo/manifest
 ```
 
-The manifest links to the OpenAPI spec (`/api/mpco/openapi.json`), so most clients
+The manifest links to the OpenAPI spec (`/api/mcpo/openapi.json`), so most clients
 need only the manifest URL. Both endpoints are public — discovery needs no key.
 
 The dashboard has copy buttons for the manifest URL and a sample request, plus a
@@ -37,7 +37,7 @@ live status dot for the tool API:
 ## 3. Prove it works
 
 ```bash
-curl https://your-server/api/mpco/list_repositories \
+curl https://your-server/api/mcpo/list_repositories \
   -H "Authorization: Bearer YOUR_KEY"
 ```
 
@@ -61,10 +61,10 @@ Then run `/todo-scope` in any project. Details in the
 
 | Endpoint | Method | Auth | Purpose |
 | --- | --- | --- | --- |
-| `/api/mpco/manifest` | GET | No | Service discovery |
-| `/api/mpco/openapi.json` | GET | No | OpenAPI 3.0 spec |
-| `/api/mpco/scan_repository` | POST | Yes | Scan a repo, return TODOs |
-| `/api/mpco/scan_repository_stream` | POST | Yes | Stream TODOs (NDJSON) |
-| `/api/mpco/list_repositories` | GET | Yes | List registered repos |
-| `/api/mpco/pull_repository` | POST | Yes | Pull latest for a repo |
+| `/api/mcpo/manifest` | GET | No | Service discovery |
+| `/api/mcpo/openapi.json` | GET | No | OpenAPI 3.0 spec |
+| `/api/mcpo/scan_repository` | POST | Yes | Scan a repo, return TODOs |
+| `/api/mcpo/scan_repository_stream` | POST | Yes | Stream TODOs (NDJSON) |
+| `/api/mcpo/list_repositories` | GET | Yes | List registered repos |
+| `/api/mcpo/pull_repository` | POST | Yes | Pull latest for a repo |
 | `/health` | GET | No | Liveness + version + auth state |

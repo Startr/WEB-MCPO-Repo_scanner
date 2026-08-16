@@ -123,10 +123,10 @@ Follow the code standards below and existing patterns in
 - Wrap failure-prone operations in `@safe_operation` from
   [`scanner/error_handling.py`](../scanner/error_handling.py); use its custom
   exceptions and error IDs.
-- Tool-API endpoints (`/api/mpco/*`) use the `@mpco_response` decorator in
+- Tool-API endpoints (`/api/mcpo/*`) use the `@mcpo_response` decorator in
   `scanner/app.py`. That surface is a plugin-style manifest + OpenAPI REST API
   — it is **not** the Model Context Protocol. Say "tool API", never "MCP";
-  only the route paths keep the mpco name.
+  the routes were renamed from the typo `mpco` to `mcpo` on 2026-08-15.
 - Live-board HTML renders server-side: fragments in
   [`scanner/fragments.py`](../scanner/fragments.py) +
   `scanner/templates/partials/`, pushed over `/events/<repo>` SSE by the

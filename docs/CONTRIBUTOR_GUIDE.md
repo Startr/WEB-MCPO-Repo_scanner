@@ -98,17 +98,17 @@ def risky_operation():
 ```
 
 JSON tool-API action endpoints in `scanner/app.py` (`scan_repository`,
-`list_repositories`, `pull_repository`) wrap responses with the `mpco_response`
+`list_repositories`, `pull_repository`) wrap responses with the `mcpo_response`
 decorator (defined in `scanner/app.py`, not `error_handling.py`). The manifest,
 spec, and streaming endpoints return their responses directly — a NDJSON stream
 can't be wrapped by a jsonify-style decorator.
 
 ### Naming: the tool API is not MCP
 
-The `/api/mpco/*` surface is a plugin-style manifest + OpenAPI REST API. It is
+The `/api/mcpo/*` surface is a plugin-style manifest + OpenAPI REST API. It is
 **not** the Model Context Protocol. Never call it MCP in code, comments, docs,
-or UI copy — say "tool API" or "manifest + OpenAPI". The route paths keep the
-`mpco` name.
+or UI copy — say "tool API" or "manifest + OpenAPI". The route namespace is
+`mcpo` — renamed 2026-08-15 from the founding-commit typo `mpco`.
 
 ## Testing
 

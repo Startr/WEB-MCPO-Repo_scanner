@@ -58,10 +58,10 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
 
 ## Backlog
 
-- [ ] **MCPO: fix the transposed route name, then settle the MCP story** #ai #mcp #decision
-  - [ ] The intended name is MCPO (old repo `Startr/WEB-MCPO-Repo_scanner`, "MCPo API" in Completed and README); routes shipped letter-swapped as `/api/mpco/*` in the founding commit `eb67dac` (2025-05-22) — 14 hits in `scanner/app.py`, 11 more files as of 2026-08-15 (census in [board-dossiers](docs/board-dossiers.md))
-  - [ ] Rename routes to `/api/mcpo/*` with 308 compat redirects from `/api/mpco/*`
-  - [ ] Decide the fork: real MCP server endpoint (JSON-RPC `tools/list` + `tools/call`) or retire the MCP term project-wide — UI copy says "tool API" since the 2026-08-15 brand audit either way
+- [ ] **MCPO: settle the MCP story** (rename shipped) #ai #mcp #decision
+  - [x] The intended name is MCPO (old repo `Startr/WEB-MCPO-Repo_scanner`, "MCPo API" in Completed and README); routes shipped letter-swapped as `/api/mpco/*` in the founding commit `eb67dac` (2025-05-22) — census in [board-dossiers](docs/board-dossiers.md)
+  - [x] Rename routes to `/api/mcpo/*` — done 2026-08-15 as a clean break (decided: no redirects, old paths dead); code + templates by hand, six docs via opencode delegate-edit (78s, diff verified), screenshots retaken, suite green
+  - [ ] Decide the fork: real MCP server endpoint (JSON-RPC `tools/list` + `tools/call`) or retire the MCP term project-wide — deferred 2026-08-15; UI copy says "tool API" either way
 - [ ] **Share-on-Network firewall test**: verify the desktop app's tray share toggle across the macOS application firewall — accept the incoming-connections prompt, reach the LAN URL from a second device, sign in with an access key. Local curl-to-own-LAN-IP is filtered on the dev Mac, so this needs a real second device. #macos #app #network
 - [ ] **Inline TODO completion tracking**: Snapshot-and-diff approach to detect when inline TODOs are removed between scans and show them as completed in the Done column. Uses `.todoscope-snapshot.json` and `.todoscope-done.json`. Git-history-independent — works on shallow clones. #feature #kanban
 - [ ] **TODO editor — remaining scope**: add-TODO form, edit card text, and drag-between-columns write-back. Checkbox toggling shipped (see Phase 2 live board). #feature #editor #kanban
@@ -175,12 +175,12 @@ The `todo-scope` Claude Code skill bootstraps and aligns a repo's TODO.md to Tod
 
 ## Bugs
 
-- [ ] **Public local repos leak `local_path`**: the scan-stream `init` payload sends the registered filesystem path to every viewer #security #privacy
-  - [ ] Repro: mark a local repo public → anonymous scan pages receive the server's absolute path (it powers the vscode:// editor links); found by the brand-audit honesty judge 2026-08-15
-  - [ ] Fix: include `local_path` only for authed sessions, or build editor links server-side
+*No known bugs. Use `# BUG:` inline tags to flag defects in source.*
 
 ## Completed
 
+- [x] **Fix `local_path` leak**: scan-stream `init` now includes the filesystem path for authed viewers only (no-keys instances unaffected); locked by 2 tests in `test_public_repo_privacy.py` — 2026-08-15 #security #privacy
+- [x] **Incremental-scan benchmark**: `test_incremental_scan_perf.py`, 400-file fixture timed with timeit — full 6.21s, incremental 0.58s (10.7x), cached 0.09s (65.8x); 2x floor asserted in CI — 2026-08-15 #performance #testing
 - [x] **Documentation refresh**: all four docs rewritten against current code and fresh-eyes verified; 6 verifier findings fixed, incl. `pipenv run todoscope` now working from a fresh clone (editable install in scanner/Pipfile) — 2026-08-15, full records in [completed-todos](docs/completed-todos.md) #documentation
 - [x] **Brand & Landing — Scope D (Brand Consistency)**: 24-finding voice audit applied; false MCP claim relabeled "tool API"; error messages moved to founder voice — 2026-08-15 #brand #copy
 - [x] **Brand & Landing — Scope C (MCP / Sage.is Integration)**: `/connect` page, dashboard tool-API strip with live status dot, `docs/connect-sage.md` with screenshots — 2026-08-15 #ai #mcp #integration
