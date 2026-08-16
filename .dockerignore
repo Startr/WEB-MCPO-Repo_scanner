@@ -1,0 +1,46 @@
+# Keep the build context small. Without this file the context was ~3.9 GB —
+# src-tauri/target alone is ~4 GB of Rust artifacts — and all of it landed in
+# the image via `COPY . /app/`.
+
+# Version control
+.git
+.gitignore
+
+# Desktop shell: Rust build artifacts, never needed by the server image
+src-tauri/target
+src-tauri/gen
+
+# Build output
+dist
+build
+*.dmg
+*.spec.bak
+
+# Python bytecode and environments
+__pycache__
+**/__pycache__
+*.py[cod]
+.venv
+venv
+.pytest_cache
+.mypy_cache
+
+# Cloned repos and local scan state — runtime data, not source
+scanner/repositories
+scanner/scan_state
+.todoscope
+
+# Local secrets and machine config
+.env
+scanner/access_keys.csv
+scanner/local_repos.yaml
+
+# Editor and OS noise
+.DS_Store
+.vscode
+.idea
+.claude
+
+# Docs and media the server does not serve
+docs/images
+*.gif
