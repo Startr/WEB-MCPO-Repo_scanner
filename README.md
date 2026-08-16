@@ -7,7 +7,6 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
 [![API](https://img.shields.io/badge/API-OpenAPI%203.0-7C3AED)](https://github.com/Startr/TodoScope#ai--agent-integration)
 [![GitHub stars](https://img.shields.io/github/stars/Startr/TodoScope?style=social)](https://github.com/Startr/TodoScope/stargazers)
-[![TODOs](https://img.shields.io/endpoint?url=https://todoscope.sage.is/api/badge/todos/WEB-Sage.is-repo_scanner)](http://localhost:5000/scan_stream/WEB-Sage.is-repo_scanner)
 [![GitHub last commit](https://img.shields.io/github/last-commit/Startr/TodoScope)](https://github.com/Startr/TodoScope/commits)
 
 Every codebase has a to-do list. Most of them are a mess. TodoScope is about the gap between what teams say they'll fix and what actually gets done — and what that gap reveals about how software really gets built.
