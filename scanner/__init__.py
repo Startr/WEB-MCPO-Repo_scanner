@@ -18,4 +18,4 @@ from .error_handling import (
 )
 
 # Version of the scanner package
-__version__ = '1.0.0'
+__version__ = '1.1.0'

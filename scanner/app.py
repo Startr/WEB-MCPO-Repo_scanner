@@ -791,10 +791,16 @@ def build_web_repo_url(parts):
     # gitlab, gitea, bitbucket all share host/owner/repo at the root.
     return f"https://{host}/{owner}/{repo}"
 
-def _last_scanned_str(repo_name):
+def _last_scanned_str(repo_name, repo_path=None):
     """Local-time display string for the repo's last scan, or None if never
     scanned (or the scan state is unreadable).
+
+    Scan state is keyed by the directory basename (what stream_data uses), not
+    the display name — pass repo_path for registered repos whose display name
+    differs from their folder, or the lookup misses and reports "never".
     """
+    if repo_path:
+        repo_name = os.path.basename(os.path.normpath(repo_path))
     state = load_scan_state(repo_name)
     iso = (state or {}).get('scanned_at')
     if not iso:
@@ -830,7 +836,7 @@ def list_local_repositories():
                     'source': 'local',
                     'public': meta.get('public', False),
                     'webhook_secret': bool(meta.get('webhook_secret')),
-                    'last_scanned_str': _last_scanned_str(name),
+                    'last_scanned_str': _last_scanned_str(name, repo_path=path),
                 })
                 seen_names.add(name)
         except Exception as e:

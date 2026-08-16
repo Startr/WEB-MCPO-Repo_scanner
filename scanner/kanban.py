@@ -27,6 +27,12 @@ CHECKED_RE = re.compile(r'^- \[x\]', re.IGNORECASE)  # completed checkbox
 # Extract the keyword (TODO/FIXME/BUG/NOTE) from an inline comment
 KEYWORD_RE = re.compile(r'(?:TODO|FIXME|BUG|NOTE)', re.IGNORECASE)
 
+# Leading/trailing comment syntax on an inline TODO line. Stripped before the
+# text becomes card content: a `#` comment marker is also markdown for <h1>,
+# so an unstripped `# TODO: fix this` renders as a heading on the board.
+COMMENT_OPEN_RE = re.compile(r'^\s*(?:#+|//+|/\*+|<!--|;+|--|%)\s*')
+COMMENT_CLOSE_RE = re.compile(r'\s*(?:\*/|-->)\s*$')
+
 # Map TODO.md section headers to kanban columns.
 # Matching is case-insensitive substring — "## High Priority" hits "high priority".
 # Multiple aliases per column so authors can use whatever feels natural.
@@ -241,8 +247,10 @@ def inline_todo_to_card(todo_item):
         return None
     column = KEYWORD_MAP.get(keyword, 'todo')
 
+    text = COMMENT_CLOSE_RE.sub('', COMMENT_OPEN_RE.sub('', todo_item.todo_text)).strip()
+
     return KanbanCard(
-        text=todo_item.todo_text,
+        text=text or todo_item.todo_text,
         source='inline',
         column=column,
         file_path=todo_item.file_path,

@@ -32,7 +32,7 @@ need only the manifest URL. Both endpoints are public — discovery needs no key
 The dashboard has copy buttons for the manifest URL and a sample request, plus a
 live status dot for the tool API:
 
-![Dashboard with the AI agents strip](images/dashboard-mcp-strip.png)
+![Dashboard with the AI agents strip](images/dashboard.png)
 
 ## 3. Prove it works
 

@@ -18,7 +18,13 @@ Connect [Sage.is](https://sage.is), [Claude.ai](https://claude.ai), or any assis
 
 The code is open. The project evolves. Get involved.
 
-![Sage_repo-TODOs.gif](Sage_repo-TODOs.gif)
+![The TodoScope board — TODO.md sections and inline TODO/FIXME/BUG comments as one kanban board](docs/images/kanban-board.png)
+
+Every TODO.md section and every inline `TODO` / `FIXME` / `BUG` comment across
+your repos, on one board. Edit a file in your editor and the cards morph in —
+no reload.
+
+![The TodoScope dashboard — add a repo by URL or local path, see when each was last scanned](docs/images/dashboard.png)
 
 ## AI & Agent Integration
 
