@@ -102,3 +102,109 @@ The one-line pitch is: *"See every TODO across all your repos. The awareness lay
   - [x] Checkbox write-back: `POST /api/todo_toggle` flips `- [ ]` ↔ `- [x]` atomically — line-content hash guard (stale view → 409), authed + local repos only, watchdog round-trip morphs the confirmation into every tab
   - [x] Verify: edit TODO.md in an editor → board morphs in ~1s without reload; second browser tab stays in sync
   - [x] PyInstaller spec: add hiddenimports for `watchdog`, `markdown_it`, `mdit_py_plugins` so binary builds keep live mode #packaging
+
+## Historical completions (archived from the board 2026-08-16)
+
+Moved out of TODO.md's `## Completed` column to keep the board readable. Every
+item is verbatim; nothing was reworded or dropped.
+
+### v1.1.0 release cycle — 2026-08-15 / 2026-08-16
+
+- [x] **v1.1.0 released**: tagged on master, GitHub release with macOS binary + Linux binary + DMG, clean GHCR image, cask published to `Sage-is/homebrew-apps` — `brew install --cask sage-is/apps/todoscope`. Cask verified by rehearsing the real install (download → sha match → quarantine flag → postflight strip → launch → `/health` reports 1.1.0, `/api/mcpo/manifest` 200) — 2026-08-16 #release
+- [x] **SECURITY: access keys leaked in the public Docker image**: no `.dockerignore` existed, so `COPY . /app/` swept the gitignored `scanner/access_keys.csv` into `ghcr.io/startr/todoscope`. Tags `v1.0.0`, `v1.1.0`, `latest` all carried a live key. Remediated 2026-08-16: key rotated, `.dockerignore` added (build context 3.85 GB → 35 MB), clean images pushed over `v1.1.0` and `latest`, and every leaked version deleted — including two *untagged* digests that still served the key by digest after the tagged ones were gone. Registry now holds one clean version. #security #docker
+- [x] **Fix inline TODO comments rendering as markdown headings**: `#` doubles as `<h1>`, so `# TODO: x` painted as a giant heading; `inline_todo_to_card` now strips comment syntax. 10 tests — 2026-08-16 #kanban
+- [x] **Fix "Last Scanned" always reading never**: scan state is keyed by directory basename, the lookup used the display name — any repo registered under a different name showed `never`. Regression test added — 2026-08-16 #ux
+- [x] **Fix `local_path` leak**: scan-stream `init` now includes the filesystem path for authed viewers only (no-keys instances unaffected); locked by 2 tests in `test_public_repo_privacy.py` — 2026-08-15 #security #privacy
+- [x] **Incremental-scan benchmark**: `test_incremental_scan_perf.py`, 400-file fixture timed with timeit — full 6.21s, incremental 0.58s (10.7x), cached 0.09s (65.8x); 2x floor asserted in CI — 2026-08-15 #performance #testing
+- [x] **Documentation refresh**: all four docs rewritten against current code and fresh-eyes verified; 6 verifier findings fixed, incl. `pipenv run todoscope` now working from a fresh clone (editable install in scanner/Pipfile) — 2026-08-15 #documentation
+- [x] **Brand & Landing — Scope D (Brand Consistency)**: 24-finding voice audit applied; false MCP claim relabeled "tool API"; error messages moved to founder voice — 2026-08-15 #brand #copy
+- [x] **Brand & Landing — Scope C (MCP / Sage.is Integration)**: `/connect` page, dashboard tool-API strip with live status dot, `docs/connect-sage.md` with screenshots — 2026-08-15 #ai #mcp #integration
+- [x] **Brand & Landing — Scope B (Dashboard)**: header + pitch, unified smart repo input with live hint, empty state, table filter, Last Scanned + force-rescan — 2026-08-15 #ux #dashboard
+- [x] **Brand & Landing — Scope A (Logged-Out Landing)**: hero, features strip, screenshot, agent section, OG meta — 2026-08-15 #brand #landing
+- [x] **Multi-host repo support**: GitHub / GitLab / Codeberg / Bitbucket / sourcehut + pure-local; five verification lanes pass; no-origin stream bug fixed — 2026-08-15 #core #frontend
+- [x] **Incremental scans + live board (Phase 2)**: git-diff incremental with scan_state (six-scenario verify), server-rendered fragments, `/events` SSE, watchdog, checkbox write-back — 2026-08-15 #performance #core
+
+### Release Pipeline — Repo Rename #release #brand
+
+- [x] **Rename GitHub repo**: `Startr/WEB-MCPO-Repo_scanner` → `Startr/TodoScope` #brand
+- [x] **Update Docker image**: `ghcr.io/startr/todoscope` #docker #brand
+- [x] **Update all internal references**: pyproject.toml, scripts, templates, docs, README, CapRover #brand
+- [x] **Convention**: clone to `GIT-TodoScope/` locally for dev clarity #brand
+- [x] **Verified**: 45 tests passing, all links updated
+
+### Release Pipeline — Mac .app + DMG + Menu Bar #release #macos #app
+
+Superseded by the Tauri shell for distribution, but the pystray menu-bar path
+still ships as the CLI's Finder-launch mode.
+
+- [x] **Build .app**: `make app` → TodoScope.app wrapper around PyInstaller binary #macos
+- [x] **Create DMG**: `make dmg` → styled DMG via `create-dmg` with background + Applications link #macos
+- [x] **App icon**: real 🔭 Apple Color Emoji via canvas+receiver (`scripts/generate_emoji_icon.sh`) #design
+- [x] **Menu bar icon**: 🔭 on transparent background via canvas+receiver (`scripts/generate_menu_icon.sh`) #design
+- [x] **pystray menu bar app**: 🔭 in menu bar with Open Browser, Show Log, Quit #macos
+- [x] **Dock icon toggle**: Hide/Show Dock Icon menu item via NSApp.setActivationPolicy ctypes #macos
+- [x] **Duplicate instance prevention**: detects running server, opens browser instead #reliability
+- [x] **Data persistence**: local_repos.yaml, access_keys.csv, repositories all in `~/.todoscope/` #data
+- [x] **Verified**: .app launches → Dock icon bounces → 🔭 in menu bar → browser opens → all menu items work
+
+### Release Pipeline — build plumbing (completed legs)
+
+- [x] **Create `scripts/todoscope`**: bash CLI wrapper (11 commands, dev mode, tunnels) #cli #docker
+- [x] **Dev mode**: smart repo discovery, source mounting, hot reload #developer-experience
+- [x] **Tunnel commands**: `todoscope tunnel` + `todoscope tailscale` #networking
+- [x] **Create `todoscope.spec`**: PyInstaller spec file (two targets: CLI onefile + .app windowed) #packaging
+- [x] **Add dev deps to Pipfile**: pyinstaller, build, twine #packaging
+- [x] **Makefile targets**: binary, binary_dir, app, dmg, pypi_build, pypi_publish, clean_dist #build
+- [x] **Verified**: `make binary` → `dist/todoscope` (11MB ARM64) → `./dist/todoscope --version` → `1.0.0`
+- [x] **Icon wired**: `--icon assets/todoscope.icns` in app target #design
+- [x] **Styled DMG**: `create-dmg` with background, icon positions, Applications drop link #design
+- [x] **Cross-platform builds** (Docker, zero cloud CI): `binary_linux` via `cdrx/pyinstaller-linux`; `binary_windows` via `cdrx/pyinstaller-windows` + Wine; `docker_push` to `ghcr.io/startr/todoscope` #build
+- [x] **`scripts/release_all.sh`**: one command builds ALL artifacts + uploads via `gh` CLI #automation
+- [x] **`make release_all` target**: calls release_all.sh #build
+- [x] Add `Casks/todoscope.rb` to `Sage-is/homebrew-apps`: Tauri .app via DMG with dequarantine postflight; version/sha256 maintained by the tap-update step in `scripts/release_all.sh`
+
+### Tauri shell (v2.0) — completed legs
+
+- [x] Sidecar on PyInstaller `--onedir` (`make sidecar_dir`), bundled whole via `bundle.macOS.files` — no externalBin, real pid, tauri#11992 sidestepped
+- [x] Rust surface thin: spawn sidecar, SIGTERM kill on quit, sticky OS-assigned port + `--exact-port` handshake, `/health` readiness poll — one main.rs
+- [x] Window opens on `http://127.0.0.1:PORT` programmatically after readiness — web UI ships unchanged, same-origin, no CORS
+- [x] Menu bar (App/Edit/View) with Cmd+= / Cmd+− / Cmd+0 zoom, factor persisted; remember-me login (30-day session); tray "Share on Network" toggle — auth-gated, rebinds `0.0.0.0`, LAN URL dialog
+- [x] pywebview path retired — researched and declined, [reality check](efforts/app-shell-v2/decisions/pywebview-reality-check.md)
+
+### Core product history
+
+- [x] **Release Pipeline — Package Foundation**: pyproject.toml, scanner/cli.py entry point, frozen-app + data-dir support in app.py, `__version__` single source; verified via `pip install -e .` #release #packaging
+- [x] **Subdirectory Migration**: Python files, tests, and Pipfiles under scanner/; imports and Makefile updated, exercised end-to-end 2026-08-15 #development #structure
+- [x] **Refactor `stream_results.html` JS**: superseded — the hand-built DOM builders are deleted; the server renders partials and the client morphs them (see Phase 2 live board). #frontend #dry
+- [x] **Speed up scan**: cached KANBAN board loads instantly on page load while full scan runs in background #performance #ux
+- [x] **Fix existing repositories not working**
+- [x] **Robust error handling**: custom exceptions, retries, and recovery strategies #core #error-handling
+- [x] **Broaden TODO pattern recognition**: FIXME, BUG, NOTE in various comment formats #core #parser
+- [x] **DRY Makefile targets** #development #testing
+- [x] **Enable streaming of API results** #api #performance
+- [x] **TODO.md and TODO.txt file detection** #feature #core
+- [x] **Web interface for displaying TODO files** #ux #frontend
+- [x] **MCPo API for TODO files** #api #integration
+- [x] **GitHub webhook integration** for automated repository scanning #integration #automation
+- [x] **TODO file processing**: diverse filenames, root and subdirectory scanning, content display #feature #core
+- [x] **Testing infrastructure**: unit and integration tests #core #testing
+- [x] **Makefile targets and test runner** #development #testing
+- [x] **Honor .gitignore patterns** during repository scans #core
+- [x] **Stream scan results** in the web UI #ux #frontend
+- [x] **HTML escaping** for multi-line display #security #rendering
+- [x] **Fix server hanging** after completing scans #critical #backend
+- [x] **Skip `scanner/repositories/`** when scanning this project as a local repo #core #backend
+- [x] **User authentication**: access_keys.csv with session and Bearer token auth #security #auth
+- [x] **Footer update**: cross-links to sage.is and startr.style #brand #footer
+- [x] **Rename "Todoscope" to "TodoScope"** consistently #brand #consistency
+- [x] **Favicon**: telescope emoji #brand #visual
+- [x] **Page titles**: descriptive, brand-consistent `<title>` tags #brand #seo
+- [x] **Noindex on login page** #seo #privacy
+- [x] **Meta description**: one-line pitch as default meta description #brand #seo
+- [x] **YAML config migration**: `local_repos.yaml` with public/webhook metadata #core #config
+- [x] **Line-number tracking** in `parse_todo_md()` for all cards and children #core #kanban
+- [x] **Kanban resource links**: board guide, `/resources` page, footer link #feature #kanban
+- [x] **Configurable editor link targets**: vscode.dev, VS Code, Cursor, JetBrains, custom URI templates #feature #editor
+- [x] **Public repo views**: per-repo public flag, auth bypass for read-only routes #feature #sharing
+- [x] **Webhook refresh**: HMAC-SHA256 verification, rate limiting, pull + kanban rebuild #feature #automation
+- [x] **Git author visualization**: blame enrichment, author badges on kanban cards #feature #kanban
