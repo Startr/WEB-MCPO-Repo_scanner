@@ -217,4 +217,5 @@ traces. Features: what and why, proposed approach, whether you'll build it.
 - [Architecture Overview](ARCHITECTURE.md)
 - [API Reference](API_REFERENCE.md)
 - [TODO.md Convention](TODO_CONVENTION.md)
+- [Working with files: field rules](file-handling-field-rules.md) — verification habits drawn from real incidents; read before large renames, releases, or anything that publishes an artifact
 - [Project README](../README.md)
